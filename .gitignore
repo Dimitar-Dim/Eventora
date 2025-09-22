@@ -63,3 +63,4 @@ out/
 *.pid
 *.seed
 *.pid.lock
+.fake
