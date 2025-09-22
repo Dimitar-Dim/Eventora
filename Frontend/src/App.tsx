@@ -1,35 +1,81 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import EventList from "./components/EventList";
+import type { Event } from "./types/Event";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showRaw, setShowRaw] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    async function loadEvents() {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch("http://localhost:8080/events", { signal });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status} - ${res.statusText}`);
+        }
+        const data: Event[] = await res.json();
+        setEvents(data);
+      } catch (err: unknown) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        console.error("Error fetching events:", err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+            ? err
+            : "Unknown error"
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadEvents();
+
+    return () => controller.abort();
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <h1>Eventora</h1>
+
+      {loading && <p>Loading events...</p>}
+
+      {error && (
+        <div>
+          <p style={{ color: "#ff6b6b" }}>Error: {error}</p>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div>
+          <p>{events.length} events loaded</p>
+            <EventList events={events} />
+            <div style={{ marginTop: 12 }}>
+              <button
+                onClick={() => setShowRaw((s) => !s)}
+                style={{ padding: "6px 12px", cursor: "pointer" }}
+              >
+                {showRaw ? "Hide raw JSON" : "Show raw JSON"}
+              </button>
+
+              {showRaw && (
+                <pre style={{ textAlign: "left", maxWidth: 800, margin: "16px auto" }}>
+                  {JSON.stringify(events, null, 2)}
+                </pre>
+              )}
+            </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;
