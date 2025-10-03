@@ -1,0 +1,96 @@
+// Eventoria Event Ticketing System Database Schema
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table venue {
+  id bigserial [primary key]
+  name varchar [not null, note: 'Venue name']
+  description text [note: 'Venue description']
+  address varchar(500) [not null, note: 'Street address']
+  city varchar(100) [not null]
+  state_province varchar(100) [note: 'State or Province']
+  postal_code varchar(20)
+  country varchar(100) [not null]
+  max_capacity integer [not null, note: 'Maximum venue capacity']
+  contact_phone varchar(20)
+  contact_email varchar(255)
+  website_url varchar(500)
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table events {
+  id bigserial [primary key]
+  name varchar(255) [not null, note: 'Event name']
+  description text [note: 'Event description']
+  event_date timestamp [not null, note: 'Date and time of the event']
+  music_type varchar(100) [note: 'Genre of music: Electronic, Rock, Jazz, etc.']
+  ticket_price decimal(10,2) [not null, note: 'Price per ticket']
+  total_capacity integer [not null, note: 'Total tickets available']
+  available_tickets integer [not null, note: 'Remaining tickets for sale']
+  image_url varchar(500) [note: 'Event poster/image URL']
+  venue_id bigint [not null, ref: > venue.id]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table tickets {
+  id bigserial [primary key]
+  ticket_number varchar(100) [unique, not null, note: 'Auto-generated ticket number']
+  customer_name varchar(255) [not null, note: 'Customer full name']
+  customer_email varchar(255) [not null, note: 'Customer email address']
+  customer_phone varchar(20) [note: 'Customer phone number']
+  purchase_price decimal(10,2) [not null, note: 'Price paid for this ticket']
+  status varchar(20) [not null, note: 'ACTIVE, USED, CANCELLED, REFUNDED']
+  purchased_at timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'When ticket was purchased']
+  used_at timestamp [note: 'When ticket was used for entry']
+  event_id bigint [not null, ref: > events.id]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// Relationships
+Ref venue_events: venue.id < events.venue_id [note: 'One venue can host many events']
+Ref event_tickets: events.id < tickets.event_id [note: 'One event can have many tickets']
+
+// Indexes for performance
+TableGroup "Performance Indexes" {
+  events.event_date [name: 'idx_events_date']
+  events.venue_id [name: 'idx_events_venue']
+  tickets.event_id [name: 'idx_tickets_event']
+  tickets.customer_email [name: 'idx_tickets_customer_email']
+  tickets.status [name: 'idx_tickets_status']
+  tickets.ticket_number [name: 'idx_tickets_ticket_number']
+}
+
+// Enums
+Enum ticket_status {
+  ACTIVE [note: 'Ticket is valid and unused']
+  USED [note: 'Ticket has been used for entry']
+  CANCELLED [note: 'Ticket was cancelled before event']
+  REFUNDED [note: 'Ticket was refunded']
+}
+
+// Notes
+Note venue_note: '''
+  # Venue Configuration
+  - Single venue setup for all events
+  - Configurable capacity limits
+  - Contact information for venue management
+'''
+
+Note events_note: '''
+  # Event Management
+  - Each event belongs to one venue
+  - Ticket pricing per event
+  - Capacity tracking with available_tickets
+  - Support for different music genres
+'''
+
+Note tickets_note: '''
+  # Ticket System
+  - Unique ticket number generation (EVT-YYYYMMDD-######)
+  - Customer information storage
+  - Status tracking throughout ticket lifecycle
+  - Purchase price tracking for accounting
+'''

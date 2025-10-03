@@ -27,25 +27,33 @@
   }
 
   .dark {
+    /* Enhanced dark theme with better color harmony */
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 224 71.4% 4.1%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 40% 98%;
-    --primary: 262.1 83.3% 57.8%;
+    --primary: 263.4 70% 50.4%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 215 27.9% 16.9%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --accent: 215 27.9% 16.9%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 262.1 83.3% 57.8%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 263.4 70% 50.4%;
+    
+    /* Custom properties for better color consistency */
+    --purple-primary: 263.4 70% 50.4%;
+    --purple-secondary: 270 91% 65%;
+    --slate-dark: 222.2 84% 4.9%;
+    --slate-medium: 215 27.9% 16.9%;
+    --slate-light: 217.9 10.6% 64.9%;
   }
 }
 
@@ -55,5 +63,48 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Custom utility classes for better color consistency */
+@layer utilities {
+  .bg-slate-950 {
+    background-color: hsl(222.2 84% 4.9%);
+  }
+  
+  .bg-slate-900 {
+    background-color: hsl(215 27.9% 16.9%);
+  }
+  
+  .bg-slate-800 {
+    background-color: hsl(217 33% 17%);
+  }
+  
+  .bg-purple-primary {
+    background-color: hsl(263.4 70% 50.4%);
+  }
+  
+  .bg-purple-secondary {
+    background-color: hsl(270 91% 65%);
+  }
+  
+  .text-purple-primary {
+    color: hsl(263.4 70% 50.4%);
+  }
+  
+  .text-purple-secondary {
+    color: hsl(270 91% 65%);
+  }
+  
+  .border-purple-primary {
+    border-color: hsl(263.4 70% 50.4%);
+  }
+  
+  .hover\:bg-purple-primary:hover {
+    background-color: hsl(263.4 70% 45%);
+  }
+  
+  .gradient-purple {
+    background: linear-gradient(135deg, hsl(263.4 70% 50.4%) 0%, hsl(270 91% 65%) 100%);
   }
 }

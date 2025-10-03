@@ -4,44 +4,21 @@ export interface Event {
   description: string
   date: string
   time: string
-  location: string
+  genre: string
+  artist: string
   price: number
   capacity: number
-  category: string
-  organizer: string
-  imageUrl?: string
-  tags?: string[]
-  isPublished: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export interface EventFormData {
-  title: string
-  description: string
-  date: string
-  time: string
-  location: string
-  price: number
-  capacity: number
-  category: string
-  imageUrl?: string
-  tags?: string[]
+  image?: string
+  status: "upcoming" | "live" | "ended"
 }
 
 export interface Ticket {
-  id: number
-  eventId: number
-  userId: number
+  id: string
+  eventId: string
+  eventTitle: string
+  eventDate: string
+  eventTime: string
+  qrCode: string
+  status: "valid" | "used" | "expired"
   purchaseDate: string
-  price: number
-  status: 'confirmed' | 'pending' | 'cancelled'
-  ticketCode: string
-}
-
-export interface User {
-  id: number
-  name: string
-  email: string
-  avatar?: string
 }
