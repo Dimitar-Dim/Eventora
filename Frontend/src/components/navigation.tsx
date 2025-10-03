@@ -1,17 +1,25 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useState } from "react"
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <nav className="bg-slate-900 border-b border-slate-800">
+    <nav className="bg-black border-b border-purple-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center">
+            <Image
+              src="/logo.png"
+              alt="Eventora Logo"
+              width={32}
+              height={32}
+              className="h-8 w-auto mr-2"
+            />
             <span className="text-2xl font-bold text-purple-400">EVENTORA</span>
           </Link>
 
