@@ -4,56 +4,59 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 262.1 83.3% 57.8%;
-    --radius: 0.5rem;
+    /* Updated theme to darker purple underground music venue aesthetic */
+    --background: 255 13% 3%; /* Very deep dark purple-black */
+    --foreground: 255 5% 98%; /* Pure white with subtle purple tint */
+    --card: 255 13% 6%; /* Darker purple card background */
+    --card-foreground: 255 5% 95%;
+    --popover: 255 13% 6%;
+    --popover-foreground: 255 5% 95%;
+    --primary: 270 50% 55%; /* Darker muted purple primary */
+    --primary-foreground: 255 5% 98%;
+    --secondary: 255 13% 8%; /* Very dark purple secondary */
+    --secondary-foreground: 255 5% 95%;
+    --muted: 255 13% 7%;
+    --muted-foreground: 255 5% 60%;
+    --accent: 275 45% 60%; /* Muted purple accent */
+    --accent-foreground: 255 5% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 255 5% 95%;
+    --border: 255 13% 15%;
+    --input: 255 13% 8%;
+    --ring: 270 50% 55%;
+    --chart-1: 270 50% 55%;
+    --chart-2: 275 45% 60%;
+    --chart-3: 265 40% 50%;
+    --chart-4: 272 47% 57%;
+    --chart-5: 268 43% 52%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    /* Enhanced dark theme with better color harmony */
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 40% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 50.4%;
-    
-    /* Custom properties for better color consistency */
-    --purple-primary: 263.4 70% 50.4%;
-    --purple-secondary: 270 91% 65%;
-    --slate-dark: 222.2 84% 4.9%;
-    --slate-medium: 215 27.9% 16.9%;
-    --slate-light: 217.9 10.6% 64.9%;
+    --background: 255 13% 3%;
+    --foreground: 255 5% 98%;
+    --card: 255 13% 6%;
+    --card-foreground: 255 5% 95%;
+    --popover: 255 13% 6%;
+    --popover-foreground: 255 5% 95%;
+    --primary: 270 50% 55%;
+    --primary-foreground: 255 5% 98%;
+    --secondary: 255 13% 8%;
+    --secondary-foreground: 255 5% 95%;
+    --muted: 255 13% 7%;
+    --muted-foreground: 255 5% 60%;
+    --accent: 275 45% 60%;
+    --accent-foreground: 255 5% 98%;
+    --destructive: 0 65% 40%;
+    --destructive-foreground: 255 5% 95%;
+    --border: 255 13% 15%;
+    --input: 255 13% 8%;
+    --ring: 270 50% 55%;
+    --chart-1: 270 50% 55%;
+    --chart-2: 275 45% 60%;
+    --chart-3: 265 40% 50%;
+    --chart-4: 272 47% 57%;
+    --chart-5: 268 43% 52%;
   }
 }
 
@@ -62,49 +65,28 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
-}
 
-/* Custom utility classes for better color consistency */
-@layer utilities {
-  .bg-slate-950 {
-    background-color: hsl(222.2 84% 4.9%);
+  /* Added custom styles for underground music venue aesthetic */
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(270 50% 55%), hsl(275 45% 60%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
   }
-  
-  .bg-slate-900 {
-    background-color: hsl(215 27.9% 16.9%);
+
+  .glow-effect {
+    box-shadow: 0 0 20px hsl(270 50% 55% / 0.3);
   }
-  
-  .bg-slate-800 {
-    background-color: hsl(217 33% 17%);
+
+  .event-card-hover {
+    transition: all 0.3s ease;
   }
-  
-  .bg-purple-primary {
-    background-color: hsl(263.4 70% 50.4%);
-  }
-  
-  .bg-purple-secondary {
-    background-color: hsl(270 91% 65%);
-  }
-  
-  .text-purple-primary {
-    color: hsl(263.4 70% 50.4%);
-  }
-  
-  .text-purple-secondary {
-    color: hsl(270 91% 65%);
-  }
-  
-  .border-purple-primary {
-    border-color: hsl(263.4 70% 50.4%);
-  }
-  
-  .hover\:bg-purple-primary:hover {
-    background-color: hsl(263.4 70% 45%);
-  }
-  
-  .gradient-purple {
-    background: linear-gradient(135deg, hsl(263.4 70% 50.4%) 0%, hsl(270 91% 65%) 100%);
+
+  .event-card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px hsl(270 50% 55% / 0.2);
   }
 }
