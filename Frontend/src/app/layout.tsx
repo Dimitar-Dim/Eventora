@@ -1,30 +1,32 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import Navigation from "@/components/navigation";
-import "./globals.css";
+import type React from "react"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import { Suspense } from "react"
+import Navigation from "@/components/navigation"
+import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Eventoria - Live Music Events",
-  description: "Discover and book amazing live music events",
-};
+  title: "Eventora - Underground Music Events",
+  description: "Discover and create unforgettable music experiences",
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={inter.className}>
-        <div className="min-h-screen bg-slate-900 text-white">
+      <body className={`${inter.className} font-sans antialiased`}>
+        <div className="min-h-screen bg-background">
           <Navigation />
           <main>
-            {children}
+            <Suspense fallback={null}>{children}</Suspense>
           </main>
         </div>
       </body>
     </html>
-  );
+  )
 }

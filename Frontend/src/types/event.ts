@@ -10,15 +10,16 @@ export interface Event {
   capacity: number
   image?: string
   status: "upcoming" | "live" | "ended"
+  organizer: string
 }
 
 export interface Ticket {
   id: string
-  eventId: string
-  eventTitle: string
-  eventDate: string
-  eventTime: string
+  event: Event
   qrCode: string
   status: "valid" | "used" | "expired"
   purchaseDate: string
+  usedAt?: string
+  purchasePrice: number
+  number: string
 }
