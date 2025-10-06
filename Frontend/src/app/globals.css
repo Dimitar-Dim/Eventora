@@ -4,7 +4,6 @@
 
 @layer base {
   :root {
-    /* Updated theme to darker purple underground music venue aesthetic */
     --background: 255 13% 3%; /* Very deep dark purple-black */
     --foreground: 255 5% 98%; /* Pure white with subtle purple tint */
     --card: 255 13% 6%; /* Darker purple card background */
@@ -68,7 +67,6 @@
     @apply bg-background text-foreground font-sans;
   }
 
-  /* Added custom styles for underground music venue aesthetic */
   .gradient-text {
     background: linear-gradient(135deg, hsl(270 50% 55%), hsl(275 45% 60%));
     -webkit-background-clip: text;
