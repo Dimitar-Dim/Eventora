@@ -8,7 +8,7 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Eventora - Underground Music Events",
+  title: "Eventora",
   description: "Discover and create unforgettable music experiences",
 }
 
