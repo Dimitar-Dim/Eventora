@@ -15,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "events")
+@Table(name = "Event")
 public class Event {
 
     @Id
@@ -28,17 +28,17 @@ public class Event {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "event_date", nullable = false)
+    @Column(name = "date", nullable = false)
     private LocalDateTime eventDate;
 
-    @Column(name = "music_type")
-    private String musicType;
+    @Column(name = "genre")
+    private Genre genre;
 
     @Column(name = "ticket_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal ticketPrice;
 
-    @Column(name = "total_capacity", nullable = false)
-    private Integer totalCapacity;
+    @Column(name = "max_tickets", nullable = false)
+    private Integer maxTickets;
 
     @Column(name = "available_tickets", nullable = false)
     private Integer availableTickets;
@@ -55,16 +55,12 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Ticket> tickets;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "venue_id", nullable = false)
-    private Venue venue;
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (availableTickets == null) {
-            availableTickets = totalCapacity;
+            availableTickets = maxTickets;
         }
     }
 
