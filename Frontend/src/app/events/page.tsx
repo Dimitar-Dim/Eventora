@@ -100,14 +100,13 @@ const mockEvents: Event[] = [
 ]
 
 const genres = [
-	"All Genres",
-	"Techno",
-	"Rock",
-	"Dubstep",
-	"Jazz",
-	"Classical",
-	"Hip-Hop",
-	"Pop"
+    "Rock",
+    "Pop",
+    "Folk",
+    "Classical",
+    "Jazz",
+    "Metal",
+    "Techno"
 ]
 
 export default function EventsPage() {
