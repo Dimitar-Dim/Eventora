@@ -1,4 +1,11 @@
 package com.dimitar.eventora.model;
 
-public class Genre {
+public enum Genre {
+    Rock,
+    Pop,
+    Folk,
+    Classical,
+    Jazz,
+    Metal,
+    Techno
 }
