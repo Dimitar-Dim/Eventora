@@ -1,82 +1,54 @@
 package com.dimitar.eventora.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
+import lombok.*;
 import java.time.LocalDateTime;
-import java.math.BigDecimal;
+import java.util.UUID;
 
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
-@Table(name = "tickets")
+@Table(name = "Ticket")
 public class Ticket {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(columnDefinition = "uuid DEFAULT gen_random_uuid()", updatable = false, nullable = false)
+    private UUID id;
 
-    @Column(name = "ticket_number", unique = true, nullable = false)
-    private String ticketNumber;
-
-    @Column(name = "customer_name", nullable = false)
-    private String customerName;
-
-    @Column(name = "customer_email", nullable = false)
-    private String customerEmail;
-
-    @Column(name = "customer_phone")
-    private String customerPhone;
-
-    @Column(name = "purchase_price", nullable = false, precision = 10, scale = 2)
-    private BigDecimal purchasePrice;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private TicketStatus status;
-
-    @Column(name = "purchased_at", nullable = false)
-    private LocalDateTime purchasedAt;
-
-    @Column(name = "used_at")
-    private LocalDateTime usedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
+
+    @Column(name = "qr_code", nullable = false, unique = true, length = 255)
+    private String qrCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private TicketStatus status = TicketStatus.ACTIVE;
+
+    @Column(name = "issued_to", nullable = false, length = 255)
+    private String issuedTo;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "used_at", nullable = true)
+    private LocalDateTime usedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        if (purchasedAt == null) {
-            purchasedAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
         }
         if (status == null) {
             status = TicketStatus.ACTIVE;
         }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    public enum TicketStatus {
-        ACTIVE,
-        USED,
-        CANCELLED,
-        REFUNDED
     }
 }
