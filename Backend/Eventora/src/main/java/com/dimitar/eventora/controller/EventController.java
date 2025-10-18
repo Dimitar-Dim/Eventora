@@ -39,7 +39,7 @@ public class EventController {
 
         event.setName(eventDetails.getName());
         event.setEventDate(eventDetails.getEventDate());
-        event.setMusicType(eventDetails.getMusicType());
+        event.setGenre(eventDetails.getGenre());
 
         return eventRepository.save(event);
     }
