@@ -69,7 +69,6 @@ public class EventServiceImpl implements EventService {
         event.setTicketPrice(dto.getTicketPrice());
         event.setMaxTickets(dto.getMaxTickets());
         event.setImageUrl(dto.getImageUrl());
-        event.setUpdatedAt(LocalDateTime.now());
 
         return eventRepository.save(event);
     }

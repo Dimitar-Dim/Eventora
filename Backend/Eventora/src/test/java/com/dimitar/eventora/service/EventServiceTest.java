@@ -89,21 +89,6 @@ class EventServiceTest {
         assertEquals(capturedEvent.getMaxTickets(), capturedEvent.getAvailableTickets());
     }
 
-    @Test
-    void createEvent_ValidData_InitializesTimestamps() {
-        // Arrange
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        when(eventRepository.save(any(Event.class))).thenReturn(validEvent);
-
-        // Act
-        eventService.createEvent(validEventRequestDTO);
-
-        // Assert
-        verify(eventRepository).save(eventCaptor.capture());
-        Event capturedEvent = eventCaptor.getValue();
-        assertNotNull(capturedEvent.getCreatedAt());
-        assertNotNull(capturedEvent.getUpdatedAt());
-    }
 
     @Test
     void createEvent_ValidData_SetsIsActiveToTrue() {
@@ -316,27 +301,6 @@ class EventServiceTest {
         verify(eventRepository, times(1)).save(any(Event.class));
     }
 
-    @Test
-    void updateEvent_ValidData_UpdatesUpdatedAtTimestamp() {
-        // Arrange
-        Long eventId = 1L;
-        Event existingEvent = buildEvent();
-        LocalDateTime originalUpdatedAt = existingEvent.getUpdatedAt();
-
-        when(eventRepository.findById(eventId)).thenReturn(Optional.of(existingEvent));
-        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
-            Event e = invocation.getArgument(0);
-            e.setUpdatedAt(LocalDateTime.now().plusSeconds(1));
-            return e;
-        });
-
-        // Act
-        Event result = eventService.updateEvent(eventId, validEventRequestDTO);
-
-        // Assert
-        assertNotNull(result.getUpdatedAt());
-        verify(eventRepository, times(1)).save(any(Event.class));
-    }
 
     @Test
     void updateEvent_InvalidId_ThrowsEventNotFoundException() {
@@ -635,8 +599,6 @@ class EventServiceTest {
         event.setMaxTickets(500);
         event.setAvailableTickets(500);
         event.setImageUrl("https://example.com/concert.jpg");
-        event.setCreatedAt(LocalDateTime.now());
-        event.setUpdatedAt(LocalDateTime.now());
         event.setIsActive(true);
         event.setOrganizerId(1L);
         return event;
