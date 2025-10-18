@@ -9,259 +9,283 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-const categories = [
-  "Technology",
-  "Music",
-  "Food & Drink",
-  "Business",
-  "Art & Culture",
-  "Sports & Fitness",
-  "Education",
-  "Entertainment",
-  "Other"
-]
+const GENRES = ["Rock", "Pop", "Folk", "Classical", "Jazz", "Metal", "Techno"] as const
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
 export default function CreateEventPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  
   const [formData, setFormData] = useState<EventFormData>({
-    title: "",
+    name: "",
     description: "",
-    date: "",
-    time: "",
-    location: "",
-    price: 0,
-    capacity: 0,
-    category: "",
-    imageUrl: "",
-    tags: []
+    eventDate: "",
+    genre: "",
+    ticketPrice: 0,
+    maxTickets: 0,
+    imageUrl: ""
   })
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'price' || name === 'capacity' ? Number(value) : value
-    }))
-  }
-
-  const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const tags = e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag)
-    setFormData(prev => ({
-      ...prev,
-      tags
+      [name]: name === 'ticketPrice' || name === 'maxTickets' ? Number(value) : value
     }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setIsSubmitting(true)
 
     try {
-      // In a real app, this would be an API call
-      console.log('Creating event:', formData)
+      if (!formData.name.trim()) throw new Error("Event name is required")
+      if (!formData.description.trim()) throw new Error("Description is required")
+      if (!formData.eventDate) throw new Error("Event date and time are required")
+      if (!formData.genre) throw new Error("Genre is required")
+      if (formData.ticketPrice < 0) throw new Error("Ticket price must be non-negative")
+      if (formData.maxTickets < 1) throw new Error("Max tickets must be at least 1")
+
+      const eventDateTime = new Date(formData.eventDate).toISOString()
+
+      const requestBody = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        eventDate: eventDateTime,
+        genre: formData.genre,
+        ticketPrice: parseFloat(formData.ticketPrice.toString()),
+        maxTickets: parseInt(formData.maxTickets.toString()),
+        imageUrl: formData.imageUrl.trim() || null,
+        organizerId: 1
+      }
+
+      const response = await fetch(`${API_BASE_URL}/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      })
+
+      if (!response.ok) {
+        let errorMessage = `Failed to create event (${response.status})`
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorData.error || errorMessage
+        } catch {
+          errorMessage = response.statusText || errorMessage
+        }
+        throw new Error(errorMessage)
+      }
+
+      const event = await response.json()
+      setSuccess(true)
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Redirect to events page or show success message
-      router.push('/events')
-    } catch (error) {
-      console.error('Error creating event:', error)
+      setTimeout(() => {
+        router.push(`/events/${event.id}`)
+      }, 1500)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred"
+      setError(errorMessage)
+      console.error("Error creating event:", err)
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Create New Event</h1>
-          <p className="text-gray-600">
-            Fill in the details below to create your event
+    <div className="min-h-screen bg-background">
+      <section className="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-white/10">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/10" />
+        <div className="relative max-w-2xl mx-auto z-10">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-3 text-white">
+            <span className="gradient-text">Create New Event</span>
+          </h1>
+          <p className="text-gray-300 text-lg">
+            Share your event with the community and reach music enthusiasts
           </p>
         </div>
+      </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Event Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Title */}
-              <div>
-                <Label htmlFor="title">Event Title *</Label>
-                <Input
-                  id="title"
-                  name="title"
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  placeholder="Enter event title"
-                />
-              </div>
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto">
+          {success && (
+            <div className="mb-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-lg backdrop-blur-sm">
+              <p className="text-emerald-300 font-medium">✓ Event created successfully! Redirecting...</p>
+            </div>
+          )}
 
-              {/* Description */}
-              <div>
-                <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  required
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Describe your event..."
-                  rows={4}
-                />
-              </div>
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg backdrop-blur-sm">
+              <p className="text-red-300 font-medium">✕ {error}</p>
+            </div>
+          )}
 
-              {/* Date and Time */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="border-white/10 bg-white/5 backdrop-blur-sm shadow-xl">
+            <CardHeader className="border-b border-white/10">
+              <CardTitle className="text-2xl text-white">Event Information</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label htmlFor="date">Date *</Label>
+                  <Label htmlFor="name" className="text-sm font-semibold text-white">
+                    Event Name <span className="text-rose-400">*</span>
+                  </Label>
                   <Input
-                    id="date"
-                    name="date"
-                    type="date"
+                    id="name"
+                    name="name"
+                    type="text"
                     required
-                    value={formData.date}
+                    value={formData.name}
                     onChange={handleInputChange}
+                    placeholder="e.g., Summer Music Festival"
+                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="time">Time *</Label>
-                  <Input
-                    id="time"
-                    name="time"
-                    type="time"
+                  <Label htmlFor="description" className="text-sm font-semibold text-white">
+                    Description <span className="text-rose-400">*</span>
+                  </Label>
+                  <Textarea
+                    id="description"
+                    name="description"
                     required
-                    value={formData.time}
+                    value={formData.description}
                     onChange={handleInputChange}
+                    placeholder="Tell people about your event..."
+                    rows={4}
+                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   />
                 </div>
-              </div>
 
-              {/* Location */}
-              <div>
-                <Label htmlFor="location">Location *</Label>
-                <Input
-                  id="location"
-                  name="location"
-                  type="text"
-                  required
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  placeholder="Enter event location"
-                />
-              </div>
-
-              {/* Price and Capacity */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="price">Ticket Price ($) *</Label>
-                  <Input
-                    id="price"
-                    name="price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    placeholder="0.00"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="eventDate" className="text-sm font-semibold text-white">
+                      Date & Time <span className="text-rose-400">*</span>
+                    </Label>
+                    <Input
+                      id="eventDate"
+                      name="eventDate"
+                      type="datetime-local"
+                      required
+                      value={formData.eventDate}
+                      onChange={handleInputChange}
+                      className="mt-2 bg-white/10 border-white/20 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="genre" className="text-sm font-semibold text-white">
+                      Genre <span className="text-rose-400">*</span>
+                    </Label>
+                    <select
+                      id="genre"
+                      name="genre"
+                      required
+                      value={formData.genre}
+                      onChange={handleInputChange}
+                      className="mt-2 flex h-10 w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-sm text-white ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
+                    >
+                      <option value="" className="bg-slate-900">Select a genre</option>
+                      {GENRES.map((genre) => (
+                        <option key={genre} value={genre} className="bg-slate-900">
+                          {genre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="capacity">Capacity *</Label>
-                  <Input
-                    id="capacity"
-                    name="capacity"
-                    type="number"
-                    min="1"
-                    required
-                    value={formData.capacity}
-                    onChange={handleInputChange}
-                    placeholder="Enter maximum attendees"
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="ticketPrice" className="text-sm font-semibold text-white">
+                      Ticket Price ($) <span className="text-rose-400">*</span>
+                    </Label>
+                    <Input
+                      id="ticketPrice"
+                      name="ticketPrice"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      required
+                      value={formData.ticketPrice}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                      className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="maxTickets" className="text-sm font-semibold text-white">
+                      Max Tickets <span className="text-rose-400">*</span>
+                    </Label>
+                    <Input
+                      id="maxTickets"
+                      name="maxTickets"
+                      type="number"
+                      min="1"
+                      required
+                      value={formData.maxTickets}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 500"
+                      className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Category */}
-              <div>
-                <Label htmlFor="category">Category *</Label>
-                <select
-                  id="category"
-                  name="category"
-                  required
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div>
+                  <Label htmlFor="imageUrl" className="text-sm font-semibold text-white">
+                    Event Image URL
+                  </Label>
+                  <Input
+                    id="imageUrl"
+                    name="imageUrl"
+                    type="url"
+                    value={formData.imageUrl}
+                    onChange={handleInputChange}
+                    placeholder="https://example.com/image.jpg"
+                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Optional: Provide a URL to an image for your event
+                  </p>
+                </div>
 
-              {/* Image URL */}
-              <div>
-                <Label htmlFor="imageUrl">Event Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  name="imageUrl"
-                  type="url"
-                  value={formData.imageUrl}
-                  onChange={handleInputChange}
-                  placeholder="https://example.com/image.jpg"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Optional: Add a URL to an image for your event
-                </p>
-              </div>
+                <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-white/10">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    size="lg"
+                    className="flex-1 glow-effect"
+                  >
+                    {isSubmitting ? "Creating..." : "Create Event"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    onClick={() => router.back()}
+                    className="flex-1 border-white/30 text-white hover:bg-white/10"
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
 
-              {/* Tags */}
-              <div>
-                <Label htmlFor="tags">Tags</Label>
-                <Input
-                  id="tags"
-                  name="tags"
-                  type="text"
-                  value={formData.tags?.join(', ') || ''}
-                  onChange={handleTagsChange}
-                  placeholder="music, concert, live (separate with commas)"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Optional: Add tags to help people find your event (separate with commas)
-                </p>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1"
-                >
-                  {isSubmitting ? 'Creating Event...' : 'Create Event'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.back()}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+          <div className="mt-8 p-4 bg-cyan-500/20 border border-cyan-500/50 rounded-lg backdrop-blur-sm">
+            <p className="text-sm text-cyan-300">
+              <strong>Tip:</strong> All fields marked with <span className="text-rose-400">*</span> are required.
+              Make sure the event date is in the future and ticket price is non-negative.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
