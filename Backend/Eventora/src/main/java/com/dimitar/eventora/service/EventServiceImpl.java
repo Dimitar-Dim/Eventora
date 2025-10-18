@@ -140,7 +140,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (dto.getOrganizerId() == null) {
-            throw new IllegalArgumentException("User ID cannot be null");
+            throw new IllegalArgumentException("Organizer ID cannot be null");
         }
     }
 }
