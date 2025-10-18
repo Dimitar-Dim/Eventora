@@ -1,16 +1,27 @@
 export interface Event {
   id: number
-  title: string
+  name: string
   description: string
-  date: string
-  time: string
+  eventDate: string // ISO 8601 datetime
+  genre: "Rock" | "Pop" | "Folk" | "Classical" | "Jazz" | "Metal" | "Techno"
+  ticketPrice: number
+  maxTickets: number
+  availableTickets: number
+  imageUrl?: string
+  isActive: boolean
+  organizerId: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface EventFormData {
+  name: string
+  description: string
+  eventDate: string // datetime-local format for input
   genre: string
-  artist: string
-  price: number
-  capacity: number
-  image?: string
-  status: "upcoming" | "live" | "ended"
-  organizer: string
+  ticketPrice: number
+  maxTickets: number
+  imageUrl: string
 }
 
 export interface Ticket {
