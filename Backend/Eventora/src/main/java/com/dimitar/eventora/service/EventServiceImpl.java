@@ -15,12 +15,12 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
 
     @Override
+    @Transactional
     public Event createEvent(EventRequestDTO dto) {
         validateEventRequestDTO(dto);
 
@@ -35,10 +35,9 @@ public class EventServiceImpl implements EventService {
         event.setImageUrl(dto.getImageUrl());
         event.setOrganizerId(dto.getOrganizerId());
         event.setIsActive(true);
-        event.setCreatedAt(LocalDateTime.now());
-        event.setUpdatedAt(LocalDateTime.now());
 
-        return eventRepository.save(event);
+        Event savedEvent = eventRepository.save(event);
+        return savedEvent;
     }
 
     @Override
@@ -53,6 +52,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public Event updateEvent(Long id, EventRequestDTO dto) {
         if (id == null) {
             throw new IllegalArgumentException("Event ID cannot be null");
@@ -75,6 +75,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public void deleteEvent(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("Event ID cannot be null");
@@ -100,6 +101,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public Event deactivateEvent(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("Event ID cannot be null");
