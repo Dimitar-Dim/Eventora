@@ -225,7 +225,7 @@ class EventServiceTest {
     }
 
     @Test
-    void createEvent_NullUserId_ThrowsIllegalArgumentException() {
+    void createEvent_NullOrganizerId_ThrowsIllegalArgumentException() {
         // Arrange
         validEventRequestDTO.setOrganizerId(null);
 
