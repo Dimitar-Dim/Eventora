@@ -15,16 +15,16 @@ import java.util.UUID;
 public class Ticket {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(columnDefinition = "uuid DEFAULT gen_random_uuid()", updatable = false, nullable = false)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(updatable = false, nullable = false)
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
     @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    private Integer userId;
 
     @Column(name = "qr_code", nullable = false, unique = true, length = 255)
     private String qrCode;

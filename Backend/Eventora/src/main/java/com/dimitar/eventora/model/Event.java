@@ -31,7 +31,8 @@ public class Event {
     @Column(name = "date", nullable = false)
     private LocalDateTime eventDate;
 
-    @Column(name = "genre")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "genre", nullable = false, length = 50)
     private Genre genre;
 
     @Column(name = "ticket_price", nullable = false, precision = 10, scale = 2)
