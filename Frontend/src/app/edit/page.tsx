@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { EventFormData } from "@/types/event"
 import { GENRES, API_BASE_URL } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
@@ -10,12 +11,16 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function CreateEventPage() {
+export default function EditEventPage() {
   const router = useRouter()
+  const params = useParams()
+  const eventId = params.id as string
+
+  const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  
+
   const [formData, setFormData] = useState<EventFormData>({
     name: "",
     description: "",
@@ -25,6 +30,41 @@ export default function CreateEventPage() {
     maxTickets: 0,
     imageUrl: ""
   })
+
+  // Fetch event on mount
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/events/${eventId}`)
+        if (!response.ok) throw new Error("Failed to fetch event")
+        const data = await response.json()
+
+        // Convert ISO date to datetime-local format
+        const eventDate = new Date(data.eventDate)
+        const localDateTime = new Date(eventDate.getTime() - eventDate.getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 16)
+
+        setFormData({
+          name: data.name,
+          description: data.description,
+          eventDate: localDateTime,
+          genre: data.genre,
+          ticketPrice: data.ticketPrice,
+          maxTickets: data.maxTickets,
+          imageUrl: data.imageUrl || ""
+        })
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load event")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (eventId) {
+      fetchEvent()
+    }
+  }, [eventId])
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -62,14 +102,14 @@ export default function CreateEventPage() {
         organizerId: 1
       }
 
-      const response = await fetch(`${API_BASE_URL}/events`, {
-        method: "POST",
+      const response = await fetch(`${API_BASE_URL}/events/${eventId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
       })
 
       if (!response.ok) {
-        let errorMessage = `Failed to create event (${response.status})`
+        let errorMessage = `Failed to update event (${response.status})`
         try {
           const errorData = await response.json()
           errorMessage = errorData.message || errorData.error || errorMessage
@@ -79,19 +119,27 @@ export default function CreateEventPage() {
         throw new Error(errorMessage)
       }
 
-      const event = await response.json()
       setSuccess(true)
-
       setTimeout(() => {
-        router.push(`/edit/${event.id}`)
+        router.push("/events")
       }, 1500)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred"
       setError(errorMessage)
-      console.error("Error creating event:", err)
+      console.error("Error updating event:", err)
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-white text-lg">Loading event...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -100,10 +148,10 @@ export default function CreateEventPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/10" />
         <div className="relative max-w-2xl mx-auto z-10">
           <h1 className="text-4xl sm:text-5xl font-bold mb-3 text-white">
-            <span className="gradient-text">Create New Event</span>
+            <span className="gradient-text">Edit Event</span>
           </h1>
           <p className="text-gray-300 text-lg">
-            Share your event with the community and reach music enthusiasts
+            Update your event details
           </p>
         </div>
       </section>
@@ -112,7 +160,7 @@ export default function CreateEventPage() {
         <div className="max-w-2xl mx-auto">
           {success && (
             <div className="mb-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-lg backdrop-blur-sm">
-              <p className="text-emerald-300 font-medium">✓ Event created successfully! Redirecting...</p>
+              <p className="text-emerald-300 font-medium">✓ Event updated successfully! Redirecting...</p>
             </div>
           )}
 
@@ -258,7 +306,7 @@ export default function CreateEventPage() {
                     size="lg"
                     className="flex-1 glow-effect"
                   >
-                    {isSubmitting ? "Creating..." : "Create Event"}
+                    {isSubmitting ? "Updating..." : "Save Changes"}
                   </Button>
                   <Button
                     type="button"

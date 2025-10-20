@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Event } from "@/types/event"
+import { GENRES } from "@/lib/constants"
 import { EventList } from "@/components/event-list"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -99,16 +100,6 @@ const mockEvents: Event[] = [
 	},
 ]
 
-const genres = [
-    "Rock",
-    "Pop",
-    "Folk",
-    "Classical",
-    "Jazz",
-    "Metal",
-    "Techno"
-]
-
 export default function EventsPage() {
 	const [searchTerm, setSearchTerm] = useState("")
 	const [selectedGenre, setSelectedGenre] = useState("All Genres")
@@ -179,7 +170,7 @@ export default function EventsPage() {
 								onChange={(e) => setSelectedGenre(e.target.value)}
 								className="flex h-10 w-full rounded-md border border-border/50 bg-secondary/80 px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all duration-300"
 							>
-								{genres.map((genre) => (
+								{GENRES.map((genre) => (
 									<option key={genre} value={genre} className="bg-popover text-foreground">
 										{genre}
 									</option>
