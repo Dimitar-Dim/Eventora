@@ -6,76 +6,37 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Filter, ChevronLeft, ChevronRight } from "lucide-react"
+import { GENRES } from "@/lib/constants"
 import type { Event } from "@/types/event"
 
-// Mock data for demonstration
-const mockEvents: Event[] = [
-  {
-    id: 1,
-    title: "Techno Pulse",
-    description: "Deep electronic beats and hypnotic rhythms. Experience the raw energy of cutting-edge techno music.",
-    date: "2024-01-12",
-    time: "22:00",
-    genre: "Techno",
-    artist: "DJ Pulse",
-    price: 25,
-    capacity: 200,
-    status: "upcoming",
-    image: "/placeholder.jpg",
-    organizer: "DJ Pulse"
-  },
-  {
-    id: 2,
-    title: "Rock Revival Night",
-    description: "Local rock bands showcase their latest tracks. Raw, unfiltered rock energy that will blow you away.",
-    date: "2024-01-13",
-    time: "20:00",
-    genre: "Rock",
-    artist: "The Rebels",
-    price: 20,
-    capacity: 150,
-    status: "upcoming",
-    image: "/rock.jpg",
-    organizer: "The Rebels"
-  },
-  {
-    id: 3,
-    title: "Bass Drop Friday",
-    description: "Heavy bass lines and darker vibes. Feel the music resonate through your entire body.",
-    date: "2024-01-14",
-    time: "23:00",
-    genre: "Dubstep",
-    artist: "Bass Master",
-    price: 30,
-    capacity: 180,
-    status: "live",
-    image: "/placeholder.jpg",
-    organizer: "Bass Master"
-  },
-]
-
-export function EventList({ events }: { events?: Event[] }) {
-  const eventsToShow = events || mockEvents
+export function EventList({ events = [] }: { events?: Event[] }) {
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedGenre, setSelectedGenre] = useState<string>("all")
-  const [selectedStatus, setSelectedStatus] = useState<string>("all")
+  const [selectedGenre, setSelectedGenre] = useState<string>("All Genres")
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const filteredEvents = eventsToShow.filter((event) => {
-    const matchesSearch =
-      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.genre.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesGenre = selectedGenre === "all" || event.genre.toLowerCase() === selectedGenre.toLowerCase()
-    const matchesStatus = selectedStatus === "all" || event.status === selectedStatus
+  console.log("EventList received events:", events)
 
-    return matchesSearch && matchesGenre && matchesStatus
-  })
+  const filteredEvents = events
+    .filter((event) => {
+      if (!event) {
+        console.warn("Null/undefined event found")
+        return false
+      }
+      if (!event.name) {
+        console.warn("Event missing name:", event)
+        return false
+      }
+      const matchesSearch =
+        event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+        (event.genre?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+      const matchesGenre = selectedGenre === "All Genres" || event.genre === selectedGenre
 
-  const genres = Array.from(new Set(eventsToShow.map((event) => event.genre)))
+      return matchesSearch && matchesGenre
+    })
 
   useEffect(() => {
     if (!isAutoScrollEnabled || filteredEvents.length <= 1) return
@@ -95,7 +56,6 @@ export function EventList({ events }: { events?: Event[] }) {
     setCurrentIndex(index)
     setIsAutoScrollEnabled(false)
 
-    // Re-enable auto-scroll after 10 seconds of inactivity
     setTimeout(() => {
       setIsAutoScrollEnabled(true)
     }, 10000)
@@ -144,24 +104,12 @@ export function EventList({ events }: { events?: Event[] }) {
                 <SelectValue placeholder="All Gen" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Genres</SelectItem>
-                {genres.map((genre) => (
-                  <SelectItem key={genre} value={genre.toLowerCase()}>
+                <SelectItem value="All Genres">All Genres</SelectItem>
+                {GENRES.map((genre) => (
+                  <SelectItem key={genre} value={genre}>
                     {genre}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-32 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="upcoming">Upcoming</SelectItem>
-                <SelectItem value="live">Live</SelectItem>
-                <SelectItem value="ended">Ended</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -195,10 +143,10 @@ export function EventList({ events }: { events?: Event[] }) {
             className="flex overflow-x-hidden scroll-smooth"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {filteredEvents.map((event) => (
+            {filteredEvents.map((event) => event && (
               <div key={event.id} className="w-full flex-shrink-0 px-2">
                 <div className="event-card-hover">
-                  <EventCard event={event} onViewDetails={(event) => console.log("View details for:", event.title)} />
+                  <EventCard event={event} onViewDetails={(event) => console.log("View details for:", event.name)} />
                 </div>
               </div>
             ))}
@@ -233,8 +181,7 @@ export function EventList({ events }: { events?: Event[] }) {
             className="mt-4 bg-transparent"
             onClick={() => {
               setSearchTerm("")
-              setSelectedGenre("all")
-              setSelectedStatus("all")
+              setSelectedGenre("All Genres")
             }}
           >
             Clear Filters

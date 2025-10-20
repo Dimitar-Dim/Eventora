@@ -17,7 +17,7 @@ export interface Event {
 export interface EventFormData {
   name: string
   description: string
-  eventDate: string // datetime-local format for input
+  eventDate: string
   genre: string
   ticketPrice: number
   maxTickets: number

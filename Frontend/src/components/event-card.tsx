@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Calendar, Clock, MapPin, Music, Users, Ticket } from "lucide-react"
+import { formatDate, formatTime } from "@/lib/utils"
 import type { Event } from "@/types/event"
 
 interface EventCardProps {
@@ -16,25 +17,8 @@ interface EventCardProps {
 export function EventCard({ event, onViewDetails }: EventCardProps) {
   const [showDetails, setShowDetails] = useState(false)
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    })
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "live":
-        return "bg-accent text-accent-foreground animate-pulse"
-      case "upcoming":
-        return "bg-primary text-primary-foreground"
-      case "ended":
-        return "bg-muted text-muted-foreground"
-      default:
-        return "bg-secondary text-secondary-foreground"
-    }
+  const getStatusColor = (isActive: boolean) => {
+    return isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
   }
 
   const handleCardClick = () => {
@@ -50,8 +34,8 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       >
         <div className="absolute inset-0">
           <Image
-            src={event.image || "/placeholder.svg"}
-            alt={event.title}
+            src={event.imageUrl || "/placeholder.svg"}
+            alt={event.name}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-110"
           />
@@ -60,8 +44,8 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
 
         <div className="relative z-10 p-8 h-96 flex flex-col justify-between">
           <div className="flex justify-between items-start">
-            <Badge className={`${getStatusColor(event.status)} font-medium text-sm`}>
-              {event.status === "live" ? "🔴 LIVE" : event.status.toUpperCase()}
+            <Badge className={`${getStatusColor(event.isActive)} font-medium text-sm`}>
+              {event.isActive ? "✓ ACTIVE" : "✕ INACTIVE"}
             </Badge>
             <Badge variant="outline" className="bg-black/30 text-white border-white/20 backdrop-blur-sm text-sm">
               {event.genre}
@@ -71,11 +55,11 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
           <div className="space-y-4">
             <div>
               <h3 className="text-4xl font-bold text-white mb-2 text-balance leading-tight group-hover:text-primary transition-colors">
-                {event.title}
+                {event.name}
               </h3>
               <div className="flex items-center space-x-3 text-white/80">
                 <Music className="h-5 w-5" />
-                <span className="font-medium text-xl">{event.artist}</span>
+                <span className="font-medium text-xl">{event.genre}</span>
               </div>
             </div>
 
@@ -83,11 +67,11 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
               <div className="flex items-center justify-between text-white">
                 <div className="flex items-center space-x-3">
                   <Calendar className="h-6 w-6 text-primary" />
-                  <span className="font-semibold text-2xl">{formatDate(event.date)}</span>
+                  <span className="font-semibold text-2xl">{formatDate(event.eventDate)}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Clock className="h-6 w-6 text-primary" />
-                  <span className="font-semibold text-2xl">{event.time}</span>
+                  <span className="font-semibold text-2xl">{formatTime(event.eventDate)}</span>
                 </div>
               </div>
             </div>
@@ -95,7 +79,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
 
           <div className="flex items-center justify-between">
             <div className="text-white">
-              <span className="text-4xl font-bold text-primary">${event.price}</span>
+              <span className="text-4xl font-bold text-primary">${event.ticketPrice}</span>
             </div>
             <Button
               size="lg"
@@ -114,13 +98,13 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold gradient-text">{event.title}</DialogTitle>
+            <DialogTitle className="text-2xl font-bold gradient-text">{event.name}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
-            {event.image && (
+            {event.imageUrl && (
               <div className="aspect-video rounded-lg overflow-hidden relative">
-                <Image src={event.image || "/placeholder.svg"} alt={event.title} fill className="object-cover" />
+                <Image src={event.imageUrl || "/placeholder.svg"} alt={event.name} fill className="object-cover" />
               </div>
             )}
 
@@ -129,8 +113,8 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                 <div className="flex items-center space-x-3">
                   <Music className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Artist</p>
-                    <p className="font-semibold">{event.artist}</p>
+                    <p className="text-sm text-muted-foreground">Genre</p>
+                    <p className="font-semibold">{event.genre}</p>
                   </div>
                 </div>
 
@@ -138,7 +122,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   <Calendar className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Date</p>
-                    <p className="font-semibold">{formatDate(event.date)}</p>
+                    <p className="font-semibold">{formatDate(event.eventDate)}</p>
                   </div>
                 </div>
 
@@ -146,7 +130,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   <Clock className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Time</p>
-                    <p className="font-semibold">{event.time}</p>
+                    <p className="font-semibold">{formatTime(event.eventDate)}</p>
                   </div>
                 </div>
               </div>
@@ -156,23 +140,23 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   <Ticket className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Price</p>
-                    <p className="font-semibold text-primary text-xl">${event.price}</p>
+                    <p className="font-semibold text-primary text-xl">${event.ticketPrice}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-3">
                   <Users className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Capacity</p>
-                    <p className="font-semibold">{event.capacity} people</p>
+                    <p className="text-sm text-muted-foreground">Available Tickets</p>
+                    <p className="font-semibold">{event.availableTickets} / {event.maxTickets}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-3">
                   <MapPin className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Venue</p>
-                    <p className="font-semibold">Main Stage</p>
+                    <p className="text-sm text-muted-foreground">Status</p>
+                    <p className="font-semibold">{event.isActive ? "Active" : "Inactive"}</p>
                   </div>
                 </div>
               </div>
@@ -188,13 +172,13 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
               <Badge variant="outline" className="text-accent border-accent/30">
                 {event.genre}
               </Badge>
-              <Badge className={getStatusColor(event.status)}>{event.status}</Badge>
+              <Badge className={getStatusColor(event.isActive)}>{event.isActive ? "Active" : "Inactive"}</Badge>
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button className="flex-1 glow-effect" size="lg" disabled={event.status === 'ended'}>
+              <Button className="flex-1 glow-effect" size="lg" disabled={!event.isActive}>
                 <Ticket className="mr-2 h-5 w-5" />
-                {event.status === 'ended' ? 'Event Ended' : 'Get Tickets'}
+                {event.isActive ? "Get Tickets" : "Event Inactive"}
               </Button>
               <Button variant="outline" size="lg">
                 Share Event
