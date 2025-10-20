@@ -21,5 +21,4 @@ jobs:
           distribution: 'temurin'
 
       - name: Run backend tests
-        working-directory: ./Backend
-        run: ./gradlew test
+        run: ./gradlew :Backend:eventora:test
