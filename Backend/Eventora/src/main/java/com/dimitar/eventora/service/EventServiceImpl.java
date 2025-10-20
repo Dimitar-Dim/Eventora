@@ -144,4 +144,9 @@ public class EventServiceImpl implements EventService {
             throw new IllegalArgumentException("Organizer ID cannot be null");
         }
     }
+
+    @Transactional
+    public List<Event> getEventsByOrganizer(Long organizerId) {
+        return eventRepository.findByOrganizerId(organizerId);
+    }
 }

@@ -23,12 +23,6 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(event);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Event> getEventById(@PathVariable Long id) {
-        Event event = eventService.getEventById(id);
-        return ResponseEntity.ok(event);
-    }
-
     @GetMapping
     public ResponseEntity<List<Event>> getAllEvents() {
         List<Event> events = eventService.getAllEvents();
@@ -39,6 +33,18 @@ public class EventController {
     public ResponseEntity<List<Event>> getActiveEvents() {
         List<Event> events = eventService.getActiveEvents();
         return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/organizer/{organizerId}")
+    public ResponseEntity<List<Event>> getEventsByOrganizer(@PathVariable Long organizerId) {
+        List<Event> events = eventService.getEventsByOrganizer(organizerId);
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Event> getEventById(@PathVariable Long id) {
+        Event event = eventService.getEventById(id);
+        return ResponseEntity.ok(event);
     }
 
     @PutMapping("/{id}")
@@ -58,4 +64,6 @@ public class EventController {
         Event event = eventService.deactivateEvent(id);
         return ResponseEntity.ok(event);
     }
+
 }
+

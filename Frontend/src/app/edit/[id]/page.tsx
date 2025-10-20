@@ -31,11 +31,10 @@ export default function EditEventPage() {
     imageUrl: ""
   })
 
-  // Fetch event on mount
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/events/${eventId}`)
+        const response = await fetch(`${API_BASE_URL}/api/events/${eventId}`)
         if (!response.ok) throw new Error("Failed to fetch event")
         const data = await response.json()
 

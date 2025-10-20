@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
-import java.util.List;
 
 @Setter
 @Getter
@@ -59,8 +58,8 @@ public class Event {
     @Column(name = "organizer_id", nullable = false)
     private Long organizerId;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Ticket> tickets;
+    //@OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    //private List<Ticket> tickets;
 
     @PrePersist
     protected void onCreate() {
