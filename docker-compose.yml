@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: ***REMOVED***
-      POSTGRES_PASSWORD: ***REMOVED***
+      POSTGRES_PASSWORD: nice try
       POSTGRES_DB: eventora_db
     ports:
       - "5432:5432"
