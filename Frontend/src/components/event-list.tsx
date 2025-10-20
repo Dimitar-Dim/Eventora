@@ -17,8 +17,6 @@ export function EventList({ events = [] }: { events?: Event[] }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  console.log("EventList received events:", events)
-
   const filteredEvents = events
     .filter((event) => {
       if (!event) {
@@ -146,7 +144,7 @@ export function EventList({ events = [] }: { events?: Event[] }) {
             {filteredEvents.map((event) => event && (
               <div key={event.id} className="w-full flex-shrink-0 px-2">
                 <div className="event-card-hover">
-                  <EventCard event={event} onViewDetails={(event) => console.log("View details for:", event.name)} />
+                  <EventCard event={event} />
                 </div>
               </div>
             ))}
