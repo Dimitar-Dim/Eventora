@@ -4,53 +4,39 @@ import { EventList } from "@/components/event-list"
 import { Event } from "@/types/event"
 import { Button } from "@/components/ui/button"
 import { Plus, Zap } from "lucide-react"
-
-const mockEvents: Event[] = [
-  {
-    id: 1,
-    title: "Rock Revival Night",
-    description: "Experience the energy of live music. From techno nights to rock showcases, discover your next favorite show.",
-    date: "2025-01-13T20:00:00Z",
-    time: "20:00",
-    genre: "Rock",
-    artist: "The Rebels",
-    price: 20,
-    capacity: 500,
-    image: "/rock.jpg",
-    status: "upcoming",
-    organizer: "The Rebels"
-  },
-  {
-    id: 2,
-    title: "Techno Underground",
-    description: "Deep beats and electronic vibes in an underground setting.",
-    date: "2025-01-15T22:00:00Z",
-    time: "22:00",
-    genre: "Techno",
-    artist: "Electronic Collective",
-    price: 35,
-    capacity: 300,
-    image: "/rock.jpg",
-    status: "upcoming",
-    organizer: "Electronic Collective"
-  },
-  {
-    id: 3,
-    title: "Dubstep Revolution",
-    description: "Heavy bass and mind-blowing drops with purple neon atmosphere.",
-    date: "2025-01-18T21:00:00Z",
-    time: "21:00",
-    genre: "Dubstep",
-    artist: "Bass Masters",
-    price: 30,
-    capacity: 800,
-    image: "/rock.jpg",
-    status: "upcoming",
-    organizer: "Bass Masters"
-  }
-]
+import { useEffect, useState } from "react"
+import { API_BASE_URL } from "@/lib/constants"
 
 export default function HomePage() {
+  const [closestEvents, setClosestEvents] = useState<Event[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchClosestEvents = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch(`${API_BASE_URL}/events`)
+        if (!response.ok) throw new Error("Failed to fetch events")
+        const data: Event[] = await response.json()
+
+        // Sort events by date and get the 5 closest ones
+        const now = new Date()
+        const upcomingEvents = data
+          .filter(event => new Date(event.eventDate) > now)
+          .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
+          .slice(0, 5)
+
+        setClosestEvents(upcomingEvents)
+      } catch (err) {
+        console.error("Error fetching events:", err)
+        setClosestEvents([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchClosestEvents()
+  }, [])
   return (
     <div className="min-h-screen bg-background">
       <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -96,11 +82,17 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Upcoming Events</h2>
+              <h2 className="text-3xl font-bold mb-2">Closest Upcoming Events</h2>
               <p className="text-muted-foreground">Discover your next live music experience</p>
             </div>
           </div>
-          <EventList events={mockEvents} />
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-foreground text-lg">Loading events...</p>
+            </div>
+          ) : (
+            <EventList events={closestEvents} />
+          )}
         </div>
       </section>
     </div>
