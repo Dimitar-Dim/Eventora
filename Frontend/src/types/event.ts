@@ -19,8 +19,8 @@ export interface EventFormData {
   description: string
   eventDate: string
   genre: string
-  ticketPrice: number
-  maxTickets: number
+  ticketPrice: number | string
+  maxTickets: number | string
   imageUrl: string
 }
 

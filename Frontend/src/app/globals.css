@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 255 13% 3%; /* Very deep dark purple-black */
+    --background: 255 13% 3%; /* Very dark purple-black */
     --foreground: 255 5% 98%; /* Pure white with subtle purple tint */
     --card: 255 13% 6%; /* Darker purple card background */
     --card-foreground: 255 5% 95%;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Event } from "@/types/event"
 import { API_BASE_URL } from "@/lib/constants"
-import { EventList } from "@/components/event-list"
+import { EventGrid } from "@/components/event-grid"
 
 export default function EventsPage() {
 	const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
@@ -54,7 +54,7 @@ export default function EventsPage() {
 				)}
 
 				{!isLoading && (
-					<EventList events={filteredEvents} />
+					<EventGrid events={filteredEvents} />
 				)}
 			</div>
 		</div>
