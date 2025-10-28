@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { EventFormData } from "@/types/event"
 import { GENRES, API_BASE_URL } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
@@ -10,24 +10,28 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Filter } from "lucide-react"
 
 export default function EditEventPage() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const eventId = params.id as string
+  const isNewEvent = searchParams.get("created") === "true"
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [success, setSuccess] = useState(isNewEvent)
 
   const [formData, setFormData] = useState<EventFormData>({
     name: "",
     description: "",
     eventDate: "",
     genre: "",
-    ticketPrice: 0,
-    maxTickets: 0,
+    ticketPrice: "",
+    maxTickets: "",
     imageUrl: ""
   })
 
@@ -85,8 +89,10 @@ export default function EditEventPage() {
       if (!formData.description.trim()) throw new Error("Description is required")
       if (!formData.eventDate) throw new Error("Event date and time are required")
       if (!formData.genre) throw new Error("Genre is required")
-      if (formData.ticketPrice < 0) throw new Error("Ticket price must be non-negative")
-      if (formData.maxTickets < 1) throw new Error("Max tickets must be at least 1")
+      if (formData.ticketPrice === '' || formData.ticketPrice === null) throw new Error("Ticket price is required")
+      if (Number(formData.ticketPrice) < 0) throw new Error("Ticket price must be non-negative")
+      if (formData.maxTickets === '' || formData.maxTickets === null) throw new Error("Max tickets is required")
+      if (Number(formData.maxTickets) < 1) throw new Error("Max tickets must be at least 1")
 
       const eventDateTime = new Date(formData.eventDate).toISOString()
 
@@ -159,7 +165,9 @@ export default function EditEventPage() {
         <div className="max-w-2xl mx-auto">
           {success && (
             <div className="mb-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-lg backdrop-blur-sm">
-              <p className="text-emerald-300 font-medium">✓ Event updated successfully! Redirecting...</p>
+              <p className="text-emerald-300 font-medium">
+                ✓ Event {isNewEvent ? "created" : "updated"} successfully!
+              </p>
             </div>
           )}
 
@@ -187,7 +195,7 @@ export default function EditEventPage() {
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="e.g., Summer Music Festival"
-                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    className="mt-2"
                   />
                 </div>
 
@@ -203,7 +211,7 @@ export default function EditEventPage() {
                     onChange={handleInputChange}
                     placeholder="Tell people about your event..."
                     rows={4}
-                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    className="mt-2"
                   />
                 </div>
 
@@ -219,28 +227,26 @@ export default function EditEventPage() {
                       required
                       value={formData.eventDate}
                       onChange={handleInputChange}
-                      className="mt-2 bg-white/10 border-white/20 text-white"
+                      className="mt-2"
                     />
                   </div>
                   <div>
                     <Label htmlFor="genre" className="text-sm font-semibold text-white">
                       Genre <span className="text-rose-400">*</span>
                     </Label>
-                    <select
-                      id="genre"
-                      name="genre"
-                      required
-                      value={formData.genre}
-                      onChange={handleInputChange}
-                      className="mt-2 flex h-10 w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-sm text-white ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
-                    >
-                      <option value="" className="bg-slate-900">Select a genre</option>
-                      {GENRES.map((genre) => (
-                        <option key={genre} value={genre} className="bg-slate-900">
-                          {genre}
-                        </option>
-                      ))}
-                    </select>
+                    <Select value={formData.genre} onValueChange={(value) => setFormData(prev => ({ ...prev, genre: value }))}>
+                      <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30">
+                        <Filter className="h-4 w-4 mr-2 text-muted-foreground/60" />
+                        <SelectValue placeholder="Select a genre" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GENRES.map((genre) => (
+                          <SelectItem key={genre} value={genre}>
+                            {genre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -259,7 +265,7 @@ export default function EditEventPage() {
                       value={formData.ticketPrice}
                       onChange={handleInputChange}
                       placeholder="0.00"
-                      className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                      className="mt-2"
                     />
                   </div>
                   <div>
@@ -275,7 +281,7 @@ export default function EditEventPage() {
                       value={formData.maxTickets}
                       onChange={handleInputChange}
                       placeholder="e.g., 500"
-                      className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                      className="mt-2"
                     />
                   </div>
                 </div>
@@ -291,7 +297,7 @@ export default function EditEventPage() {
                     value={formData.imageUrl}
                     onChange={handleInputChange}
                     placeholder="https://example.com/image.jpg"
-                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    className="mt-2"
                   />
                   <p className="text-xs text-gray-400 mt-1">
                     Optional: Provide a URL to an image for your event
