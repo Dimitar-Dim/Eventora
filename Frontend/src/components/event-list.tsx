@@ -35,6 +35,20 @@ export function EventList({ events = [] }: { events?: Event[] }) {
 
       return matchesSearch && matchesGenre
     })
+    .sort((a, b) => {
+      const now = new Date()
+      const aTime = new Date(a.eventDate).getTime()
+      const bTime = new Date(b.eventDate).getTime()
+
+      const aIsFuture = aTime > now.getTime()
+      const bIsFuture = bTime > now.getTime()
+
+      if (aIsFuture && !bIsFuture) return -1
+      if (!aIsFuture && bIsFuture) return 1
+
+      return aTime - bTime
+    })
+    .slice(0, 5)
 
   useEffect(() => {
     if (!isAutoScrollEnabled || filteredEvents.length <= 1) return
@@ -82,8 +96,7 @@ export function EventList({ events = [] }: { events?: Event[] }) {
 
   return (
     <div className="space-y-6">
-      {/* Search and Filters */}
-      <div className="bg-background/10 backdrop-blur-sm rounded-lg border border-border/20 p-4">
+      <div className=" bg-background/10 backdrop-blur-sm rounded-lg border border-border/20 p-4">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
@@ -115,42 +128,41 @@ export function EventList({ events = [] }: { events?: Event[] }) {
       </div>
 
       {filteredEvents.length > 0 ? (
-        <div className="relative">
-          {/* Navigation Arrows */}
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-card/80 border-primary/30 text-primary hover:bg-primary/20 hover:border-primary hover:scale-110 backdrop-blur-md transition-all duration-300 glow-effect"
-            onClick={scrollLeft}
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
+        <div>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-card/80 border-primary/30 text-primary hover:bg-primary/20 hover:border-primary hover:scale-110 backdrop-blur-md transition-all duration-300 glow-effect flex-shrink-0"
+              onClick={scrollLeft}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </Button>
 
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-card/80 border-primary/30 text-primary hover:bg-primary/20 hover:border-primary hover:scale-110 backdrop-blur-md transition-all duration-300 glow-effect"
-            onClick={scrollRight}
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-
-          {/* Carousel Container */}
-          <div
-            ref={scrollContainerRef}
-            className="flex overflow-x-hidden scroll-smooth"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {filteredEvents.map((event) => event && (
-              <div key={event.id} className="w-full flex-shrink-0 px-2">
-                <div className="event-card-hover">
-                  <EventCard event={event} />
+            <div
+              ref={scrollContainerRef}
+              className="flex overflow-x-hidden scroll-smooth flex-1 relative"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {filteredEvents.map((event) => event && (
+                <div key={event.id} className="w-full flex-shrink-0 px-2">
+                  <div className="event-card-hover">
+                    <EventCard event={event} />
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-card/80 border-primary/30 text-primary hover:bg-primary/20 hover:border-primary hover:scale-110 backdrop-blur-md transition-all duration-300 glow-effect flex-shrink-0"
+              onClick={scrollRight}
+            >
+              <ChevronRight className="h-6 w-6" />
+            </Button>
           </div>
 
-          {/* Carousel Indicators */}
           <div className="flex justify-center space-x-2 mt-6">
             {filteredEvents.map((_, index) => (
               <button
@@ -164,7 +176,6 @@ export function EventList({ events = [] }: { events?: Event[] }) {
             ))}
           </div>
 
-          {/* Auto-scroll Status Indicator */}
           <div className="text-center mt-2">
             <span className={`text-xs ${isAutoScrollEnabled ? "text-primary" : "text-muted-foreground"}`}>
               {isAutoScrollEnabled ? "● Auto-scrolling" : "○ Manual mode"}

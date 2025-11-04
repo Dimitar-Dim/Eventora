@@ -8,39 +8,31 @@ import { useEffect, useState } from "react"
 import { API_BASE_URL } from "@/lib/constants"
 
 export default function HomePage() {
-  const [closestEvents, setClosestEvents] = useState<Event[]>([])
+  const [allEvents, setAllEvents] = useState<Event[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const fetchClosestEvents = async () => {
+    const fetchAllEvents = async () => {
       try {
         setIsLoading(true)
         const response = await fetch(`${API_BASE_URL}/events`)
         if (!response.ok) throw new Error("Failed to fetch events")
         const data: Event[] = await response.json()
 
-        // Sort events by date and get the 5 closest ones
-        const now = new Date()
-        const upcomingEvents = data
-          .filter(event => new Date(event.eventDate) > now)
-          .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
-          .slice(0, 5)
-
-        setClosestEvents(upcomingEvents)
+        setAllEvents(data)
       } catch (err) {
         console.error("Error fetching events:", err)
-        setClosestEvents([])
+        setAllEvents([])
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchClosestEvents()
+    fetchAllEvents()
   }, [])
   return (
     <div className="min-h-screen bg-background">
       <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/** Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
@@ -91,7 +83,7 @@ export default function HomePage() {
               <p className="text-foreground text-lg">Loading events...</p>
             </div>
           ) : (
-            <EventList events={closestEvents} />
+            <EventList events={allEvents} />
           )}
         </div>
       </section>

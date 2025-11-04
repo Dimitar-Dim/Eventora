@@ -79,7 +79,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
 
           <div className="flex items-center justify-between">
             <div className="text-white">
-              <span className="text-4xl font-bold text-primary">${event.ticketPrice}</span>
+              <span className="text-4xl font-bold text-primary">€{event.ticketPrice}</span>
             </div>
             <Button
               size="lg"
@@ -140,7 +140,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   <Ticket className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Price</p>
-                    <p className="font-semibold text-primary text-xl">${event.ticketPrice}</p>
+                    <p className="font-semibold text-primary text-xl">€{event.ticketPrice}</p>
                   </div>
                 </div>
 

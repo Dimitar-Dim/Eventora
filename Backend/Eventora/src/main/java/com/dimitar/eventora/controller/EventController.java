@@ -1,8 +1,10 @@
 package com.dimitar.eventora.controller;
 
-import com.dimitar.eventora.dto.EventRequestDTO;
+import com.dimitar.eventora.dto.EventDTO;
 import com.dimitar.eventora.model.Event;
 import com.dimitar.***REMOVED***vice.EventService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +20,7 @@ public class EventController {
     private final EventService eventService;
 
     @PostMapping
-    public ResponseEntity<Event> createEvent(@RequestBody EventRequestDTO dto) {
+    public ResponseEntity<Event> createEvent(@Valid @RequestBody EventDTO dto) {
         Event event = eventService.createEvent(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(event);
     }
@@ -29,41 +31,28 @@ public class EventController {
         return ResponseEntity.ok(events);
     }
 
-    @GetMapping("/active")
-    public ResponseEntity<List<Event>> getActiveEvents() {
-        List<Event> events = eventService.getActiveEvents();
-        return ResponseEntity.ok(events);
-    }
-
-    @GetMapping("/organizer/{organizerId}")
-    public ResponseEntity<List<Event>> getEventsByOrganizer(@PathVariable Long organizerId) {
-        List<Event> events = eventService.getEventsByOrganizer(organizerId);
-        return ResponseEntity.ok(events);
-    }
-
     @GetMapping("/{id}")
-    public ResponseEntity<Event> getEventById(@PathVariable Long id) {
+    public ResponseEntity<Event> getEventById(@PathVariable @Positive(message = "Event ID must be positive") Long id) {
         Event event = eventService.getEventById(id);
         return ResponseEntity.ok(event);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Event> updateEvent(@PathVariable Long id, @RequestBody EventRequestDTO dto) {
+    public ResponseEntity<Event> updateEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id, 
+                                             @Valid @RequestBody EventDTO dto) {
         Event event = eventService.updateEvent(id, dto);
         return ResponseEntity.ok(event);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id) {
         eventService.deleteEvent(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<Event> deactivateEvent(@PathVariable Long id) {
+    public ResponseEntity<Event> deactivateEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id) {
         Event event = eventService.deactivateEvent(id);
         return ResponseEntity.ok(event);
     }
-
 }
-
