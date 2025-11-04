@@ -253,7 +253,7 @@ export default function EditEventPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="ticketPrice" className="text-sm font-semibold text-white">
-                      Ticket Price ($) <span className="text-rose-400">*</span>
+                      Ticket Price (€) <span className="text-rose-400">*</span>
                     </Label>
                     <Input
                       id="ticketPrice"
