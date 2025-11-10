@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { EventFormData } from "@/types/event"
 import { GENRES, API_BASE_URL } from "@/lib/constants"
+import { getAuthHeader } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -68,7 +69,10 @@ export default function CreateEventPage() {
 
       const response = await fetch(`${API_BASE_URL}/events`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...getAuthHeader()
+        },
         body: JSON.stringify(requestBody),
       })
 

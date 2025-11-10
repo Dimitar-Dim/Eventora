@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Event } from "@/types/event"
 import { API_BASE_URL } from "@/lib/constants"
+import { getAuthHeader } from "@/lib/auth"
 import { EventGrid } from "@/components/event-grid"
 
 export default function EventsPage() {
@@ -15,7 +16,12 @@ export default function EventsPage() {
 			try {
 				setIsLoading(true)
 				const url = `${API_BASE_URL}/events`
-				const response = await fetch(url)
+				const response = await fetch(url, {
+					headers: {
+						'Content-Type': 'application/json',
+						...getAuthHeader()
+					}
+				})
 				if (!response.ok) throw new Error(`Failed to fetch events: ${response.status}`)
 				const data = await response.json()
 				setFilteredEvents(data)

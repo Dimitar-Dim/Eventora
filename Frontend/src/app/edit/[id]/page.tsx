@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useParams, useSearchParams } from "next/navigation"
 import { EventFormData } from "@/types/event"
 import { GENRES, API_BASE_URL } from "@/lib/constants"
+import { getAuthHeader } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,7 +39,9 @@ export default function EditEventPage() {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/events/${eventId}`)
+        const response = await fetch(`${API_BASE_URL}/events/${eventId}`, {
+          headers: getAuthHeader()
+        })
         if (!response.ok) throw new Error("Failed to fetch event")
         const data = await response.json()
 
@@ -109,7 +112,10 @@ export default function EditEventPage() {
 
       const response = await fetch(`${API_BASE_URL}/events/${eventId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...getAuthHeader()
+        },
         body: JSON.stringify(requestBody),
       })
 
