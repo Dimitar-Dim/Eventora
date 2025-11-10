@@ -1,5 +1,6 @@
 package com.dimitar.eventora.entity;
 
+import com.dimitar.eventora.model.Genre;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,7 +35,7 @@ public class EventEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "genre", nullable = false, length = 50)
-    private EventGenre genre;
+    private Genre genre;
 
     @Column(name = "ticket_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal ticketPrice;
