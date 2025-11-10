@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Suspense } from "react"
 import Navigation from "@/components/navigation"
+import { ToastContainer } from "@/components/toast-container"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -25,6 +26,7 @@ export default function RootLayout({
           <main>
             <Suspense fallback={null}>{children}</Suspense>
           </main>
+          <ToastContainer />
         </div>
       </body>
     </html>

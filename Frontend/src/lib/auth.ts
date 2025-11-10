@@ -1,6 +1,10 @@
+import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime"
+
 export const AUTH_TOKEN_KEY = "accessToken"
 export const AUTH_TOKEN_TYPE_KEY = "tokenType"
 export const AUTH_TOKEN_EXPIRATION_KEY = "tokenExpiration"
+
+export const AUTH_CHANGE_EVENT = "auth-change"
 
 export const setAuthToken = (token: string, tokenType: string, expiresIn: number) => {
   localStorage.setItem(AUTH_TOKEN_KEY, token)
@@ -8,6 +12,10 @@ export const setAuthToken = (token: string, tokenType: string, expiresIn: number
 
   const expirationTime = new Date().getTime() + expiresIn * 1000
   localStorage.setItem(AUTH_TOKEN_EXPIRATION_KEY, expirationTime.toString())
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT))
+  }
 }
 
 export const getAuthToken = (): string | null => {
@@ -49,6 +57,10 @@ export function clearAuthToken(): void {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(AUTH_TOKEN_TYPE_KEY);
   localStorage.removeItem(AUTH_TOKEN_EXPIRATION_KEY);
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT))
+  }
 }
 
 export const getAuthHeader = (): Record<string, string> => {
@@ -62,4 +74,16 @@ export const getAuthHeader = (): Record<string, string> => {
   return {
     Authorization: `${tokenType} ${token}`,
   }
+}
+
+export const redirectAfterLogin = (router: AppRouterInstance) => {
+  router.push("/")
+}
+
+export const redirectAfterLogout = (router: AppRouterInstance) => {
+  router.push("/")
+}
+
+export const redirectAfterRegister = (router: AppRouterInstance) => {
+  router.push("/login")
 }

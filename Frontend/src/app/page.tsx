@@ -15,7 +15,7 @@ export default function HomePage() {
     const fetchAllEvents = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`${API_BASE_URL}/events`)
+        const response = await fetch(`${API_BASE_URL}/api/events`)
         if (!response.ok) throw new Error("Failed to fetch events")
         const data: Event[] = await response.json()
 

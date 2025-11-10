@@ -1,0 +1,14 @@
+build/
+.gradle/
+.git/
+.github/
+.idea/
+.vscode/
+*.iml
+.DS_Store
+node_modules/
+dist/
+out/
+*.log
+.env
+.env.local

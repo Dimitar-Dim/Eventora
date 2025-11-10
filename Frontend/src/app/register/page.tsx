@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { API_BASE_URL } from "@/lib/constants"
+import { redirectAfterRegister } from "@/lib/auth"
+import { showSuccess, showError } from "@/lib/toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -68,7 +71,7 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("http://localhost:8080/auth/register", {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -88,13 +91,12 @@ export default function RegisterPage() {
         )
       }
 
-      router.push("/login?registered=true")
+      showSuccess("Account created! 🎉 Redirecting to login...")
+      redirectAfterRegister(router)
     } catch (err) {
-      if (err instanceof Error) {
-        setError({ message: err.message })
-      } else {
-        setError({ message: "An unexpected error occurred" })
-      }
+      const message = err instanceof Error ? err.message : "An unexpected error occurred"
+      showError(message)
+      setError({ message })
     } finally {
       setIsLoading(false)
     }

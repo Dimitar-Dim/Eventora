@@ -15,7 +15,7 @@ export default function EventsPage() {
 		const fetchEvents = async () => {
 			try {
 				setIsLoading(true)
-				const url = `${API_BASE_URL}/events`
+				const url = `${API_BASE_URL}/api/events`
 				const response = await fetch(url, {
 					headers: {
 						'Content-Type': 'application/json',
