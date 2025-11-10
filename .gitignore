@@ -67,6 +67,7 @@ out/
 *.iws
 *.idea/
 *.db
+application-dev.properties
 
 # Misc
 *.orig
