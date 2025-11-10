@@ -2,10 +2,31 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { getAuthToken, clearAuthToken, getRoleFromToken } from "@/lib/auth"
+import { useRouter } from "next/navigation"
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    const token = getAuthToken()
+    setIsAuthenticated(!!token)
+    if (token) {
+      setUserRole(getRoleFromToken())
+    }
+    setIsLoading(false)
+  }, [])
+
+  const handleLogout = () => {
+    clearAuthToken()
+    setIsAuthenticated(false)
+    router.push("/login")
+  }
 
   return (
     <nav className="bg-black border-b border-purple-800">
@@ -26,15 +47,46 @@ export default function Navigation() {
             <Link href="/events" className="text-gray-300 hover:text-white transition-colors">
               Events
             </Link>
-            <Link href="/tickets" className="text-gray-300 hover:text-white transition-colors">
-              My Tickets
-            </Link>
-            <Link href="/create" className="text-gray-300 hover:text-white transition-colors">
-              + Create Event
-            </Link>
-            <Link href="/profile" className="text-gray-300 hover:text-white transition-colors">
-              Profile
-            </Link>
+            {isAuthenticated && (
+              <>
+                <Link href="/tickets" className="text-gray-300 hover:text-white transition-colors">
+                  My Tickets
+                </Link>
+                {userRole !== "USER" && (
+                  <Link href="/create" className="text-gray-300 hover:text-white transition-colors">
+                    + Create Event
+                  </Link>
+                )}
+                <Link href="/profile" className="text-gray-300 hover:text-white transition-colors">
+                  Profile
+                </Link>
+              </>
+            )}
+            {!isLoading && (
+              isAuthenticated ? (
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors font-medium"
+                >
+                  Logout
+                </button>
+              ) : (
+                <div className="flex items-center space-x-4">
+                  <Link
+                    href="/login"
+                    className="text-gray-300 hover:text-white transition-colors font-medium"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors font-medium"
+                  >
+                    Register
+                  </Link>
+                </div>
+              )
+            )}
           </div>
 
           <div className="md:hidden">
@@ -55,15 +107,42 @@ export default function Navigation() {
               <Link href="/events" className="block px-3 py-2 text-gray-300 hover:text-white">
                 Events
               </Link>
-              <Link href="/tickets" className="block px-3 py-2 text-gray-300 hover:text-white">
-                My Tickets
-              </Link>
-              <Link href="/create" className="block px-3 py-2 text-gray-300 hover:text-white">
-                + Create Event
-              </Link>
-              <Link href="/profile" className="block px-3 py-2 text-gray-300 hover:text-white">
-                Profile
-              </Link>
+              {isAuthenticated && (
+                <>
+                  <Link href="/tickets" className="block px-3 py-2 text-gray-300 hover:text-white">
+                    My Tickets
+                  </Link>
+                  {userRole !== "USER" && (
+                    <Link href="/create" className="block px-3 py-2 text-gray-300 hover:text-white">
+                      + Create Event
+                    </Link>
+                  )}
+                  <Link href="/profile" className="block px-3 py-2 text-gray-300 hover:text-white">
+                    Profile
+                  </Link>
+                </>
+              )}
+              <div className="border-t border-purple-800 mt-2 pt-2">
+                {!isLoading && (
+                  isAuthenticated ? (
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white font-medium"
+                    >
+                      Logout
+                    </button>
+                  ) : (
+                    <>
+                      <Link href="/login" className="block px-3 py-2 text-gray-300 hover:text-white">
+                        Login
+                      </Link>
+                      <Link href="/register" className="block px-3 py-2 text-gray-300 hover:text-white font-medium">
+                        Register
+                      </Link>
+                    </>
+                  )
+                )}
+              </div>
             </div>
           </div>
         )}
