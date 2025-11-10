@@ -2,7 +2,6 @@ package com.dimitar.***REMOVED***vice;
 
 import com.dimitar.eventora.dto.EventDTO;
 import com.dimitar.eventora.entity.EventEntity;
-import com.dimitar.eventora.entity.EventGenre;
 import com.dimitar.eventora.exception.EventNotFound;
 import com.dimitar.eventora.model.Event;
 import com.dimitar.eventora.model.Genre;
@@ -10,6 +9,7 @@ import com.dimitar.eventora.repository.EventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -469,7 +469,7 @@ class EventServiceTest {
         event.setName("Spring Concert");
         event.setDescription("An amazing spring concert featuring local artists");
         event.setEventDate(LocalDateTime.of(2025, 6, 15, 19, 0));
-        event.setGenre(EventGenre.Rock);
+        event.setGenre(Genre.Rock);
         event.setTicketPrice(new BigDecimal("49.99"));
         event.setMaxTickets(500);
         event.setAvailableTickets(500);
