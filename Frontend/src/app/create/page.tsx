@@ -5,19 +5,18 @@ import { useRouter } from "next/navigation"
 import { EventFormData } from "@/types/event"
 import { GENRES, API_BASE_URL } from "@/lib/constants"
 import { getAuthHeader } from "@/lib/auth"
+import { showSuccess, showError } from "@/lib/toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Filter } from "lucide-react"
 
 export default function CreateEventPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
 
   const [formData, setFormData] = useState<EventFormData>({
     name: "",
@@ -67,9 +66,9 @@ export default function CreateEventPage() {
         organizerId: 1
       }
 
-      const response = await fetch(`${API_BASE_URL}/events`, {
+      const response = await fetch(`${API_BASE_URL}/api/events`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           ...getAuthHeader()
         },
@@ -88,15 +87,15 @@ export default function CreateEventPage() {
       }
 
       const event = await response.json()
-      setSuccess(true)
-
+      showSuccess("Event created! 🎉 Redirecting...")
+      
       setTimeout(() => {
         router.push(`/edit/${event.id}?created=true`)
       }, 1500)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred"
+      showError(errorMessage)
       setError(errorMessage)
-      console.error("Error creating event:", err)
     } finally {
       setIsSubmitting(false)
     }
@@ -118,12 +117,6 @@ export default function CreateEventPage() {
 
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
-          {success && (
-            <div className="mb-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-lg backdrop-blur-sm">
-              <p className="text-emerald-300 font-medium">✓ Event created successfully! Redirecting...</p>
-            </div>
-          )}
-
           {error && (
             <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg backdrop-blur-sm">
               <p className="text-red-300 font-medium">✕ {error}</p>
@@ -189,7 +182,6 @@ export default function CreateEventPage() {
                     </Label>
                     <Select value={formData.genre} onValueChange={(value) => setFormData(prev => ({ ...prev, genre: value }))}>
                       <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30">
-                        <Filter className="h-4 w-4 mr-2 text-muted-foreground/60" />
                         <SelectValue placeholder="Select a genre" />
                       </SelectTrigger>
                       <SelectContent>

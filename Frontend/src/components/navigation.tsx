@@ -3,7 +3,8 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
-import { getAuthToken, clearAuthToken, getRoleFromToken } from "@/lib/auth"
+import { getAuthToken, clearAuthToken, getRoleFromToken, redirectAfterLogout, AUTH_CHANGE_EVENT } from "@/lib/auth"
+import { showSuccess } from "@/lib/toast"
 import { useRouter } from "next/navigation"
 
 export default function Navigation() {
@@ -14,18 +15,41 @@ export default function Navigation() {
   const router = useRouter()
 
   useEffect(() => {
-    const token = getAuthToken()
-    setIsAuthenticated(!!token)
-    if (token) {
-      setUserRole(getRoleFromToken())
+    const checkAuthStatus = () => {
+      const token = getAuthToken()
+      setIsAuthenticated(!!token)
+      if (token) {
+        setUserRole(getRoleFromToken())
+      }
+      setIsLoading(false)
     }
-    setIsLoading(false)
+
+    checkAuthStatus()
+
+    window.addEventListener(AUTH_CHANGE_EVENT, checkAuthStatus)
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        checkAuthStatus()
+      }
+    })
+
+    // Re-check when storage changes (for sync across tabs)
+    window.addEventListener("storage", checkAuthStatus)
+
+    return () => {
+      window.removeEventListener(AUTH_CHANGE_EVENT, checkAuthStatus)
+      document.removeEventListener("visibilitychange", checkAuthStatus)
+      window.removeEventListener("storage", checkAuthStatus)
+    }
   }, [])
 
   const handleLogout = () => {
     clearAuthToken()
     setIsAuthenticated(false)
-    router.push("/login")
+    setIsMenuOpen(false)
+    showSuccess("Logged out successfully 👋")
+    redirectAfterLogout(router)
   }
 
   return (

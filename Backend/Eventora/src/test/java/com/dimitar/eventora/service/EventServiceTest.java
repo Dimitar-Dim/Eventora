@@ -7,6 +7,7 @@ import com.dimitar.eventora.model.Event;
 import com.dimitar.eventora.model.Genre;
 import com.dimitar.eventora.repository.EventRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -20,7 +21,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import org.mockito.ArgumentCaptor;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("EventService Tests")
 class EventServiceTest {
 
     @Mock
@@ -55,8 +56,8 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should create event successfully with valid data")
     void createEvent_ValidData_SavesSuccessfully() {
-        // Arrange
         when(eventRepository.save(any(EventEntity.class))).thenReturn(validEventEntity);
 
         // Act
@@ -77,8 +78,8 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should initialize available tickets to max tickets")
     void createEvent_ValidData_InitializesAvailableTicketsToMaxTickets() {
-        // Arrange
         ArgumentCaptor<EventEntity> eventCaptor = ArgumentCaptor.forClass(EventEntity.class);
         when(eventRepository.save(any(EventEntity.class))).thenReturn(validEventEntity);
 
@@ -93,8 +94,8 @@ class EventServiceTest {
 
 
     @Test
+    @DisplayName("Should set isActive to true on creation")
     void createEvent_ValidData_SetsIsActiveToTrue() {
-        // Arrange
         ArgumentCaptor<EventEntity> eventCaptor = ArgumentCaptor.forClass(EventEntity.class);
         when(eventRepository.save(any(EventEntity.class))).thenReturn(validEventEntity);
 
@@ -110,8 +111,8 @@ class EventServiceTest {
 
 
     @Test
+    @DisplayName("Should get event by id successfully")
     void getEventById_ValidId_ReturnsEvent() {
-        // Arrange
         Long eventId = 1L;
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(validEventEntity));
 
@@ -126,28 +127,19 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw EventNotFound when event id is invalid")
     void getEventById_InvalidId_ThrowsEventNotFoundException() {
-        // Arrange
         Long invalidId = 999L;
         when(eventRepository.findById(invalidId)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThrows(EventNotFound.class, () -> {
-            eventService.getEventById(invalidId);
-        });
-
+        assertThrows(EventNotFound.class, () -> eventService.getEventById(invalidId));
         verify(eventRepository, times(1)).findById(invalidId);
     }
 
     @Test
+    @DisplayName("Should throw EventNotFound when event id is null")
     void getEventById_NullId_ThrowsIllegalArgumentException() {
-        // Arrange - Service doesn't validate IDs, repository does
-        // This test verifies the service throws EventNotFound when ID doesn't exist
-        
-        // Act & Assert
-        assertThrows(EventNotFound.class, () -> {
-            eventService.getEventById(null);
-        });
+        assertThrows(EventNotFound.class, () -> eventService.getEventById(null));
 
         verify(eventRepository, never()).findById(anyLong());
     }
@@ -193,6 +185,7 @@ class EventServiceTest {
 
 
     @Test
+    @DisplayName("Should throw EventNotFound when updating non-existent event")
     void updateEvent_InvalidId_ThrowsEventNotFoundException() {
         // Arrange
         Long invalidId = 999L;
@@ -208,6 +201,7 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw EventNotFound when updating with null id")
     void updateEvent_NullId_ThrowsIllegalArgumentException() {
         // Arrange - Service will pass null to repository which throws
         
@@ -221,6 +215,7 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should deactivate event on delete")
     void deleteEvent_ValidId_DeactivatesEvent() {
         // Arrange
         Long eventId = 1L;
@@ -245,6 +240,7 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw EventNotFound when deleting non-existent event")
     void deleteEvent_InvalidId_ThrowsEventNotFoundException() {
         // Arrange
         Long invalidId = 999L;
@@ -261,6 +257,7 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw EventNotFound when deleting with null id")
     void deleteEvent_NullId_ThrowsIllegalArgumentException() {
         // Arrange - Service will pass null to repository which throws
         
@@ -275,6 +272,7 @@ class EventServiceTest {
 
 
     @Test
+    @DisplayName("Should return all events when they exist")
     void getAllEvents_EventsExist_ReturnsAllEvents() {
         // Arrange
         EventEntity event1 = buildEventEntity();
@@ -304,6 +302,7 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should return empty list when no events exist")
     void getAllEvents_NoEvents_ReturnsEmptyList() {
         // Arrange
         when(eventRepository.findAll()).thenReturn(Collections.emptyList());
@@ -320,6 +319,7 @@ class EventServiceTest {
 
 
     @Test
+    @DisplayName("Should return only active events when they exist")
     void getActiveEvents_ActiveEventsExist_ReturnsOnlyActiveEvents() {
         // Arrange
         EventEntity activeEvent1 = buildEventEntity();
@@ -351,6 +351,7 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should return empty list when no active events exist")
     void getActiveEvents_NoActiveEvents_ReturnsEmptyList() {
         // Arrange
         EventEntity inactiveEvent1 = buildEventEntity();
@@ -373,6 +374,7 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should return empty list when no events exist at all")
     void getActiveEvents_NoEventsAtAll_ReturnsEmptyList() {
         // Arrange
         when(eventRepository.findAll()).thenReturn(Collections.emptyList());
@@ -389,6 +391,7 @@ class EventServiceTest {
 
 
     @Test
+    @DisplayName("Should set IsActive to false when deactivating event")
     void deactivateEvent_ValidId_SetsIsActiveToFalse() {
         // Arrange
         Long eventId = 1L;
@@ -415,6 +418,7 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should remain inactive when deactivating already inactive event")
     void deactivateEvent_AlreadyInactive_RemainsInactive() {
         // Arrange
         Long eventId = 1L;
@@ -436,6 +440,7 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw EventNotFound when deactivating non-existent event")
     void deactivateEvent_InvalidId_ThrowsEventNotFoundException() {
         // Arrange
         Long invalidId = 999L;
@@ -451,6 +456,7 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw EventNotFound when deactivating with null id")
     void deactivateEvent_NullId_ThrowsIllegalArgumentException() {
         // Arrange - Service will pass null to repository which throws
         

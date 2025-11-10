@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { API_BASE_URL } from "@/lib/constants"
+import { setAuthToken, redirectAfterLogin } from "@/lib/auth"
+import { showSuccess, showError } from "@/lib/toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -26,7 +29,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("http://localhost:8080/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -35,27 +38,24 @@ export default function LoginPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(
-          errorData.message || `Login failed with status ${response.status}`
-        )
+        let errorMessage = `Login failed with status ${response.status}`
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorMessage
+        } catch {
+        }
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
       
-      localStorage.setItem("accessToken", data.access_token)
-      localStorage.setItem("tokenType", data.token_type)
-      
-      const expirationTime = new Date().getTime() + data.expires_in * 1000
-      localStorage.setItem("tokenExpiration", expirationTime.toString())
-
-      router.push("/")
+      setAuthToken(data.access_token, data.token_type, data.expires_in)
+      showSuccess("Welcome back! 🎉")
+      redirectAfterLogin(router)
     } catch (err) {
-      if (err instanceof Error) {
-        setError({ message: err.message })
-      } else {
-        setError({ message: "An unexpected error occurred" })
-      }
+      const message = err instanceof Error ? err.message : "Login failed"
+      showError(message)
+      setError({ message })
     } finally {
       setIsLoading(false)
     }
