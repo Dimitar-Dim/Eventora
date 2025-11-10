@@ -2,10 +2,9 @@ package com.dimitar.***REMOVED***vice;
 
 import com.dimitar.eventora.dto.EventDTO;
 import com.dimitar.eventora.entity.EventEntity;
-import com.dimitar.eventora.entity.EventGenre;
+import com.dimitar.eventora.model.Genre;
 import com.dimitar.eventora.exception.EventNotFound;
 import com.dimitar.eventora.model.Event;
-import com.dimitar.eventora.model.Genre;
 import com.dimitar.eventora.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +26,7 @@ public class EventServiceImpl implements EventService {
         entity.setName(dto.getName());
         entity.setDescription(dto.getDescription());
         entity.setEventDate(dto.getEventDate());
-        entity.setGenre(EventGenre.valueOf(dto.getGenre().name()));
+        entity.setGenre(dto.getGenre());
         entity.setTicketPrice(dto.getTicketPrice());
         entity.setMaxTickets(dto.getMaxTickets());
         entity.setAvailableTickets(dto.getMaxTickets());
@@ -56,7 +55,7 @@ public class EventServiceImpl implements EventService {
         entity.setName(dto.getName());
         entity.setDescription(dto.getDescription());
         entity.setEventDate(dto.getEventDate());
-        entity.setGenre(EventGenre.valueOf(dto.getGenre().name()));
+        entity.setGenre(dto.getGenre());
         entity.setTicketPrice(dto.getTicketPrice());
         entity.setMaxTickets(dto.getMaxTickets());
         entity.setImageUrl(dto.getImageUrl());
@@ -114,7 +113,7 @@ public class EventServiceImpl implements EventService {
         event.setName(entity.getName());
         event.setDescription(entity.getDescription());
         event.setEventDate(entity.getEventDate());
-        event.setGenre(Genre.valueOf(entity.getGenre().name()));
+        event.setGenre(entity.getGenre());
         event.setTicketPrice(entity.getTicketPrice());
         event.setMaxTickets(entity.getMaxTickets());
         event.setAvailableTickets(entity.getAvailableTickets());
