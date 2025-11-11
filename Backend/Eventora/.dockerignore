@@ -1,14 +1,26 @@
-build/
-.gradle/
-.git/
-.github/
-.idea/
-.vscode/
-*.iml
+# General
+.git
+.gitignore
+.dockerignore
 .DS_Store
-node_modules/
+*.log
+*.iml
+.idea
+.vscode
+
+# Build artifacts
+build/
 dist/
 out/
-*.log
+.gradle/
+node_modules/
+
+# Environments
 .env
 .env.local
+
+# GitHub Actions
+.github/
+
+# Mac-specific clutter
+__MACOSX/
