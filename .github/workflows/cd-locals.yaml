@@ -19,17 +19,22 @@ jobs:
     steps:
       - id: tstart
         run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
           cache: gradle
+
       - name: Make Gradle wrapper executable
         run: chmod +x Backend/Eventora/gradlew
+
       - name: Run backend tests
         working-directory: Backend/Eventora
         run: ./gradlew test --no-daemon
+
       - id: tend
         if: always()
         run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
@@ -44,30 +49,53 @@ jobs:
     steps:
       - id: tstart
         run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           clean: false
-      - name: Start stack (e2e, no DB)
+
+      - name: Start stack (e2e, keep DB)
         run: |
-          docker compose -f docker-compose.e2e.yml down --remove-orphans || true
+          docker compose -f docker-compose.e2e.yml up -d postgres
+          docker compose -f docker-compose.e2e.yml stop backend frontend || true
+          docker compose -f docker-compose.e2e.yml rm -f backend frontend || true
           docker compose -f docker-compose.e2e.yml up -d --build --no-deps backend frontend
+          docker compose -f docker-compose.e2e.yml ps
+
+      - name: Wait for backend (readiness)
+        run: |
+          for i in {1..120}; do
+            code=$(curl -sS -o /tmp/h.json -w "%{http_code}" http://localhost:8081/actuator/health/readiness || echo 000)
+            if [ "$code" = "200" ] && grep -q '"status":"UP"' /tmp/h.json; then exit 0; fi
+            sleep 1
+          done
+          echo "Backend readiness failed"; cat /tmp/h.json; exit 1
+
       - name: Wait for web
         run: |
           for i in {1..90}; do
-            curl -fsS http://localhost:3001 && exit 0 || true
+            curl -fsS http://localhost:3001 >/dev/null && exit 0 || true
             sleep 1
           done
           echo "Web not ready"; exit 1
+
       - name: Run Cypress headless
-        working-directory: Frontend
-        run: |
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Frontend/package-lock.json
+      - run: |
+          cd Frontend
           npm ci
           npx cypress install
           npx cypress run
-      - name: Stop stack
+
+      - name: Stop app services (keep DB)
         if: always()
-        run: docker compose -f docker-compose.e2e.yml down -v
+        run: docker compose -f docker-compose.e2e.yml stop backend frontend || true
+
       - id: tend
         if: always()
         run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
@@ -82,27 +110,37 @@ jobs:
     steps:
       - id: tstart
         run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
-      - name: Rebuild & restart stack (no DB)
+
+      - name: Rebuild & restart stack (keep DB)
         run: |
-          docker compose -f docker-compose.yaml down --remove-orphans || true
+          docker compose -f docker-compose.yaml up -d postgres
+          docker compose -f docker-compose.yaml stop backend frontend || true
+          docker compose -f docker-compose.yaml rm -f backend frontend || true
           docker compose -f docker-compose.yaml up -d --build --no-deps backend frontend
           docker compose -f docker-compose.yaml ps
-      - name: Wait for backend
+
+      - name: Wait for backend (readiness)
         run: |
           for i in {1..120}; do
-            if curl -sSf http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then exit 0; fi
+            code=$(curl -sS -o /tmp/h.json -w "%{http_code}" http://localhost:8080/actuator/health/readiness || echo 000)
+            if [ "$code" = "200" ] && grep -q '"status":"UP"' /tmp/h.json; then exit 0; fi
             sleep 1
           done
-          echo "Backend healthcheck failed"; exit 1
+          echo "Backend readiness failed"; cat /tmp/h.json; exit 1
+
       - name: Check frontend
         run: curl -sSf http://localhost:3000 > /dev/null
+
       - name: Dump logs on failure
         if: failure()
         run: |
           echo "--- compose ps ---"; docker compose -f docker-compose.yaml ps
           echo "--- backend logs ---"; docker compose -f docker-compose.yaml logs --tail=200 backend || true
           echo "--- frontend logs ---"; docker compose -f docker-compose.yaml logs --tail=200 frontend || true
+          echo "--- postgres logs ---"; docker compose -f docker-compose.yaml logs --tail=200 postgres || true
+
       - id: tend
         if: always()
         run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
