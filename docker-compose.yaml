@@ -1,17 +1,21 @@
 version: '3.8'
 
 services:
+  # Database Service
   postgres:
     image: postgres:16-alpine
+    container_name: eventora-database
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ***REMOVED***
       POSTGRES_DB: eventora
+      # Optional: Use scram-sha-256 for better password encryption
       POSTGRES_INITDB_ARGS: "-c password_encryption=scram-sha-256"
     ports:
       - "5432:5432"
     volumes:
-      - eventora_postgres_data:/var/lib/postgresql/data
+      # Persistent volume for database data
+      - eventora_db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -20,6 +24,7 @@ services:
     networks:
       - eventora-network
 
+  # Backend Service (Spring Boot/Java)
   backend:
     build:
       context: ./Backend/Eventora
@@ -28,10 +33,12 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: dev
+      # Use the Docker service name 'postgres' for the host
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/eventora
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: ***REMOVED***
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    # Ensure the database is healthy before starting the backend
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,15 +46,19 @@ services:
     networks:
       - eventora-network
 
+  # Frontend Service (Next.js/Node)
   frontend:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8080
+        # Use the Docker service name 'backend' for internal communication
+        NEXT_PUBLIC_API_URL: http://backend:8080
     ports:
       - "3000:3000"
     environment:
+      # This env var is used by the Next.js app *in the browser*
+      # so it must be accessible from the user's machine (localhost).
       NEXT_PUBLIC_API_URL: http://localhost:8080
       NODE_ENV: production
     depends_on:
@@ -56,9 +67,11 @@ services:
     networks:
       - eventora-network
 
+# Top-level volume definitions for persistence
 volumes:
-  eventora_postgres_data:
+  eventora_db_data:
 
+# Top-level network definition
 networks:
   eventora-network:
     driver: bridge
