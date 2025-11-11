@@ -26,7 +26,6 @@ jobs:
         working-directory: Backend/Eventora
         run: ./gradlew test --no-daemon
 
-  # Optional: E2E before deploy (requires Node+Cypress on runner)
   e2e:
     needs: test-backend
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
@@ -63,13 +62,13 @@ jobs:
     runs-on: [self-hosted, macOS]
     steps:
       - uses: actions/checkout@v4
-
+  
       - name: Rebuild & restart stack
         run: |
           docker compose down --remove-orphans || true
           docker compose up -d --build
-          docker image prune -af --filter "until=72h" || true
-
+          docker compose ps
+  
       - name: Wait for backend
         run: |
           for i in {1..120}; do
@@ -77,14 +76,17 @@ jobs:
             sleep 1
           done
           echo "Backend healthcheck failed"; exit 1
-
+  
       - name: Check frontend
-        run: |
-          for i in {1..60}; do
-            curl -fsS http://localhost:3000 >/dev/null && exit 0 || true
-            sleep 1
-          done
-          echo "Frontend not reachable"; exit 1
-
+        run: curl -sSf http://localhost:3000 > /dev/null
+  
       - name: Verify database
-        run: docker compose exec -T db psql -U postgres -d eventora -c 'SELECT 1;'
+        run: docker compose exec -T postgres psql -U postgres -d eventora -c 'SELECT 1;'
+  
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          echo "--- compose ps ---"; docker compose ps
+          echo "--- backend logs ---"; docker compose logs --tail=200 backend || true
+          echo "--- frontend logs ---"; docker compose logs --tail=200 frontend || true
+          echo "--- db logs ---"; docker compose logs --tail=200 postgres || true
