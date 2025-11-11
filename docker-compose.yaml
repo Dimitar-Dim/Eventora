@@ -3,7 +3,6 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: eventora_db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ***REMOVED***
@@ -25,7 +24,6 @@ services:
     build:
       context: ./Backend/Eventora
       dockerfile: Dockerfile
-    container_name: eventora-backend
     ports:
       - "8080:8080"
     environment:
@@ -47,7 +45,6 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: http://localhost:8080
-    container_name: eventora-frontend
     ports:
       - "3000:3000"
     environment:
