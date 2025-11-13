@@ -55,6 +55,17 @@ jobs:
           fetch-depth: 0
           clean: false
 
+      - name: Docker config (no keychain)
+        run: |
+          mkdir -p "$RUNNER_TEMP/docker"
+          cat > "$RUNNER_TEMP/docker/config.json" << 'EOF'
+          {
+            "auths": {},
+            "credsStore": ""
+          }
+          EOF
+          echo "DOCKER_CONFIG=$RUNNER_TEMP/docker" >> "$GITHUB_ENV"
+
       - name: Start stack (e2e, keep DB)
         run: |
           docker compose -f docker-compose.e2e.yml up -d postgres
@@ -112,6 +123,17 @@ jobs:
         run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
+
+      - name: Docker config (no keychain)
+        run: |
+          mkdir -p "$RUNNER_TEMP/docker"
+          cat > "$RUNNER_TEMP/docker/config.json" << 'EOF'
+          {
+            "auths": {},
+            "credsStore": ""
+          }
+          EOF
+          echo "DOCKER_CONFIG=$RUNNER_TEMP/docker" >> "$GITHUB_ENV"
 
       - name: Rebuild & restart stack (keep DB)
         run: |
