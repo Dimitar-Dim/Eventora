@@ -69,11 +69,11 @@ jobs:
 
       - name: Start stack (e2e, keep DB)
         run: |
-          docker compose -f docker-compose.e2e.yml up -d postgres
-          docker compose -f docker-compose.e2e.yml stop backend frontend || true
-          docker compose -f docker-compose.e2e.yml rm -f backend frontend || true
-          docker compose -f docker-compose.e2e.yml up -d --build --no-deps backend frontend
-          docker compose -f docker-compose.e2e.yml ps
+          docker-compose -f docker-compose.e2e.yml up -d postgres
+          docker-compose -f docker-compose.e2e.yml stop backend frontend || true
+          docker-compose -f docker-compose.e2e.yml rm -f backend frontend || true
+          docker-compose -f docker-compose.e2e.yml up -d --build --no-deps backend frontend
+          docker-compose -f docker-compose.e2e.yml ps
 
       - name: Wait for backend (readiness)
         run: |
@@ -92,13 +92,15 @@ jobs:
           done
           echo "Web not ready"; exit 1
 
-      - name: Run Cypress headless
+      - name: Setup Node for Cypress
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: Frontend/package-lock.json
-      - run: |
+
+      - name: Run Cypress headless
+        run: |
           cd Frontend
           npm ci
           npx cypress install
@@ -106,7 +108,7 @@ jobs:
 
       - name: Stop app services (keep DB)
         if: always()
-        run: docker compose -f docker-compose.e2e.yml stop backend frontend || true
+        run: docker-compose -f docker-compose.e2e.yml stop backend frontend || true
 
       - id: tend
         if: always()
@@ -138,11 +140,11 @@ jobs:
 
       - name: Rebuild & restart stack (keep DB)
         run: |
-          docker compose -f docker-compose.yaml up -d postgres
-          docker compose -f docker-compose.yaml stop backend frontend || true
-          docker compose -f docker-compose.yaml rm -f backend frontend || true
-          docker compose -f docker-compose.yaml up -d --build --no-deps backend frontend
-          docker compose -f docker-compose.yaml ps
+          docker-compose -f docker-compose.yaml up -d postgres
+          docker-compose -f docker-compose.yaml stop backend frontend || true
+          docker-compose -f docker-compose.yaml rm -f backend frontend || true
+          docker-compose -f docker-compose.yaml up -d --build --no-deps backend frontend
+          docker-compose -f docker-compose.yaml ps
 
       - name: Wait for backend (readiness)
         run: |
@@ -159,10 +161,10 @@ jobs:
       - name: Dump logs on failure
         if: failure()
         run: |
-          echo "--- compose ps ---"; docker compose -f docker-compose.yaml ps
-          echo "--- backend logs ---"; docker compose -f docker-compose.yaml logs --tail=200 backend || true
-          echo "--- frontend logs ---"; docker compose -f docker-compose.yaml logs --tail=200 frontend || true
-          echo "--- postgres logs ---"; docker compose -f docker-compose.yaml logs --tail=200 postgres || true
+          echo "--- compose ps ---"; docker-compose -f docker-compose.yaml ps
+          echo "--- backend logs ---"; docker-compose -f docker-compose.yaml logs --tail=200 backend || true
+          echo "--- frontend logs ---"; docker-compose -f docker-compose.yaml logs --tail=200 frontend || true
+          echo "--- postgres logs ---"; docker-compose -f docker-compose.yaml logs --tail=200 postgres || true
 
       - id: tend
         if: always()
