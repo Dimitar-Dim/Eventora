@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# Ensures the script exits immediately if a command exits with a non-zero status,
-# or if any command in a pipeline fails.
+# Ensures the script exits immediately if a command exits with a non-zero status
 set -euo pipefail
 
 # Define directories relative to the script's location
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="$PROJECT_DIR/Backend/Eventora"
-FRONTEND_DIR="$PROJECT_DIR/Frontend" # Added for completeness, as per your original request
+FRONTEND_DIR="$PROJECT_DIR/Frontend"
 
 echo "=== Local deployment workflow started ==="
 
@@ -27,21 +26,18 @@ else
   echo "Not in a git repository. Skipping pull."
 fi
 
-# 2) Run backend tests (a crucial quality gate)
+# 2) Run backend tests
 echo "Running backend tests..."
 (cd "$BACKEND_DIR" && chmod +x ./gradlew && ./gradlew test --no-daemon -q)
 echo "Backend tests completed successfully."
 
-# 3) Rebuild and restart app containers (leaving the database running)
+# 3) Rebuild and restart app containers
 echo "Shutting down old backend and frontend containers..."
 cd "$PROJECT_DIR"
-# CRITICAL: This stops and removes ONLY the backend and frontend,
-# preserving the 'postgres' container and its volume data.
 docker compose -f docker-compose.yaml stop backend frontend || true
 docker compose -f docker-compose.yaml rm -f backend frontend || true
 
 echo "Rebuilding and starting Docker containers (backend + frontend)..."
-# Use --no-deps to only build and start the specified services
 docker compose -f docker-compose.yaml up -d --build --no-deps backend frontend
 docker compose -f docker-compose.yaml ps
 

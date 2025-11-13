@@ -9,12 +9,10 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ***REMOVED***
       POSTGRES_DB: eventora
-      # Optional: Use scram-sha-256 for better password encryption
       POSTGRES_INITDB_ARGS: "-c password_encryption=scram-sha-256"
     ports:
       - "5432:5432"
     volumes:
-      # Persistent volume for database data
       - eventora_db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -24,7 +22,7 @@ services:
     networks:
       - eventora-network
 
-  # Backend Service (Spring Boot/Java)
+  # Backend Service
   backend:
     build:
       context: ./Backend/Eventora
@@ -33,12 +31,10 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: dev
-      # Use the Docker service name 'postgres' for the host
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/eventora
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: ***REMOVED***
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-    # Ensure the database is healthy before starting the backend
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,19 +42,16 @@ services:
     networks:
       - eventora-network
 
-  # Frontend Service (Next.js/Node)
+  # Frontend Service
   frontend:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
       args:
-        # Use the Docker service name 'backend' for internal communication
         NEXT_PUBLIC_API_URL: http://backend:8080
     ports:
       - "3000:3000"
     environment:
-      # This env var is used by the Next.js app *in the browser*
-      # so it must be accessible from the user's machine (localhost).
       NEXT_PUBLIC_API_URL: http://localhost:8080
       NODE_ENV: production
     depends_on:

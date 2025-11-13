@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "cypress run",
+    "test:e2e:ui": "cypress open"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.1.2",

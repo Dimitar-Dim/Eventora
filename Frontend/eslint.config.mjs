@@ -20,6 +20,13 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    rules: {
+      "@typescript-eslint/no-namespace": "off",
+    },
+  },
 ];
+
+
 
 export default eslintConfig;
