@@ -71,7 +71,7 @@ jobs:
 
   e2e:
     needs: test-backend
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
     runs-on: [self-hosted, macOS]
     outputs:
       started: ${{ steps.tstart.outputs.ts }}
