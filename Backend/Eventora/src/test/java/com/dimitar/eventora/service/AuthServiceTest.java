@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -78,6 +79,8 @@ class AuthServiceTest {
                 .username("testuser")
                 .email("test@example.com")
                 .role(UserRole.USER)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
     }
 
@@ -182,6 +185,8 @@ class AuthServiceTest {
         assertEquals(jwtToken, response.accessToken());
         assertEquals("Bearer", response.tokenType());
         assertEquals(900L, response.expiresIn());
+        assertNotNull(response.user());
+        assertEquals("testuser", response.user().username());
 
         verify(userRepository, times(1)).findByEmailIgnoreCase(validLoginRequest.email());
         verify(passwordEncoder, times(1)).matches(validLoginRequest.password(), testUser.getPasswordHash());
@@ -230,6 +235,8 @@ class AuthServiceTest {
         LoginResponse response = authService.login(mixedCaseRequest);
 
         assertNotNull(response);
+        assertNotNull(response.user());
+        assertEquals("testuser", response.user().username());
         verify(userRepository, times(1)).findByEmailIgnoreCase(mixedCaseEmail);
     }
 
@@ -245,8 +252,10 @@ class AuthServiceTest {
         when(jwtService.createJwt(1L, "USER")).thenReturn(jwtToken);
         when(jwtService.getTtlSeconds()).thenReturn(900L);
 
-        authService.login(validLoginRequest);
+        LoginResponse response = authService.login(validLoginRequest);
 
+        assertNotNull(response);
+        assertEquals(jwtToken, response.accessToken());
         verify(jwtService, times(1)).createJwt(1L, "USER");
     }
 }

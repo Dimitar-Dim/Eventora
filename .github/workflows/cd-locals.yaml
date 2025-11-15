@@ -37,13 +37,12 @@ jobs:
         run: ./gradlew test --no-daemon
 
       - name: Backend SonarQube Analysis
+        if: secrets.SONAR_TOKEN != '' && secrets.SONAR_ORGANIZATION != ''
         working-directory: ./Backend/Eventora
         run: |
           ./gradlew sonarqube \
-            -Dsonar.projectKey=eventora_backend \
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+            --no-daemon
 
       - id: tend
         if: always()
@@ -64,13 +63,11 @@ jobs:
         run: npm ci
       
       - name: Frontend SonarQube Analysis
+        if: secrets.SONAR_TOKEN != '' && secrets.SONAR_ORGANIZATION != ''
         working-directory: ./Frontend
         run: |
           npx sonar-scanner \
-            -Dsonar.projectKey=eventora_frontend \
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
   e2e:
     needs: test-backend
