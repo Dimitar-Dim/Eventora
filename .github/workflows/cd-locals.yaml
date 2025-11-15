@@ -98,11 +98,11 @@ jobs:
 
       - name: Start stack (e2e, keep DB)
         run: |
-          docker-compose -f docker-compose.e2e.yml up -d postgres
-          docker-compose -f docker-compose.e2e.yml stop backend frontend || true
-          docker-compose -f docker-compose.e2e.yml rm -f backend frontend || true
-          docker-compose -f docker-compose.e2e.yml up -d --build --no-deps backend frontend
-          docker-compose -f docker-compose.e2e.yml ps
+          docker-compose -f docker-compose.yaml up -d postgres
+          docker-compose -f docker-compose.yaml stop backend frontend || true
+          docker-compose -f docker-compose.yaml rm -f backend frontend || true
+          docker-compose -f docker-compose.yaml up -d --build --no-deps backend frontend
+          docker-compose -f docker-compose.yaml ps
 
       - name: Wait for backend (readiness)
         run: |
@@ -137,7 +137,7 @@ jobs:
 
       - name: Stop app services (keep DB)
         if: always()
-        run: docker-compose -f docker-compose.e2e.yml stop backend frontend || true
+        run: docker-compose -f docker-compose.yaml stop backend frontend || true
 
       - id: tend
         if: always()
