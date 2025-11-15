@@ -5,23 +5,26 @@ import { Event } from "@/types/event"
 import { Button } from "@/components/ui/button"
 import { Plus, Zap } from "lucide-react"
 import { useEffect, useState } from "react"
-import { API_BASE_URL } from "@/lib/constants"
+import { ***REMOVED***vice/eventService"
+import { getRoleFromToken } from "@/utils/auth"
 
 export default function HomePage() {
   const [allEvents, setAllEvents] = useState<Event[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    const role = getRoleFromToken()
+    setUserRole(role)
+  }, [])
 
   useEffect(() => {
     const fetchAllEvents = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`${API_BASE_URL}/api/events`)
-        if (!response.ok) throw new Error("Failed to fetch events")
-        const data: Event[] = await response.json()
-
+        const data = await eventService.getAll()
         setAllEvents(data)
-      } catch (err) {
-        console.error("Error fetching events:", err)
+      } catch {
         setAllEvents([])
       } finally {
         setIsLoading(false)
@@ -45,12 +48,12 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/10" />
         <div className="relative max-w-7xl mx-auto text-center z-10">
           <div className="backdrop-blur-sm sm:p-12">
-            <h1 className="text-4xl sm:text-6xl font-bold mb-6 text-balance text-white drop-shadow-2xl">
+            <h1 className="text-4xl sm:text-6xl font-bold mb-6 text-balance text-foreground drop-shadow-2xl">
               <span className="gradient-text">Live</span>
               <br />
               Music Events
             </h1>
-            <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto text-pretty drop-shadow-lg">
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty drop-shadow-lg">
               Experience the energy of live music. From techno nights to rock shows, discover your next favorite event.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -60,12 +63,14 @@ export default function HomePage() {
                   Explore Events
                 </Button>
               </Link>
-              <Link href="/create">
-                <Button size="lg" variant="outline" className="backdrop-blur-sm border-white/30 text-white hover:bg-white/10">
-                  <Plus className="mr-2 h-5 w-5" />
-                  Create Event
-                </Button>
-              </Link>
+              {(userRole === "ADMIN" || userRole === "ORGANIZER") && (
+                <Link href="/create">
+                  <Button size="lg" variant="outline" className="backdrop-blur-sm border-border text-foreground hover:bg-card">
+                    <Plus className="mr-2 h-5 w-5" />
+                    Create Event
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -29,7 +29,7 @@ describe('Create Event Form', () => {
   });
 
   it('should have cancel button', () => {
-    cy.get('button').contains('Cancel').should('be.visible');
+    cy.get('button').contains('Cancel').should('be.visible'); //TODO CHECK CONTAINER CONTENT
   });
 
   it('should be able to fill name field', () => {

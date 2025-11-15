@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Calendar, Clock, MapPin, Music, Users, Ticket } from "lucide-react"
-import { formatDate, formatTime } from "@/lib/utils"
+import { formatDate, formatTime } from "@/utils/dateUtils"
 import type { Event } from "@/types/event"
 
 interface EventCardProps {
@@ -47,24 +47,24 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
             <Badge className={`${getStatusColor(event.isActive)} font-medium text-sm`}>
               {event.isActive ? "✓ ACTIVE" : "✕ INACTIVE"}
             </Badge>
-            <Badge variant="outline" className="bg-black/30 text-white border-white/20 backdrop-blur-sm text-sm">
+            <Badge variant="outline" className="bg-card/50 text-foreground border-border backdrop-blur-sm text-sm">
               {event.genre}
             </Badge>
           </div>
 
           <div className="space-y-4">
             <div>
-              <h3 className="text-4xl font-bold text-white mb-2 text-balance leading-tight group-hover:text-primary transition-colors">
+              <h3 className="text-4xl font-bold text-foreground mb-2 text-balance leading-tight group-hover:text-primary transition-colors">
                 {event.name}
               </h3>
-              <div className="flex items-center space-x-3 text-white/80">
+              <div className="flex items-center space-x-3 text-muted-foreground">
                 <Music className="h-5 w-5" />
                 <span className="font-medium text-xl">{event.genre}</span>
               </div>
             </div>
 
-            <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-              <div className="flex items-center justify-between text-white">
+            <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 border border-border/50">
+              <div className="flex items-center justify-between text-foreground">
                 <div className="flex items-center space-x-3">
                   <Calendar className="h-6 w-6 text-primary" />
                   <span className="font-semibold text-2xl">{formatDate(event.eventDate)}</span>
@@ -78,7 +78,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="text-white">
+            <div className="text-foreground">
               <span className="text-4xl font-bold text-primary">€{event.ticketPrice}</span>
             </div>
             <Button

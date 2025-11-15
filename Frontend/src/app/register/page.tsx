@@ -2,24 +2,16 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { API_BASE_URL } from "@/lib/constants"
-import { redirectAfterRegister } from "@/lib/auth"
-import { showSuccess, showError } from "@/lib/toast"
-import { Button } from "@/components/ui/button"
+import { redirectAfterRegister } from "@/utils/auth"
+import { showSuccess, showError } from "@/utils/toast"
+import { IValidationError, IAuthError } from "@/types/auth"
+import { userService } from "@/api/service/userService"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-
-interface ValidationError {
-  field: string
-  message: string
-}
-
-interface RegisterError {
-  message: string
-  errors?: Record<string, string>
-  status?: number
-}
+import { ErrorAlert } from "@/components/form/ErrorAlert"
+import { LoadingButton } from "@/components/form/LoadingButton"
+import { FormCard } from "@/components/form/FormCard"
+import { PageHeader, TermsFooter } from "@/components/layout/PageHeader"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -28,13 +20,13 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [passwordConfirm, setPasswordConfirm] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<RegisterError | null>(null)
+  const [error, setError] = useState<IAuthError | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
+  const [validationErrors, setValidationErrors] = useState<IValidationError[]>([])
 
   const validateForm = (): boolean => {
-    const errors: ValidationError[] = []
+    const errors: IValidationError[] = []
 
     if (username.length < 3) {
       errors.push({ field: "username", message: "Username must be at least 3 characters" })
@@ -71,25 +63,12 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-          passwordConfirm,
-        }),
+      await userService.register({
+        username,
+        email,
+        password,
+        passwordConfirm,
       })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(
-          errorData.message || `Registration failed with status ${response.status}`
-        )
-      }
 
       showSuccess("Account created! 🎉 Redirecting to login...")
       redirectAfterRegister(router)
@@ -107,30 +86,21 @@ export default function RegisterPage() {
   }
 
   const inputClasses = (hasError: boolean) =>
-    `bg-background/40 border-purple-900/30 hover:border-purple-900/60 focus-visible:border-purple-700 ${
-      hasError ? "border-destructive/50 hover:border-destructive/50" : ""
+    `bg-background/40 border-border focus-visible:border-primary ${
+      hasError ? "border-destructive/50 focus-visible:border-destructive/50" : ""
     }`
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">
-            <span className="gradient-text">Join Eventora</span>
-          </h1>
-          <p className="text-muted-foreground">Create your account to discover amazing events</p>
-        </div>
+        <PageHeader title="Join Eventora" subtitle="Create your account to discover amazing events" />
 
-        {/* Card */}
-        <div className="border border-purple-900/50 bg-card/50 backdrop-blur-sm rounded-lg p-8 mb-6">
+        <FormCard
+          footerText="Already have an account?"
+          footerLink={{ text: "Sign in", href: "/login" }}
+        >
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error Alert */}
-            {error && (
-              <div className="bg-destructive/15 border border-destructive/50 text-destructive px-4 py-3 rounded-lg text-sm">
-                {error.message}
-              </div>
-            )}
+            {error && <ErrorAlert message={error.message} />}
 
             {/* Username Field */}
             <div className="space-y-2">
@@ -251,54 +221,17 @@ export default function RegisterPage() {
             </div>
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full h-11 text-base font-semibold"
-              disabled={isLoading || !username || !email || !password || !passwordConfirm}
+            <LoadingButton
+              isLoading={isLoading}
+              disabled={!username || !email || !password || !passwordConfirm}
+              loadingText="Creating account..."
             >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                  Creating account...
-                </div>
-              ) : (
-                "Create Account"
-              )}
-            </Button>
+              Create Account
+            </LoadingButton>
           </form>
+        </FormCard>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border/30"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card/50 px-2 text-muted-foreground">Or</span>
-            </div>
-          </div>
-
-          {/* Sign In Link */}
-          <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:text-accent font-semibold transition-colors">
-              Sign in
-            </Link>
-          </p>
-        </div>
-
-        {/* Additional Info */}
-        <div className="text-center text-xs text-muted-foreground space-y-2">
-          <p>
-            By creating an account, you agree to our{" "}
-            <Link href="#" className="text-primary hover:text-accent transition-colors">
-              Terms of Service
-            </Link>
-            {" "}and{" "}
-            <Link href="#" className="text-primary hover:text-accent transition-colors">
-              Privacy Policy
-            </Link>
-          </p>
-        </div>
+        <TermsFooter agreement="By creating an account, you agree to our" />
       </div>
     </div>
   )

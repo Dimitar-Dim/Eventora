@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useParams, useSearchParams } from "next/navigation"
-import { EventFormData } from "@/types/event"
-import { GENRES, API_BASE_URL } from "@/lib/constants"
-import { getAuthHeader } from "@/lib/auth"
-import { showSuccess, showError } from "@/lib/toast"
+import { IEventFormData, GENRES } from "@/types/event"
+import { showSuccess, showError } from "@/utils/toast"
+import { ***REMOVED***vice/eventService"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -25,7 +24,7 @@ export default function EditEventPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState<EventFormData>({
+  const [formData, setFormData] = useState<IEventFormData>({
     name: "",
     description: "",
     eventDate: "",
@@ -38,11 +37,7 @@ export default function EditEventPage() {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/events/${eventId}`, {
-          headers: getAuthHeader()
-        })
-        if (!response.ok) throw new Error("Failed to fetch event")
-        const data = await response.json()
+        const data = await eventService.getById(parseInt(eventId))
 
         // Convert ISO date to datetime-local format
         const eventDate = new Date(data.eventDate)
@@ -109,25 +104,7 @@ export default function EditEventPage() {
         organizerId: 1
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/events/${eventId}`, {
-        method: "PUT",
-        headers: { 
-          "Content-Type": "application/json",
-          ...getAuthHeader()
-        },
-        body: JSON.stringify(requestBody),
-      })
-
-      if (!response.ok) {
-        let errorMessage = `Failed to update event (${response.status})`
-        try {
-          const errorData = await response.json()
-          errorMessage = errorData.message || errorData.error || errorMessage
-        } catch {
-          errorMessage = response.statusText || errorMessage
-        }
-        throw new Error(errorMessage)
-      }
+      await eventService.update(parseInt(eventId), requestBody)
 
       showSuccess(`Event ${isNewEvent ? "created" : "updated"} successfully! 🎉`)
       setTimeout(() => {
@@ -146,7 +123,7 @@ export default function EditEventPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white text-lg">Loading event...</p>
+          <p className="text-foreground text-lg">Loading event...</p>
         </div>
       </div>
     )
@@ -154,13 +131,13 @@ export default function EditEventPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <section className="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-white/10">
+      <section className="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/10" />
         <div className="relative max-w-2xl mx-auto z-10">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-3 text-white">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-3 text-foreground">
             <span className="gradient-text">Edit Event</span>
           </h1>
-          <p className="text-gray-300 text-lg">
+          <p className="text-muted-foreground text-lg">
             Update your event details
           </p>
         </div>
@@ -169,20 +146,20 @@ export default function EditEventPage() {
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           {error && (
-            <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg backdrop-blur-sm">
-              <p className="text-red-300 font-medium">✕ {error}</p>
+            <div className="mb-6 p-4 bg-destructive/20 border border-destructive/50 rounded-lg backdrop-blur-sm">
+              <p className="text-destructive font-medium">✕ {error}</p>
             </div>
           )}
 
-          <Card className="border-white/10 bg-white/5 backdrop-blur-sm shadow-xl">
-            <CardHeader className="border-b border-white/10">
-              <CardTitle className="text-2xl text-white">Event Information</CardTitle>
+          <Card className="border-border bg-card/50 backdrop-blur-sm shadow-xl">
+            <CardHeader className="border-b border-border">
+              <CardTitle className="text-2xl text-foreground">Event Information</CardTitle>
             </CardHeader>
             <CardContent className="pt-8">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label htmlFor="name" className="text-sm font-semibold text-white">
-                    Event Name <span className="text-rose-400">*</span>
+                  <Label htmlFor="name" className="text-sm font-semibold text-foreground">
+                    Event Name <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="name"
@@ -197,8 +174,8 @@ export default function EditEventPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="description" className="text-sm font-semibold text-white">
-                    Description <span className="text-rose-400">*</span>
+                  <Label htmlFor="description" className="text-sm font-semibold text-foreground">
+                    Description <span className="text-destructive">*</span>
                   </Label>
                   <Textarea
                     id="description"
@@ -214,8 +191,8 @@ export default function EditEventPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="eventDate" className="text-sm font-semibold text-white">
-                      Date & Time <span className="text-rose-400">*</span>
+                    <Label htmlFor="eventDate" className="text-sm font-semibold text-foreground">
+                      Date & Time <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="eventDate"
@@ -228,8 +205,8 @@ export default function EditEventPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="genre" className="text-sm font-semibold text-white">
-                      Genre <span className="text-rose-400">*</span>
+                    <Label htmlFor="genre" className="text-sm font-semibold text-foreground">
+                      Genre <span className="text-destructive">*</span>
                     </Label>
                     <Select value={formData.genre} onValueChange={(value) => setFormData(prev => ({ ...prev, genre: value }))}>
                       <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30">
@@ -248,8 +225,8 @@ export default function EditEventPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="ticketPrice" className="text-sm font-semibold text-white">
-                      Ticket Price (€) <span className="text-rose-400">*</span>
+                    <Label htmlFor="ticketPrice" className="text-sm font-semibold text-foreground">
+                      Ticket Price (€) <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="ticketPrice"
@@ -265,8 +242,8 @@ export default function EditEventPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="maxTickets" className="text-sm font-semibold text-white">
-                      Max Tickets <span className="text-rose-400">*</span>
+                    <Label htmlFor="maxTickets" className="text-sm font-semibold text-foreground">
+                      Max Tickets <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="maxTickets"
@@ -283,7 +260,7 @@ export default function EditEventPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="imageUrl" className="text-sm font-semibold text-white">
+                  <Label htmlFor="imageUrl" className="text-sm font-semibold text-foreground">
                     Event Image URL
                   </Label>
                   <Input
@@ -295,12 +272,12 @@ export default function EditEventPage() {
                     placeholder="https://example.com/image.jpg"
                     className="mt-2"
                   />
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Optional: Provide a URL to an image for your event
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-white/10">
+                <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border">
                   <Button
                     type="submit"
                     disabled={isSubmitting}
@@ -314,7 +291,7 @@ export default function EditEventPage() {
                     variant="outline"
                     size="lg"
                     onClick={() => router.back()}
-                    className="flex-1 border-white/30 text-white hover:bg-white/10"
+                    className="flex-1"
                     disabled={isSubmitting}
                   >
                     Cancel
@@ -324,9 +301,9 @@ export default function EditEventPage() {
             </CardContent>
           </Card>
 
-          <div className="mt-8 p-4 bg-cyan-500/20 border border-cyan-500/50 rounded-lg backdrop-blur-sm">
-            <p className="text-sm text-cyan-300">
-              <strong>Tip:</strong> All fields marked with <span className="text-rose-400">*</span> are required.
+          <div className="mt-8 p-4 bg-accent/20 border border-accent/50 rounded-lg backdrop-blur-sm">
+            <p className="text-sm text-accent">
+              <strong>Tip:</strong> All fields marked with <span className="text-destructive">*</span> are required.
               Make sure the event date is in the future and ticket price is non-negative.
             </p>
           </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { subscribeToToasts, Toast } from "@/lib/toast"
+import { subscribeToToasts, Toast } from "@/utils/toast"
 
 export function ToastContainer() {
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -33,9 +33,9 @@ export function ToastContainer() {
             font-medium text-sm
             backdrop-blur-sm
             animate-slide-in-right
-            ${toast.type === "success" ? "bg-green-500/90 text-white border border-green-400/50" : ""}
-            ${toast.type === "error" ? "bg-red-500/90 text-white border border-red-400/50" : ""}
-            ${toast.type === "info" ? "bg-blue-500/90 text-white border border-blue-400/50" : ""}
+            ${toast.type === "success" ? "bg-primary/90 text-primary-foreground border border-primary/50" : ""}
+            ${toast.type === "error" ? "bg-destructive/90 text-destructive-foreground border border-destructive/50" : ""}
+            ${toast.type === "info" ? "bg-accent/90 text-accent-foreground border border-accent/50" : ""}
           `}
         >
           {toast.message}
