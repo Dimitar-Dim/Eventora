@@ -37,12 +37,12 @@ jobs:
         run: ./gradlew test --no-daemon
 
       - name: Backend SonarQube Analysis
-        if: secrets.SONAR_TOKEN != ''
         working-directory: Backend/Eventora
         run: |
           ./gradlew sonarqube \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
             --no-daemon
+        continue-on-error: true
 
       - id: tend
         if: always()
@@ -63,11 +63,11 @@ jobs:
         run: npm ci
       
       - name: Frontend SonarQube Analysis
-        if: secrets.SONAR_TOKEN != ''
         working-directory: Frontend
         run: |
           npx sonar-scanner \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true
 
   e2e:
     needs: test-backend
