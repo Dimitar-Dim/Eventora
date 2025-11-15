@@ -36,9 +36,41 @@ jobs:
         working-directory: Backend/Eventora
         run: ./gradlew test --no-daemon
 
+      - name: Backend SonarQube Analysis
+        working-directory: ./Backend/Eventora
+        run: |
+          ./gradlew sonarqube \
+            -Dsonar.projectKey=eventora_backend \
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
       - id: tend
         if: always()
         run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+  frontend-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        working-directory: ./Frontend
+        run: npm ci
+      
+      - name: Frontend SonarQube Analysis
+        working-directory: ./Frontend
+        run: |
+          npx sonar-scanner \
+            -Dsonar.projectKey=eventora_frontend \
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
   e2e:
     needs: test-backend
