@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Suspense } from "react"
+import { AuthProvider } from "@/context/AuthContext"
 import Navigation from "@/components/navigation"
 import { ToastContainer } from "@/components/toast-container"
 import "./globals.css"
@@ -21,13 +22,15 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.className} font-sans antialiased`}>
-        <div className="min-h-screen bg-background">
-          <Navigation />
-          <main>
-            <Suspense fallback={null}>{children}</Suspense>
-          </main>
-          <ToastContainer />
-        </div>
+        <AuthProvider>
+          <div className="min-h-screen bg-background">
+            <Navigation />
+            <main>
+              <Suspense fallback={null}>{children}</Suspense>
+            </main>
+            <ToastContainer />
+          </div>
+        </AuthProvider>
       </body>
     </html>
   )

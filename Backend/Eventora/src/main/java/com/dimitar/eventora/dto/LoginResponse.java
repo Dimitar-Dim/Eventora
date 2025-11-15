@@ -10,6 +10,9 @@ public record LoginResponse(
         long expiresIn,
 
         @JsonProperty("token_type")
-        String tokenType
+        String tokenType,
+
+        @JsonProperty("user")
+        UserDTO user
 ) {
 }

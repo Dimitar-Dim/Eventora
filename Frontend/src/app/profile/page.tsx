@@ -1,71 +1,130 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { useRouter } from "next/navigation"
-import { getAuthToken, clearAuthToken, getRoleFromToken, redirectAfterLogout } from "@/lib/auth"
+import { useAuth } from "@/context/AuthContext"
+import { clearAuthToken, redirectAfterLogout } from "@/utils/auth"
 import { Button } from "@/components/ui/button"
-
-type TokenPayload = {
-  name?: string
-  email?: string
-  [key: string]: unknown
-}
-
-function decodeTokenPayload(token: string | null): TokenPayload | null {
-  if (!token) return null
-  try {
-    const parts = token.split('.')
-    if (parts.length !== 3) return null
-    const payload = JSON.parse(atob(parts[1]))
-    return payload
-  } catch (error) {
-    console.debug("decodeTokenPayload error:", error)
-    return null
-  }
-}
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [tokenPayload, setTokenPayload] = useState<TokenPayload | null>(null)
-
-  useEffect(() => {
-    const token = getAuthToken()
-    const payload = decodeTokenPayload(token)
-    setTokenPayload(payload)
-  }, [])
+  const { user } = useAuth()
 
   const handleLogout = () => {
     clearAuthToken()
     redirectAfterLogout(router)
   }
 
+  const initials = user?.username
+    ? user.username
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+    : "U"
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="bg-card/60 border border-purple-800 rounded-xl p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold text-white mb-4">Profile</h1>
-
-        <div className="flex items-center gap-6">
-          <div className="w-24 h-24 rounded-full bg-purple-700 flex items-center justify-center text-white text-xl font-bold">
-            {tokenPayload?.name ? tokenPayload.name[0].toUpperCase() : "U"}
-          </div>
-
-          <div className="flex-1">
-            <p className="text-lg font-medium text-white">{tokenPayload?.name ?? "Unknown User"}</p>
-            {tokenPayload?.email && (
-              <p className="text-sm text-gray-300 mt-1">{tokenPayload.email}</p>
-            )}
-            <p className="text-sm text-gray-300 mt-1">Role: {getRoleFromToken() ?? "-"}</p>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" onClick={() => router.push("/events")}>My events</Button>
-            <Button variant="destructive" onClick={handleLogout}>Logout</Button>
-          </div>
+    <div className="min-h-[calc(100vh-64px)] bg-background py-12">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-2">My Profile</h1>
+          <p className="text-muted-foreground">Manage your account and view your ticket history</p>
         </div>
 
-        <div className="mt-6 text-sm text-gray-300">
-          <p>This is a quick profile page placeholder. You can extend it to edit profile details, change avatar or view activity.</p>
+        {/* Profile Card */}
+        <Card className="mb-8 overflow-hidden">
+          <div className="bg-gradient-to-r from-primary to-accent h-24" />
+          <div className="px-8 pb-8">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-12 mb-6">
+              <div className="flex items-end gap-6 mb-4 md:mb-0">
+                <div className="w-32 h-32 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-foreground text-4xl font-bold border-4 border-card shadow-lg">
+                  {initials}
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-foreground">{user?.username ?? "Unknown User"}</h2>
+                  {user?.email && (
+                    <p className="text-muted-foreground mt-1">{user.email}</p>
+                  )}
+                  <div className="flex gap-2 mt-2">
+                    <Badge variant="outline">{user?.role?.toUpperCase() ?? "User"}</Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Button variant="outline" onClick={() => router.push("/events")}>
+                  Browse Events
+                </Button>
+                <Button variant="destructive" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="p-6">
+            <div className="text-muted-foreground text-sm mb-2">Total Tickets</div>
+            <div className="text-3xl font-bold text-foreground">0</div>
+            <p className="text-muted-foreground text-xs mt-2">No tickets purchased yet</p>
+          </Card>
+          <Card className="p-6">
+            <div className="text-muted-foreground text-sm mb-2">Upcoming Events</div>
+            <div className="text-3xl font-bold text-foreground">0</div>
+            <p className="text-muted-foreground text-xs mt-2">Events you&apos;re attending</p>
+          </Card>
+          <Card className="p-6">
+            <div className="text-muted-foreground text-sm mb-2">Member Since</div>
+            <div className="text-3xl font-bold text-foreground">2025</div>
+            <p className="text-muted-foreground text-xs mt-2">Active member</p>
+          </Card>
         </div>
+
+        {/* Ticket History Section */}
+        <Card>
+          <div className="p-8">
+            <h3 className="text-2xl font-bold text-foreground mb-6">Ticket History</h3>
+
+            <div className="space-y-4">
+              {/* Placeholder tickets */}
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-4 bg-card border border-border rounded-lg hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center text-foreground font-bold">
+                      🎫
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-foreground font-medium">Ticket #{1000 + i}</p>
+                      <p className="text-muted-foreground text-sm">Event name placeholder</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-muted-foreground text-sm">Date TBD</p>
+                    <p className="text-muted-foreground text-xs mt-1">Pending</p>
+                  </div>
+                </div>
+              ))}
+
+              {/* Empty state */}
+              <div className="py-12 text-center border-2 border-dashed border-border rounded-lg">
+                <div className="text-5xl mb-3">🎫</div>
+                <p className="text-muted-foreground mb-2">No tickets yet</p>
+                <p className="text-muted-foreground text-sm mb-4">Start purchasing tickets to events and they&apos;ll appear here</p>
+                <Button onClick={() => router.push("/events")}>
+                  Browse Events
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   )

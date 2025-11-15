@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Event } from "@/types/event"
-import { API_BASE_URL } from "@/lib/constants"
-import { getAuthHeader } from "@/lib/auth"
 import { EventGrid } from "@/components/event-grid"
+import { ***REMOVED***vice/eventService"
 
 export default function EventsPage() {
 	const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
@@ -15,15 +14,7 @@ export default function EventsPage() {
 		const fetchEvents = async () => {
 			try {
 				setIsLoading(true)
-				const url = `${API_BASE_URL}/api/events`
-				const response = await fetch(url, {
-					headers: {
-						'Content-Type': 'application/json',
-						...getAuthHeader()
-					}
-				})
-				if (!response.ok) throw new Error(`Failed to fetch events: ${response.status}`)
-				const data = await response.json()
+				const data = await eventService.getAll()
 				setFilteredEvents(data)
 			} catch (err) {
 				setError(err instanceof Error ? err.message : "Failed to load events")
@@ -47,13 +38,11 @@ export default function EventsPage() {
 					</p>
 				</div>
 
-				{error && (
-					<div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg backdrop-blur-sm">
-						<p className="text-red-300 font-medium">✕ {error}</p>
-					</div>
-				)}
-
-				{isLoading && (
+			{error && (
+				<div className="mb-6 p-4 bg-destructive/20 border border-destructive/50 rounded-lg backdrop-blur-sm">
+					<p className="text-destructive font-medium">✕ {error}</p>
+				</div>
+			)}				{isLoading && (
 					<div className="text-center py-12">
 						<p className="text-foreground text-lg">Loading events...</p>
 					</div>

@@ -2,23 +2,24 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { EventFormData } from "@/types/event"
-import { GENRES, API_BASE_URL } from "@/lib/constants"
-import { getAuthHeader } from "@/lib/auth"
-import { showSuccess, showError } from "@/lib/toast"
+import { IEventFormData, GENRES } from "@/types/event"
+import { showSuccess, showError } from "@/utils/toast"
+import { ***REMOVED***vice/eventService"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ErrorAlert } from "@/components/form/ErrorAlert"
+import { PageHeader } from "@/components/layout/PageHeader"
 
 export default function CreateEventPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState<EventFormData>({
+  const [formData, setFormData] = useState<IEventFormData>({
     name: "",
     description: "",
     eventDate: "",
@@ -66,27 +67,7 @@ export default function CreateEventPage() {
         organizerId: 1
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/events`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeader()
-        },
-        body: JSON.stringify(requestBody),
-      })
-
-      if (!response.ok) {
-        let errorMessage = `Failed to create event (${response.status})`
-        try {
-          const errorData = await response.json()
-          errorMessage = errorData.message || errorData.error || errorMessage
-        } catch {
-          errorMessage = response.statusText || errorMessage
-        }
-        throw new Error(errorMessage)
-      }
-
-      const event = await response.json()
+      const event = await eventService.create(requestBody)
       showSuccess("Event created! 🎉 Redirecting...")
       
       setTimeout(() => {
@@ -103,35 +84,24 @@ export default function CreateEventPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <section className="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-white/10">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/10" />
-        <div className="relative max-w-2xl mx-auto z-10">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-3 text-white">
-            <span className="gradient-text">Create New Event</span>
-          </h1>
-          <p className="text-gray-300 text-lg">
-            Share your event with the community and reach music enthusiasts
-          </p>
-        </div>
-      </section>
+      <PageHeader
+        title={<span className="gradient-text">Create New Event</span>}
+        subtitle="Share your event with the community and reach music enthusiasts"
+      />
 
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
-          {error && (
-            <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg backdrop-blur-sm">
-              <p className="text-red-300 font-medium">✕ {error}</p>
-            </div>
-          )}
+          {error && <ErrorAlert message={error} />}
 
-          <Card className="border-white/10 bg-white/5 backdrop-blur-sm shadow-xl">
-            <CardHeader className="border-b border-white/10">
-              <CardTitle className="text-2xl text-white">Event Information</CardTitle>
+          <Card className="border-border bg-card/50 backdrop-blur-sm shadow-xl">
+            <CardHeader className="border-b border-border">
+              <CardTitle className="text-2xl text-foreground">Event Information</CardTitle>
             </CardHeader>
             <CardContent className="pt-8">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label htmlFor="name" className="text-sm font-semibold text-white">
-                    Event Name <span className="text-rose-400">*</span>
+                  <Label htmlFor="name" className="text-sm font-semibold text-foreground">
+                    Event Name <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="name"
@@ -146,8 +116,8 @@ export default function CreateEventPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="description" className="text-sm font-semibold text-white">
-                    Description <span className="text-rose-400">*</span>
+                  <Label htmlFor="description" className="text-sm font-semibold text-foreground">
+                    Description <span className="text-destructive">*</span>
                   </Label>
                   <Textarea
                     id="description"
@@ -163,8 +133,8 @@ export default function CreateEventPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="eventDate" className="text-sm font-semibold text-white">
-                      Date & Time <span className="text-rose-400">*</span>
+                    <Label htmlFor="eventDate" className="text-sm font-semibold text-foreground">
+                      Date & Time <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="eventDate"
@@ -177,8 +147,8 @@ export default function CreateEventPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="genre" className="text-sm font-semibold text-white">
-                      Genre <span className="text-rose-400">*</span>
+                    <Label htmlFor="genre" className="text-sm font-semibold text-foreground">
+                      Genre <span className="text-destructive">*</span>
                     </Label>
                     <Select value={formData.genre} onValueChange={(value) => setFormData(prev => ({ ...prev, genre: value }))}>
                       <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30">
@@ -197,8 +167,8 @@ export default function CreateEventPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="ticketPrice" className="text-sm font-semibold text-white">
-                      Ticket Price (€) <span className="text-rose-400">*</span>
+                    <Label htmlFor="ticketPrice" className="text-sm font-semibold text-foreground">
+                      Ticket Price (€) <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="ticketPrice"
@@ -214,8 +184,8 @@ export default function CreateEventPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="maxTickets" className="text-sm font-semibold text-white">
-                      Max Tickets <span className="text-rose-400">*</span>
+                    <Label htmlFor="maxTickets" className="text-sm font-semibold text-foreground">
+                      Max Tickets <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="maxTickets"
@@ -232,7 +202,7 @@ export default function CreateEventPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="imageUrl" className="text-sm font-semibold text-white">
+                  <Label htmlFor="imageUrl" className="text-sm font-semibold text-foreground">
                     Event Image URL
                   </Label>
                   <Input
@@ -244,12 +214,12 @@ export default function CreateEventPage() {
                     placeholder="https://example.com/image.jpg"
                     className="mt-2"
                   />
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Optional: Provide a URL to an image for your event
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-white/10">
+                <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border">
                   <Button
                     type="submit"
                     disabled={isSubmitting}
@@ -263,7 +233,7 @@ export default function CreateEventPage() {
                     variant="outline"
                     size="lg"
                     onClick={() => router.back()}
-                    className="flex-1 border-white/30 text-white hover:bg-white/10"
+                    className="flex-1"
                     disabled={isSubmitting}
                   >
                     Cancel

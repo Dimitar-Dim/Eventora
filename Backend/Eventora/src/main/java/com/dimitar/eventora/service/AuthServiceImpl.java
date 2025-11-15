@@ -4,6 +4,7 @@ import com.dimitar.eventora.dto.LoginRequest;
 import com.dimitar.eventora.dto.LoginResponse;
 import com.dimitar.eventora.dto.RegisterRequest;
 import com.dimitar.eventora.dto.RegisterResponse;
+import com.dimitar.***REMOVED***DTO;
 import com.dimitar.***REMOVED***Entity;
 import com.dimitar.eventora.exception.UnauthorizedException;
 import com.dimitar.***REMOVED***AlreadyExistsException;
@@ -72,6 +73,33 @@ public class AuthServiceImpl implements AuthService {
         String jwt = jwtService.createJwt(user.getId(), user.getRole().name());
         long expiresIn = jwtService.getTtlSeconds();
 
-        return new LoginResponse(jwt, expiresIn, "Bearer");
+        UserDTO userDTO = new UserDTO(
+                user.getId().toString(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name().toLowerCase(),
+                user.getCreatedAt().toString(),
+                user.getUpdatedAt().toString()
+        );
+
+        return new LoginResponse(jwt, expiresIn, "Bearer", userDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDTO getProfile(String userId) {
+        UserEntity userEntity = userRepository.findById(Long.parseLong(userId))
+                .orElseThrow(UnauthorizedException::new);
+
+        User user = userMapper.toModel(userEntity);
+
+        return new UserDTO(
+                user.getId().toString(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name().toLowerCase(),
+                user.getCreatedAt().toString(),
+                user.getUpdatedAt().toString()
+        );
     }
 }

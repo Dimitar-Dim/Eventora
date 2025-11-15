@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Filter, ChevronLeft, ChevronRight } from "lucide-react"
-import { GENRES } from "@/lib/constants"
+import { GENRES } from "@/types/event"
 import type { Event } from "@/types/event"
 
 const EVENTS_PER_PAGE = 15
@@ -18,12 +18,7 @@ export function EventGrid({ events = [] }: { events?: Event[] }) {
 
   const filteredEvents = events
     .filter((event) => {
-      if (!event) {
-        console.warn("Null/undefined event found")
-        return false
-      }
-      if (!event.name) {
-        console.warn("Event missing name:", event)
+      if (!event || !event.name) {
         return false
       }
       const matchesSearch =

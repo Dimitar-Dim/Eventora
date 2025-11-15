@@ -19,7 +19,7 @@ export const setAuthToken = (token: string, tokenType: string, expiresIn: number
 }
 
 export const getAuthToken = (): string | null => {
-  if (typeof window === "undefined") return null
+  if (typeof window === "undefined") return null;
   return localStorage.getItem(AUTH_TOKEN_KEY)
 }
 
@@ -47,8 +47,7 @@ export function getRoleFromToken(): string | null {
 
     const payload = JSON.parse(atob(parts[1]));
     return payload.role || null;
-  } catch (error) {
-    console.error('Error decoding token:', error);
+  } catch {
     return null;
   }
 }

@@ -2,25 +2,23 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { API_BASE_URL } from "@/lib/constants"
-import { setAuthToken, redirectAfterLogin } from "@/lib/auth"
-import { showSuccess, showError } from "@/lib/toast"
-import { Button } from "@/components/ui/button"
+import { useAuth } from "@/context/AuthContext"
+import { showSuccess, showError } from "@/utils/toast"
+import { redirectAfterLogin } from "@/utils/auth"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-
-interface LoginError {
-  message: string
-  status?: number
-}
+import { ErrorAlert } from "@/components/form/ErrorAlert"
+import { LoadingButton } from "@/components/form/LoadingButton"
+import { FormCard } from "@/components/form/FormCard"
+import { PageHeader, TermsFooter } from "@/components/layout/PageHeader"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<LoginError | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,33 +27,13 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      if (!response.ok) {
-        let errorMessage = `Login failed with status ${response.status}`
-        try {
-          const errorData = await response.json()
-          errorMessage = errorData.message || errorMessage
-        } catch {
-        }
-        throw new Error(errorMessage)
-      }
-
-      const data = await response.json()
-      
-      setAuthToken(data.access_token, data.token_type, data.expires_in)
+      await login(email, password)
       showSuccess("Welcome back! 🎉")
       redirectAfterLogin(router)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed"
       showError(message)
-      setError({ message })
+      setError(message)
     } finally {
       setIsLoading(false)
     }
@@ -64,25 +42,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">
-            <span className="gradient-text">Welcome Back</span>
-          </h1>
-          <p className="text-muted-foreground">Sign in to your Eventora account</p>
-        </div>
+        <PageHeader title="Welcome Back" subtitle="Sign in to your Eventora account" />
 
-        {/* Card */}
-        <div className="border border-purple-900/50 bg-card/50 backdrop-blur-sm rounded-lg p-8 mb-6">
+        <FormCard
+          footerText="Don't have an account?"
+          footerLink={{ text: "Create one", href: "/register" }}
+        >
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error Alert */}
-            {error && (
-              <div className="bg-destructive/15 border border-destructive/50 text-destructive px-4 py-3 rounded-lg text-sm">
-                {error.message}
-              </div>
-            )}
+            {error && <ErrorAlert message={error} />}
 
-            {/* Email Field */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground">
                 Email Address
@@ -95,11 +63,10 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
                 required
-                className="bg-background/40 border-purple-900/30 hover:border-purple-900/60 focus-visible:border-purple-700"
+                className="bg-background/40 border-border focus-visible:border-primary"
               />
             </div>
 
-            {/* Password Field */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-foreground">
                 Password
@@ -113,7 +80,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
                   required
-                  className="bg-background/40 border-purple-900/30 hover:border-purple-900/60 focus-visible:border-purple-700 pr-10"
+                  className="bg-background/40 border-border focus-visible:border-primary pr-10"
                 />
                 <button
                   type="button"
@@ -135,58 +102,17 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full h-11 text-base font-semibold"
-              disabled={isLoading || !email || !password}
+            <LoadingButton
+              isLoading={isLoading}
+              disabled={!email || !password}
+              loadingText="Signing in..."
             >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                  Signing in...
-                </div>
-              ) : (
-                "Sign In"
-              )}
-            </Button>
+              Sign In
+            </LoadingButton>
           </form>
+        </FormCard>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border/30"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card/50 px-2 text-muted-foreground">Or</span>
-            </div>
-          </div>
-
-          {/* Sign Up Link */}
-          <p className="text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="text-primary hover:text-accent font-semibold transition-colors"
-            >
-              Create one
-            </Link>
-          </p>
-        </div>
-
-        {/* Additional Info */}
-        <div className="text-center text-xs text-muted-foreground">
-          <p>
-            By signing in, you agree to our{" "}
-            <Link href="#" className="text-primary hover:text-accent transition-colors">
-              Terms of Service
-            </Link>
-            {" "}and{" "}
-            <Link href="#" className="text-primary hover:text-accent transition-colors">
-              Privacy Policy
-            </Link>
-          </p>
-        </div>
+        <TermsFooter agreement="By signing in, you agree to our" />
       </div>
     </div>
   )

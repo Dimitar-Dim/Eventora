@@ -1,9 +1,11 @@
-export interface Event {
+import { IGenre } from "./genre"
+
+export interface IEvent {
   id: number
   name: string
   description: string
-  eventDate: string // ISO 8601 datetime
-  genre: "Rock" | "Pop" | "Folk" | "Classical" | "Jazz" | "Metal" | "Techno"
+  eventDate: string
+  genre: IGenre
   ticketPrice: number
   maxTickets: number
   availableTickets: number
@@ -14,7 +16,7 @@ export interface Event {
   updatedAt: string
 }
 
-export interface EventFormData {
+export interface IEventFormData {
   name: string
   description: string
   eventDate: string
@@ -24,9 +26,9 @@ export interface EventFormData {
   imageUrl: string
 }
 
-export interface Ticket {
+export interface ITicket {
   id: string
-  event: Event
+  event: IEvent
   qrCode: string
   status: "valid" | "used" | "expired"
   purchaseDate: string
@@ -34,3 +36,8 @@ export interface Ticket {
   purchasePrice: number
   number: string
 }
+
+// Export non-prefixed versions for backward compatibility
+export type Event = IEvent
+export type EventFormData = IEventFormData
+export type Ticket = ITicket
