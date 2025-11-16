@@ -19,9 +19,18 @@ public class JwtService {
     private final Duration tokenTtl;
 
     public JwtService(
-            @Value("${jwt.secret:your-256-bit-secret-key-change-this-in-production-must-be-at-least-32-chars}") String secret,
+            @Value("${jwt.secret}") String secret,
             @Value("${jwt.ttl-minutes:15}") int ttlMinutes) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("jwt.secret must be configured");
+        }
+
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("jwt.secret must be at least 32 bytes (256 bits) for HS256");
+        }
+
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
         this.tokenTtl = Duration.ofMinutes(ttlMinutes);
     }
 
