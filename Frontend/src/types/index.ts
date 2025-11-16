@@ -22,6 +22,12 @@ export type {
   IUpdateEventPayload,
 } from "./event"
 
+// Ticket domain
+export type {
+  IUserTicket,
+  TicketStatus,
+} from "./ticket"
+
 // Re-export constants
 export { GENRES } from "./event/genre"
 
