@@ -1,25 +1,30 @@
-describe('Homepage Navigation', () => {
+describe('Navigation', () => {
   beforeEach(() => {
     cy.visit('/');
   });
 
-  it('should load the homepage', () => {
-    cy.get('nav').should('exist');
+  it('loads homepage with navigation', () => {
+    cy.get('[data-cy="navigation"]').should('be.visible');
   });
 
-  it('should navigate to login page', () => {
-    cy.visit('/login');
-    cy.get('input[type="email"]').should('exist');
-    cy.get('input[type="password"]').should('exist');
+  it('navigates to login', () => {
+    cy.get('[data-cy="nav-login"]').click();
+    cy.url().should('include', '/login');
   });
 
-  it('should navigate to register page', () => {
-    cy.visit('/register');
-    cy.get('input[type="email"]').should('exist');
-    cy.get('input[type="password"]').should('exist');
+  it('navigates to register', () => {
+    cy.get('[data-cy="nav-register"]').click();
+    cy.url().should('include', '/register');
   });
 
-  it('should display navigation menu', () => {
-    cy.get('nav').should('be.visible');
+  it('navigates to events', () => {
+    cy.get('[data-cy="nav-events"]').click();
+    cy.url().should('include', '/events');
+  });
+
+  it('navigates to home', () => {
+    cy.visit('/events');
+    cy.get('[data-cy="nav-home"]').click();
+    cy.url().should('eq', Cypress.config().baseUrl + '/');
   });
 });

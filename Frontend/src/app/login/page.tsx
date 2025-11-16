@@ -64,6 +64,7 @@ export default function LoginPage() {
                 disabled={isLoading}
                 required
                 className="bg-background/40 border-border focus-visible:border-primary"
+                data-cy="login-email-input"
               />
             </div>
 
@@ -81,12 +82,14 @@ export default function LoginPage() {
                   disabled={isLoading}
                   required
                   className="bg-background/40 border-border focus-visible:border-primary pr-10"
+                  data-cy="login-password-input"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   disabled={isLoading}
+                  data-cy="login-password-toggle"
                 >
                   {showPassword ? (
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -106,6 +109,7 @@ export default function LoginPage() {
               isLoading={isLoading}
               disabled={!email || !password}
               loadingText="Signing in..."
+              data-cy="login-submit"
             >
               Sign In
             </LoadingButton>

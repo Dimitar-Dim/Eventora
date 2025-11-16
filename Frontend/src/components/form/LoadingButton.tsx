@@ -3,6 +3,7 @@ interface LoadingButtonProps {
   disabled: boolean
   loadingText: string
   children: string
+  "data-cy"?: string
 }
 
 export function LoadingButton({
@@ -10,12 +11,14 @@ export function LoadingButton({
   disabled,
   loadingText,
   children,
+  "data-cy": dataCy,
 }: LoadingButtonProps) {
   return (
     <button
       type="submit"
       className="w-full h-11 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
       disabled={disabled || isLoading}
+      data-cy={dataCy}
     >
       {isLoading ? (
         <div className="flex items-center justify-center gap-2">

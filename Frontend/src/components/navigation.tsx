@@ -53,10 +53,10 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="bg-card border-b border-border">
+    <nav className="bg-card border-b border-border" data-cy="navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center" data-cy="nav-home">
             <Image
               src="/logo.png"
               alt="Eventora Logo"
@@ -68,20 +68,20 @@ export default function Navigation() {
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/events" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/events" className="text-muted-foreground hover:text-foreground transition-colors" data-cy="nav-events">
               Events
             </Link>
             {isAuthenticated && (
               <>
-                <Link href="/tickets" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/tickets" className="text-muted-foreground hover:text-foreground transition-colors" data-cy="nav-tickets">
                   My Tickets
                 </Link>
                 {(userRole === "ADMIN" || userRole === "ORGANIZER") && (
-                  <Link href="/create" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="/create" className="text-muted-foreground hover:text-foreground transition-colors" data-cy="nav-create">
                     + Create Event
                   </Link>
                 )}
-                <Link href="/profile" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/profile" className="text-muted-foreground hover:text-foreground transition-colors" data-cy="nav-profile">
                   Profile
                 </Link>
               </>
@@ -91,6 +91,7 @@ export default function Navigation() {
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md transition-colors font-medium"
+                  data-cy="nav-logout"
                 >
                   Logout
                 </button>
@@ -99,12 +100,14 @@ export default function Navigation() {
                   <Link
                     href="/login"
                     className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+                    data-cy="nav-login"
                   >
                     Login
                   </Link>
                   <Link
                     href="/register"
                     className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md transition-colors font-medium"
+                    data-cy="nav-register"
                   >
                     Register
                   </Link>
@@ -128,20 +131,20 @@ export default function Navigation() {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <Link href="/events" className="block px-3 py-2 text-muted-foreground hover:text-foreground">
+              <Link href="/events" className="block px-3 py-2 text-muted-foreground hover:text-foreground" data-cy="nav-events-mobile">
                 Events
               </Link>
               {isAuthenticated && (
                 <>
-                  <Link href="/tickets" className="block px-3 py-2 text-muted-foreground hover:text-foreground">
+                  <Link href="/tickets" className="block px-3 py-2 text-muted-foreground hover:text-foreground" data-cy="nav-tickets-mobile">
                     My Tickets
                   </Link>
                   {(userRole === "ADMIN" || userRole === "ORGANIZER") && (
-                    <Link href="/create" className="block px-3 py-2 text-muted-foreground hover:text-foreground">
+                    <Link href="/create" className="block px-3 py-2 text-muted-foreground hover:text-foreground" data-cy="nav-create-mobile">
                       + Create Event
                     </Link>
                   )}
-                  <Link href="/profile" className="block px-3 py-2 text-muted-foreground hover:text-foreground">
+                  <Link href="/profile" className="block px-3 py-2 text-muted-foreground hover:text-foreground" data-cy="nav-profile-mobile">
                     Profile
                   </Link>
                 </>
@@ -152,15 +155,16 @@ export default function Navigation() {
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-3 py-2 text-muted-foreground hover:text-foreground font-medium"
+                      data-cy="nav-logout-mobile"
                     >
                       Logout
                     </button>
                   ) : (
                     <>
-                      <Link href="/login" className="block px-3 py-2 text-muted-foreground hover:text-foreground">
+                      <Link href="/login" className="block px-3 py-2 text-muted-foreground hover:text-foreground" data-cy="nav-login-mobile">
                         Login
                       </Link>
-                      <Link href="/register" className="block px-3 py-2 text-muted-foreground hover:text-foreground font-medium">
+                      <Link href="/register" className="block px-3 py-2 text-muted-foreground hover:text-foreground font-medium" data-cy="nav-register-mobile">
                         Register
                       </Link>
                     </>
