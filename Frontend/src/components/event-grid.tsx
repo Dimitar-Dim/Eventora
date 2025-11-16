@@ -62,6 +62,7 @@ export function EventGrid({ events = [] }: { events?: Event[] }) {
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30"
+              data-cy="search-input"
             />
           </div>
 
@@ -148,6 +149,7 @@ export function EventGrid({ events = [] }: { events?: Event[] }) {
             variant="outline"
             className="mt-4 bg-transparent"
             onClick={handleClearFilters}
+            data-cy="clear-filters"
           >
             Clear Filters
           </Button>

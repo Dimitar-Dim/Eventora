@@ -112,6 +112,7 @@ export default function CreateEventPage() {
                     onChange={handleInputChange}
                     placeholder="e.g., Summer Music Festival"
                     className="mt-2"
+                    data-cy="event-name-input"
                   />
                 </div>
 
@@ -128,6 +129,7 @@ export default function CreateEventPage() {
                     placeholder="Tell people about your event..."
                     rows={4}
                     className="mt-2"
+                    data-cy="event-description-input"
                   />
                 </div>
 
@@ -144,6 +146,7 @@ export default function CreateEventPage() {
                       value={formData.eventDate}
                       onChange={handleInputChange}
                       className="mt-2"
+                      data-cy="event-date-input"
                     />
                   </div>
                   <div>
@@ -151,7 +154,7 @@ export default function CreateEventPage() {
                       Genre <span className="text-destructive">*</span>
                     </Label>
                     <Select value={formData.genre} onValueChange={(value) => setFormData(prev => ({ ...prev, genre: value }))}>
-                      <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30">
+                      <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30" data-cy="event-genre-select">
                         <SelectValue placeholder="Select a genre" />
                       </SelectTrigger>
                       <SelectContent>
@@ -181,6 +184,7 @@ export default function CreateEventPage() {
                       onChange={handleInputChange}
                       placeholder="0.00"
                       className="mt-2"
+                      data-cy="event-ticket-price-input"
                     />
                   </div>
                   <div>
@@ -197,6 +201,7 @@ export default function CreateEventPage() {
                       onChange={handleInputChange}
                       placeholder="e.g., 500"
                       className="mt-2"
+                      data-cy="event-max-tickets-input"
                     />
                   </div>
                 </div>
@@ -225,6 +230,7 @@ export default function CreateEventPage() {
                     disabled={isSubmitting}
                     size="lg"
                     className="flex-1 glow-effect"
+                    data-cy="create-event-submit"
                   >
                     {isSubmitting ? "Creating..." : "Create Event"}
                   </Button>
@@ -235,6 +241,7 @@ export default function CreateEventPage() {
                     onClick={() => router.back()}
                     className="flex-1"
                     disabled={isSubmitting}
+                    data-cy="create-event-cancel"
                   >
                     Cancel
                   </Button>

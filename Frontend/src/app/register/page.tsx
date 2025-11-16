@@ -116,6 +116,7 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 required
                 className={inputClasses(!!getFieldError("username"))}
+                data-cy="register-username-input"
               />
               {getFieldError("username") && (
                 <p className="text-xs text-destructive">{getFieldError("username")}</p>
@@ -136,6 +137,7 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 required
                 className={inputClasses(!!getFieldError("email"))}
+                data-cy="register-email-input"
               />
               {getFieldError("email") && (
                 <p className="text-xs text-destructive">{getFieldError("email")}</p>
@@ -157,6 +159,7 @@ export default function RegisterPage() {
                   disabled={isLoading}
                   required
                   className={`${inputClasses(!!getFieldError("password"))} pr-10`}
+                  data-cy="register-password-input"
                 />
                 <button
                   type="button"
@@ -196,6 +199,7 @@ export default function RegisterPage() {
                   disabled={isLoading}
                   required
                   className={`${inputClasses(!!getFieldError("passwordConfirm"))} pr-10`}
+                  data-cy="register-password-confirm-input"
                 />
                 <button
                   type="button"
@@ -225,6 +229,7 @@ export default function RegisterPage() {
               isLoading={isLoading}
               disabled={!username || !email || !password || !passwordConfirm}
               loadingText="Creating account..."
+              data-cy="register-submit"
             >
               Create Account
             </LoadingButton>

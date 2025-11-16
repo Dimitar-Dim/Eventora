@@ -31,6 +31,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       <div
         className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-sm border border-border/30 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/20 event-card-hover"
         onClick={handleCardClick}
+        data-cy="event-card"
       >
         <div className="absolute inset-0">
           <Image
@@ -54,7 +55,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
 
           <div className="space-y-4">
             <div>
-              <h3 className="text-4xl font-bold text-foreground mb-2 text-balance leading-tight group-hover:text-primary transition-colors">
+              <h3 className="text-4xl font-bold text-foreground mb-2 text-balance leading-tight group-hover:text-primary transition-colors" data-cy="event-title">
                 {event.name}
               </h3>
               <div className="flex items-center space-x-3 text-muted-foreground">
@@ -79,7 +80,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
 
           <div className="flex items-center justify-between">
             <div className="text-foreground">
-              <span className="text-4xl font-bold text-primary">€{event.ticketPrice}</span>
+              <span className="text-4xl font-bold text-primary" data-cy="event-price">€{event.ticketPrice}</span>
             </div>
             <Button
               size="lg"
@@ -98,7 +99,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold gradient-text">{event.name}</DialogTitle>
+            <DialogTitle className="text-2xl font-bold gradient-text" data-cy="event-details-title">{event.name}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -114,7 +115,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   <Music className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Genre</p>
-                    <p className="font-semibold">{event.genre}</p>
+                    <p className="font-semibold" data-cy="event-genre">{event.genre}</p>
                   </div>
                 </div>
 
@@ -122,7 +123,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   <Calendar className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Date</p>
-                    <p className="font-semibold">{formatDate(event.eventDate)}</p>
+                    <p className="font-semibold" data-cy="event-date">{formatDate(event.eventDate)}</p>
                   </div>
                 </div>
 
@@ -130,7 +131,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   <Clock className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Time</p>
-                    <p className="font-semibold">{formatTime(event.eventDate)}</p>
+                    <p className="font-semibold" data-cy="event-time">{formatTime(event.eventDate)}</p>
                   </div>
                 </div>
               </div>
@@ -140,7 +141,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   <Ticket className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Price</p>
-                    <p className="font-semibold text-primary text-xl">€{event.ticketPrice}</p>
+                    <p className="font-semibold text-primary text-xl" data-cy="event-details-price">€{event.ticketPrice}</p>
                   </div>
                 </div>
 
@@ -148,7 +149,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   <Users className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Available Tickets</p>
-                    <p className="font-semibold">{event.availableTickets} / {event.maxTickets}</p>
+                    <p className="font-semibold" data-cy="event-available-tickets">{event.availableTickets} / {event.maxTickets}</p>
                   </div>
                 </div>
 
@@ -156,7 +157,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   <MapPin className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
-                    <p className="font-semibold">{event.isActive ? "Active" : "Inactive"}</p>
+                    <p className="font-semibold" data-cy="event-status">{event.isActive ? "Active" : "Inactive"}</p>
                   </div>
                 </div>
               </div>
@@ -164,7 +165,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
 
             <div>
               <h4 className="font-semibold mb-2">About This Event</h4>
-              <p className="text-muted-foreground text-pretty leading-relaxed">{event.description}</p>
+              <p className="text-muted-foreground text-pretty leading-relaxed" data-cy="event-description">{event.description}</p>
             </div>
 
             <div className="flex items-center space-x-2">

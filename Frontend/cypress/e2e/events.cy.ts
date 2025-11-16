@@ -1,35 +1,31 @@
-describe('Events Page', () => {
+describe('Events', () => {
   beforeEach(() => {
     cy.visit('/events');
-    // Wait for search input to appear
-    cy.get('input[placeholder*="Search"]', { timeout: 10000 }).should('be.visible');
   });
 
-  it('should load events page', () => {
+  it('loads events page', () => {
     cy.url().should('include', '/events');
+    cy.get('[data-cy="search-input"]').should('be.visible');
   });
 
-  it('should display page title', () => {
-    cy.contains('All Events').should('be.visible');
+  it('searches events', () => {
+    cy.get('[data-cy="search-input"]').type('jazz');
+    cy.get('[data-cy="search-input"]').should('have.value', 'jazz');
   });
 
-  it('should display search input', () => {
-    cy.get('input[placeholder*="Search"]').should('be.visible');
+  it('clears search', () => {
+    cy.get('[data-cy="search-input"]').type('test');
+    cy.get('[data-cy="search-input"]').clear();
+    cy.get('[data-cy="search-input"]').should('have.value', '');
   });
 
-  it('should be able to type in search', () => {
-    cy.get('input[placeholder*="Search"]').type('test', { delay: 50 });
-    cy.get('input[placeholder*="Search"]').should('have.value', 'test');
+  it('displays page content', () => {
+    cy.get('[data-cy="search-input"]').should('be.visible');
   });
 
-  it('should have filter controls', () => {
-    // Look for any select or button that might be filter
-    cy.get('input, select, button').should('have.length.greaterThan', 0);
-  });
-
-  it('should handle loading state', () => {
-    // Just verify page doesn't error and shows content
-    cy.get('body').should('be.visible');
-    cy.contains('Discover amazing events').should('be.visible');
+  it('navigates to event details', () => {
+    cy.get('[data-cy="event-card"]').should('exist').and('be.visible');
+    cy.get('[data-cy="event-card"]').first().click();
+    cy.get('[data-cy="event-details-title"]').should('be.visible');
   });
 });

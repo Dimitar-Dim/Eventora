@@ -1,37 +1,37 @@
-describe('Event Details Page', () => {
+describe('Event Details', () => {
   beforeEach(() => {
     cy.visit('/events');
-    cy.contains('All Events', { timeout: 10000 }).should('be.visible');
   });
 
-  it('should load events page', () => {
+  it('loads events page', () => {
     cy.url().should('include', '/events');
+    cy.get('[data-cy="search-input"]').should('be.visible');
   });
 
-  it('should display page header', () => {
-    cy.contains('All Events').should('be.visible');
-    cy.contains('Discover amazing events').should('be.visible');
+  it('searches for events', () => {
+    cy.get('[data-cy="search-input"]').type('rock');
+    cy.get('[data-cy="search-input"]').should('have.value', 'rock');
   });
 
-  it('should have search and filter controls', () => {
-    cy.get('input[placeholder*="Search"]').should('be.visible');
+  it('clears search', () => {
+    cy.get('[data-cy="search-input"]').type('test');
+    cy.get('[data-cy="search-input"]').clear();
+    cy.get('[data-cy="search-input"]').should('have.value', '');
   });
 
-  it('should render page without errors', () => {
-    // Page loads and displays key elements
-    cy.get('body').should('be.visible');
-    cy.get('input[placeholder*="Search"]').should('exist');
+  it('displays page content', () => {
+    cy.get('[data-cy="search-input"]').should('be.visible');
   });
 
-  it('should respond to search input', () => {
-    cy.get('input[placeholder*="Search"]').clear();
-    cy.get('input[placeholder*="Search"]').type('test');
-    cy.get('input[placeholder*="Search"]').should('have.value', 'test');
+    it('opens event details', () => {
+    cy.get('[data-cy="event-card"]').should('exist').and('be.visible');
+    cy.get('[data-cy="event-card"]').first().click();
+    cy.get('[data-cy="event-details-title"]').should('be.visible');
   });
 
-  it('should allow clearing search', () => {
-    cy.get('input[placeholder*="Search"]').type('test');
-    cy.get('input[placeholder*="Search"]').clear();
-    cy.get('input[placeholder*="Search"]').should('have.value', '');
+  it('shows event information', () => {
+    cy.get('[data-cy="event-card"]').should('exist').and('be.visible');
+    cy.get('[data-cy="event-card"]').first().click();
+    cy.get('[data-cy="event-title"]').should('be.visible');
   });
 });
