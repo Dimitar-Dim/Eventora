@@ -1,5 +1,5 @@
 import { ApiService } from "../apiService";
-import { IEvent, ICreateEventPayload } from "@/types/event";
+import { IEvent, ICreateEventPayload, IPurchaseTicketPayload, IPurchaseTicketResponse } from "@/types/event";
 
 const apiService = new ApiService();
 
@@ -46,6 +46,17 @@ export const eventService = {
       endpoint: `/api/events/${id}`,
       config: {
         requiresAuth: true,
+      },
+    });
+  },
+
+  /** Purchase a single ticket for the given event (requires auth) */
+  purchaseTicket: async (id: number, payload?: IPurchaseTicketPayload) => {
+    return await apiService.post<IPurchaseTicketResponse>({
+      endpoint: `/api/events/${id}/tickets`,
+      config: {
+        requiresAuth: true,
+        body: payload,
       },
     });
   },

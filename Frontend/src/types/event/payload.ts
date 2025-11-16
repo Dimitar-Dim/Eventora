@@ -12,3 +12,19 @@ export interface ICreateEventPayload {
 export interface IUpdateEventPayload extends Partial<ICreateEventPayload> {
   id: number
 }
+
+export interface IPurchaseTicketPayload {
+  issuedTo?: string
+}
+
+export interface IPurchaseTicketResponse {
+  ticketId: number
+  eventId: number
+  eventName: string
+  issuedTo: string
+  qrCode: string
+  status: string
+  remainingTickets: number
+  pricePaid: number
+  purchasedAt: string
+}

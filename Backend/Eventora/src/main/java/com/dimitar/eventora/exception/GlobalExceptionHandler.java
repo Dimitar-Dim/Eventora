@@ -14,6 +14,12 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String KEY_TIMESTAMP = "timestamp";
+    private static final String KEY_STATUS = "status";
+    private static final String KEY_ERROR = "error";
+    private static final String KEY_MESSAGE = "message";
+    private static final String KEY_PATH = "path";
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationException(
             MethodArgumentNotValidException ex, WebRequest request) {
@@ -23,68 +29,54 @@ public class GlobalExceptionHandler {
             fieldErrors.put(error.getField(), error.getDefaultMessage())
         );
 
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.BAD_REQUEST.value());
-        error.put("error", "Validation Failed");
+        Map<String, Object> error = buildErrorBody(HttpStatus.BAD_REQUEST, "Validation Failed", "Validation Failed", request);
         error.put("errors", fieldErrors);
-        error.put("path", request.getDescription(false).replace("uri=", ""));
-
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(EventNotFound.class)
     public ResponseEntity<Map<String, Object>> handleEventNotFound(EventNotFound ex, WebRequest request) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.NOT_FOUND.value());
-        error.put("error", "Not Found");
-        error.put("message", ex.getMessage());
-        error.put("path", request.getDescription(false).replace("uri=", ""));
+        Map<String, Object> error = buildErrorBody(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<Map<String, Object>> handleUnauthorized(UnauthorizedException ex, WebRequest request) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.UNAUTHORIZED.value());
-        error.put("error", "Unauthorized");
-        error.put("message", ex.getMessage());
-        error.put("path", request.getDescription(false).replace("uri=", ""));
+        Map<String, Object> error = buildErrorBody(HttpStatus.UNAUTHORIZED, "Unauthorized", ex.getMessage(), request);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleUserAlreadyExists(UserAlreadyExistsException ex, WebRequest request) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.CONFLICT.value());
-        error.put("error", "Conflict");
-        error.put("message", ex.getMessage());
-        error.put("path", request.getDescription(false).replace("uri=", ""));
+        Map<String, Object> error = buildErrorBody(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), request);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(TicketPurchaseException.class)
+    public ResponseEntity<Map<String, Object>> handleTicketPurchaseException(TicketPurchaseException ex, WebRequest request) {
+        Map<String, Object> error = buildErrorBody(HttpStatus.CONFLICT, "Ticket Purchase Failed", ex.getMessage(), request);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.BAD_REQUEST.value());
-        error.put("error", "Bad Request");
-        error.put("message", ex.getMessage());
-        error.put("path", request.getDescription(false).replace("uri=", ""));
+        Map<String, Object> error = buildErrorBody(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage(), request);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex, WebRequest request) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        error.put("error", "Internal Server Error");
-        error.put("message", "An unexpected error occurred");
-        error.put("path", request.getDescription(false).replace("uri=", ""));
+        Map<String, Object> error = buildErrorBody(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", "An unexpected error occurred", request);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    private Map<String, Object> buildErrorBody(HttpStatus status, String errorTitle, String message, WebRequest request) {
+        Map<String, Object> error = new HashMap<>();
+        error.put(KEY_TIMESTAMP, LocalDateTime.now());
+        error.put(KEY_STATUS, status.value());
+        error.put(KEY_ERROR, errorTitle);
+        error.put(KEY_MESSAGE, message);
+        error.put(KEY_PATH, request.getDescription(false).replace("uri=", ""));
+        return error;
     }
 }

@@ -3,6 +3,7 @@ package com.dimitar.***REMOVED***vice;
 import com.dimitar.eventora.dto.EventDTO;
 import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.eventora.exception.EventNotFound;
+import com.dimitar.eventora.mapper.EventMapper;
 import com.dimitar.eventora.model.Event;
 import com.dimitar.eventora.model.Genre;
 import com.dimitar.eventora.repository.EventRepository;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -29,10 +31,14 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EventService Tests")
+@SuppressWarnings({"null", "NullAway"})
 class EventServiceTest {
 
     @Mock
     private EventRepository eventRepository;
+
+    @Spy
+    private EventMapper eventMapper = new EventMapper();
 
     @InjectMocks
     private EventServiceImpl eventService;
