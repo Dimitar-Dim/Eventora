@@ -145,7 +145,7 @@ jobs:
 
   build-and-deploy:
     needs: test-backend
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: [self-hosted, macOS]
     outputs:
       started: ${{ steps.tstart.outputs.ts }}
