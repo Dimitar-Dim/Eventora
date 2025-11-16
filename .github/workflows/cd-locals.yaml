@@ -70,8 +70,8 @@ jobs:
         continue-on-error: true
 
   e2e:
-    needs: test-backend
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+    needs: build-and-deploy
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: [self-hosted, macOS]
     outputs:
       started: ${{ steps.tstart.outputs.ts }}
