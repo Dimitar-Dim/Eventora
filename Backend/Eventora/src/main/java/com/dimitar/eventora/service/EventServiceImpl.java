@@ -2,8 +2,8 @@ package com.dimitar.***REMOVED***vice;
 
 import com.dimitar.eventora.dto.EventDTO;
 import com.dimitar.eventora.entity.EventEntity;
-import com.dimitar.eventora.model.Genre;
 import com.dimitar.eventora.exception.EventNotFound;
+import com.dimitar.eventora.mapper.EventMapper;
 import com.dimitar.eventora.model.Event;
 import com.dimitar.eventora.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,13 +11,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.lang.NonNull;
 
 @Service
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
+    private final EventMapper eventMapper;
 
     @Override
     @Transactional
@@ -35,21 +36,23 @@ public class EventServiceImpl implements EventService {
         entity.setIsActive(true);
 
         EventEntity savedEntity = eventRepository.save(entity);
-        return convertEntityToDomain(savedEntity);
+        return eventMapper.toModel(savedEntity);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Event getEventById(Long id) {
-        return eventRepository.findById(id)
-                .map(this::convertEntityToDomain)
+        Long eventId = requireEventId(id);
+        return eventRepository.findById(eventId)
+                .map(eventMapper::toModel)
                 .orElseThrow(() -> new EventNotFound(id));
     }
 
     @Override
     @Transactional
     public Event updateEvent(Long id, EventDTO dto) {
-        EventEntity entity = eventRepository.findById(id)
+        Long eventId = requireEventId(id);
+        EventEntity entity = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFound(id));
 
         entity.setName(dto.getName());
@@ -61,13 +64,14 @@ public class EventServiceImpl implements EventService {
         entity.setImageUrl(dto.getImageUrl());
 
         EventEntity updatedEntity = eventRepository.save(entity);
-        return convertEntityToDomain(updatedEntity);
+        return eventMapper.toModel(updatedEntity);
     }
 
     @Override
     @Transactional
     public void deleteEvent(Long id) {
-        EventEntity entity = eventRepository.findById(id)
+        Long eventId = requireEventId(id);
+        EventEntity entity = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFound(id));
         entity.setIsActive(false);
         eventRepository.save(entity);
@@ -77,8 +81,8 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public List<Event> getAllEvents() {
         return eventRepository.findAll().stream()
-                .map(this::convertEntityToDomain)
-                .collect(Collectors.toList());
+                .map(eventMapper::toModel)
+        .toList();
     }
 
     @Override
@@ -86,42 +90,32 @@ public class EventServiceImpl implements EventService {
     public List<Event> getActiveEvents() {
         return eventRepository.findAll().stream()
                 .filter(EventEntity::getIsActive)
-                .map(this::convertEntityToDomain)
-                .collect(Collectors.toList());
+                .map(eventMapper::toModel)
+        .toList();
     }
 
     @Override
     @Transactional
     public Event deactivateEvent(Long id) {
-        EventEntity entity = eventRepository.findById(id)
+        Long eventId = requireEventId(id);
+        EventEntity entity = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFound(id));
         entity.setIsActive(false);
         EventEntity updatedEntity = eventRepository.save(entity);
-        return convertEntityToDomain(updatedEntity);
+        return eventMapper.toModel(updatedEntity);
     }
 
     @Transactional(readOnly = true)
     public List<Event> getEventsByOrganizer(Long organizerId) {
         return eventRepository.findByOrganizerId(organizerId).stream()
-                .map(this::convertEntityToDomain)
-                .collect(Collectors.toList());
+                .map(eventMapper::toModel)
+                .toList();
     }
 
-    private Event convertEntityToDomain(EventEntity entity) {
-        Event event = new Event();
-        event.setId(entity.getId());
-        event.setName(entity.getName());
-        event.setDescription(entity.getDescription());
-        event.setEventDate(entity.getEventDate());
-        event.setGenre(entity.getGenre());
-        event.setTicketPrice(entity.getTicketPrice());
-        event.setMaxTickets(entity.getMaxTickets());
-        event.setAvailableTickets(entity.getAvailableTickets());
-        event.setImageUrl(entity.getImageUrl());
-        event.setCreatedAt(entity.getCreatedAt());
-        event.setUpdatedAt(entity.getUpdatedAt());
-        event.setIsActive(entity.getIsActive());
-        event.setOrganizerId(entity.getOrganizerId());
-        return event;
+    private @NonNull Long requireEventId(Long id) {
+        if (id == null) {
+            throw new EventNotFound("Event id must not be null");
+        }
+        return id;
     }
 }
