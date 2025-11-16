@@ -73,9 +73,6 @@ export default function Navigation() {
             </Link>
             {isAuthenticated && (
               <>
-                <Link href="/tickets" className="text-muted-foreground hover:text-foreground transition-colors" data-cy="nav-tickets">
-                  My Tickets
-                </Link>
                 {(userRole === "ADMIN" || userRole === "ORGANIZER") && (
                   <Link href="/create" className="text-muted-foreground hover:text-foreground transition-colors" data-cy="nav-create">
                     + Create Event
@@ -136,9 +133,6 @@ export default function Navigation() {
               </Link>
               {isAuthenticated && (
                 <>
-                  <Link href="/tickets" className="block px-3 py-2 text-muted-foreground hover:text-foreground" data-cy="nav-tickets-mobile">
-                    My Tickets
-                  </Link>
                   {(userRole === "ADMIN" || userRole === "ORGANIZER") && (
                     <Link href="/create" className="block px-3 py-2 text-muted-foreground hover:text-foreground" data-cy="nav-create-mobile">
                       + Create Event
