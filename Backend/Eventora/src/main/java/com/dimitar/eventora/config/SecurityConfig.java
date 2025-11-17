@@ -19,6 +19,7 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
+    @SuppressWarnings("java:S5122") // Safe because the API is stateless and authenticated via bearer JWTs, not cookies.
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(c -> {  })
