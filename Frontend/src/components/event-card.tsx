@@ -94,9 +94,16 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
 
         <div className="relative z-10 p-8 h-96 flex flex-col justify-between">
           <div className="flex justify-between items-start">
-            <Badge className={`${getStatusColor(eventDetails.isActive)} font-medium text-sm`}>
-              {eventDetails.isActive ? "✓ ACTIVE" : "✕ INACTIVE"}
-            </Badge>
+            <div className="flex flex-wrap gap-2">
+              <Badge className={`${getStatusColor(eventDetails.isActive)} font-medium text-sm`}>
+                {eventDetails.isActive ? "✓ ACTIVE" : "✕ INACTIVE"}
+              </Badge>
+              {isSoldOut && (
+                <Badge className="bg-destructive/80 text-destructive-foreground font-medium text-sm">
+                  Sold Out
+                </Badge>
+              )}
+            </div>
             <Badge variant="outline" className="bg-card/50 text-foreground border-border backdrop-blur-sm text-sm">
               {eventDetails.genre}
             </Badge>
@@ -198,7 +205,12 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   <Users className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Available Tickets</p>
-                    <p className="font-semibold" data-cy="event-available-tickets">{eventDetails.availableTickets} / {eventDetails.maxTickets}</p>
+                    <p className="font-semibold flex items-center gap-2" data-cy="event-available-tickets">
+                      {eventDetails.availableTickets} / {eventDetails.maxTickets}
+                      {isSoldOut && (
+                        <Badge className="bg-destructive/80 text-destructive-foreground text-xs">Sold Out</Badge>
+                      )}
+                    </p>
                   </div>
                 </div>
 
@@ -276,7 +288,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                 )}
 
                 <Button
-                  className="w-full glow-effect"
+                  className={`w-full glow-effect ${(!canPurchase || isBuying) ? "opacity-60 cursor-not-allowed" : ""}`}
                   size="lg"
                   disabled={!canPurchase || isBuying}
                   onClick={handleTicketPurchase}
