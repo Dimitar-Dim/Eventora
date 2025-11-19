@@ -35,6 +35,8 @@ import static org.mockito.Mockito.*;
 @SuppressWarnings({"null", "NullAway"})
 class EventServiceTest {
 
+    private static final Long REQUESTER_ID = 1L;
+
     @Mock
     private EventRepository eventRepository;
 
@@ -169,7 +171,7 @@ class EventServiceTest {
         when(eventRepository.save(any(EventEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        Event result = eventService.updateEvent(eventId, updateRequest);
+        Event result = eventService.updateEvent(eventId, updateRequest, REQUESTER_ID, false);
 
         // Assert
         assertNotNull(result);
@@ -196,7 +198,7 @@ class EventServiceTest {
 
         // Act & Assert
         assertThrows(EventNotFound.class, () -> {
-            eventService.updateEvent(invalidId, validEventRequest);
+            eventService.updateEvent(invalidId, validEventRequest, REQUESTER_ID, false);
         });
 
         verify(eventRepository, times(1)).findById(invalidId);
@@ -210,7 +212,7 @@ class EventServiceTest {
         
         // Act & Assert
         assertThrows(EventNotFound.class, () -> {
-            eventService.updateEvent(null, validEventRequest);
+            eventService.updateEvent(null, validEventRequest, REQUESTER_ID, false);
         });
 
         verify(eventRepository, never()).findById(anyLong());
@@ -229,7 +231,7 @@ class EventServiceTest {
         when(eventRepository.save(any(EventEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        eventService.deleteEvent(eventId);
+        eventService.deleteEvent(eventId, REQUESTER_ID, false);
 
         // Assert
         ArgumentCaptor<EventEntity> eventCaptor = ArgumentCaptor.forClass(EventEntity.class);
@@ -251,7 +253,7 @@ class EventServiceTest {
 
         // Act & Assert
         assertThrows(EventNotFound.class, () -> {
-            eventService.deleteEvent(invalidId);
+            eventService.deleteEvent(invalidId, REQUESTER_ID, false);
         });
 
         verify(eventRepository, times(1)).findById(invalidId);
@@ -266,7 +268,7 @@ class EventServiceTest {
         
         // Act & Assert
         assertThrows(EventNotFound.class, () -> {
-            eventService.deleteEvent(null);
+            eventService.deleteEvent(null, REQUESTER_ID, false);
         });
 
         verify(eventRepository, never()).findById(anyLong());
@@ -405,7 +407,7 @@ class EventServiceTest {
         when(eventRepository.save(any(EventEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        Event result = eventService.deactivateEvent(eventId);
+        Event result = eventService.deactivateEvent(eventId, REQUESTER_ID, false);
 
         // Assert
         assertNotNull(result);
@@ -432,7 +434,7 @@ class EventServiceTest {
         when(eventRepository.save(any(EventEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        Event result = eventService.deactivateEvent(eventId);
+        Event result = eventService.deactivateEvent(eventId, REQUESTER_ID, false);
 
         // Assert
         assertNotNull(result);
@@ -451,7 +453,7 @@ class EventServiceTest {
 
         // Act & Assert
         assertThrows(EventNotFound.class, () -> {
-            eventService.deactivateEvent(invalidId);
+            eventService.deactivateEvent(invalidId, REQUESTER_ID, false);
         });
 
         verify(eventRepository, times(1)).findById(invalidId);
@@ -465,7 +467,7 @@ class EventServiceTest {
         
         // Act & Assert
         assertThrows(EventNotFound.class, () -> {
-            eventService.deactivateEvent(null);
+            eventService.deactivateEvent(null, REQUESTER_ID, false);
         });
 
         verify(eventRepository, never()).findById(anyLong());

@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -51,20 +52,29 @@ public class EventController {
 
     @PutMapping("/{id}")
     public ResponseEntity<EventResponse> updateEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id,
-                                                     @Valid @RequestBody EventRequest request) {
-        Event event = eventService.updateEvent(id, request);
+                                                     @Valid @RequestBody EventRequest request,
+                                                     Authentication authentication) {
+        Long requesterId = extractUserId(authentication);
+        boolean canManageAll = hasAdminPrivileges(authentication);
+        Event event = eventService.updateEvent(id, request, requesterId, canManageAll);
         return ResponseEntity.ok(eventDtoMapper.toResponse(event));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id) {
-        eventService.deleteEvent(id);
+    public ResponseEntity<Void> deleteEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id,
+                                            Authentication authentication) {
+        Long requesterId = extractUserId(authentication);
+        boolean canManageAll = hasAdminPrivileges(authentication);
+        eventService.deleteEvent(id, requesterId, canManageAll);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<EventResponse> deactivateEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id) {
-        Event event = eventService.deactivateEvent(id);
+    public ResponseEntity<EventResponse> deactivateEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id,
+                                                         Authentication authentication) {
+        Long requesterId = extractUserId(authentication);
+        boolean canManageAll = hasAdminPrivileges(authentication);
+        Event event = eventService.deactivateEvent(id, requesterId, canManageAll);
         return ResponseEntity.ok(eventDtoMapper.toResponse(event));
     }
 
@@ -104,5 +114,14 @@ public class EventController {
         } catch (NumberFormatException ex) {
             throw new UnauthorizedException();
         }
+    }
+
+    private boolean hasAdminPrivileges(Authentication authentication) {
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
     }
 }

@@ -1,0 +1,15 @@
+{
+  "id": 123,
+  "name": "City Lights Festival",
+  "description": "Multi-stage city music festival",
+  "eventDate": "2025-06-01T18:00:00.000Z",
+  "genre": "Rock",
+  "ticketPrice": 49.99,
+  "maxTickets": 500,
+  "availableTickets": 475,
+  "imageUrl": "https://example.com/citylights.jpg",
+  "isActive": true,
+  "organizerId": 1,
+  "createdAt": "2025-05-01T10:00:00.000Z",
+  "updatedAt": "2025-05-05T12:30:00.000Z"
+}
