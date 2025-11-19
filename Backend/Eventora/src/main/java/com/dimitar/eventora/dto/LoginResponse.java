@@ -13,6 +13,6 @@ public record LoginResponse(
         String tokenType,
 
         @JsonProperty("user")
-        UserDTO user
+        UserResponse user
 ) {
 }

@@ -1,8 +1,9 @@
 package com.dimitar.***REMOVED***vice;
 
-import com.dimitar.eventora.dto.EventDTO;
+import com.dimitar.eventora.dto.EventRequest;
 import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.eventora.exception.EventNotFound;
+import com.dimitar.eventora.mapper.EventDtoMapper;
 import com.dimitar.eventora.mapper.EventMapper;
 import com.dimitar.eventora.model.Event;
 import com.dimitar.eventora.model.Genre;
@@ -40,23 +41,18 @@ class EventServiceTest {
     @Spy
     private EventMapper eventMapper = new EventMapper();
 
+    @Spy
+    private EventDtoMapper eventDtoMapper = new EventDtoMapper();
+
     @InjectMocks
     private EventServiceImpl eventService;
 
-    private EventDTO validEventRequestDTO;
+    private EventRequest validEventRequest;
     private EventEntity validEventEntity;
 
     @BeforeEach
     void setUp() {
-        validEventRequestDTO = new EventDTO();
-        validEventRequestDTO.setName("Spring Concert");
-        validEventRequestDTO.setDescription("An amazing spring concert featuring local artists");
-        validEventRequestDTO.setEventDate(LocalDateTime.of(2025, 6, 15, 19, 0));
-        validEventRequestDTO.setGenre(Genre.Rock);
-        validEventRequestDTO.setTicketPrice(new BigDecimal("49.99"));
-        validEventRequestDTO.setMaxTickets(500);
-        validEventRequestDTO.setImageUrl("https://example.com/concert.jpg");
-        validEventRequestDTO.setOrganizerId(1L);
+        validEventRequest = buildEventRequest();
 
         validEventEntity = buildEventEntity();
     }
@@ -67,18 +63,18 @@ class EventServiceTest {
         when(eventRepository.save(any(EventEntity.class))).thenReturn(validEventEntity);
 
         // Act
-        Event result = eventService.createEvent(validEventRequestDTO);
+        Event result = eventService.createEvent(validEventRequest);
 
         // Assert
         assertNotNull(result);
-        assertEquals(validEventRequestDTO.getName(), result.getName());
-        assertEquals(validEventRequestDTO.getDescription(), result.getDescription());
-        assertEquals(validEventRequestDTO.getEventDate(), result.getEventDate());
-        assertEquals(validEventRequestDTO.getGenre(), result.getGenre());
-        assertEquals(validEventRequestDTO.getTicketPrice(), result.getTicketPrice());
-        assertEquals(validEventRequestDTO.getMaxTickets(), result.getMaxTickets());
-        assertEquals(validEventRequestDTO.getImageUrl(), result.getImageUrl());
-        assertEquals(validEventRequestDTO.getOrganizerId(), result.getOrganizerId());
+        assertEquals(validEventRequest.name(), result.getName());
+        assertEquals(validEventRequest.description(), result.getDescription());
+        assertEquals(validEventRequest.eventDate(), result.getEventDate());
+        assertEquals(validEventRequest.genre(), result.getGenre());
+        assertEquals(validEventRequest.ticketPrice(), result.getTicketPrice());
+        assertEquals(validEventRequest.maxTickets(), result.getMaxTickets());
+        assertEquals(validEventRequest.imageUrl(), result.getImageUrl());
+        assertEquals(validEventRequest.organizerId(), result.getOrganizerId());
 
         verify(eventRepository, times(1)).save(any(EventEntity.class));
     }
@@ -90,7 +86,7 @@ class EventServiceTest {
         when(eventRepository.save(any(EventEntity.class))).thenReturn(validEventEntity);
 
         // Act
-        eventService.createEvent(validEventRequestDTO);
+        eventService.createEvent(validEventRequest);
 
         // Assert
         verify(eventRepository).save(eventCaptor.capture());
@@ -106,7 +102,7 @@ class EventServiceTest {
         when(eventRepository.save(any(EventEntity.class))).thenReturn(validEventEntity);
 
         // Act
-        eventService.createEvent(validEventRequestDTO);
+        eventService.createEvent(validEventRequest);
 
         // Assert
         verify(eventRepository).save(eventCaptor.capture());
@@ -155,15 +151,16 @@ class EventServiceTest {
     void updateEvent_ValidData_UpdatesSuccessfully() {
         // Arrange
         Long eventId = 1L;
-        EventDTO updateDTO = new EventDTO();
-        updateDTO.setName("Updated Concert");
-        updateDTO.setDescription("Updated description");
-        updateDTO.setEventDate(LocalDateTime.of(2025, 7, 20, 20, 0));
-        updateDTO.setGenre(Genre.Jazz);
-        updateDTO.setTicketPrice(new BigDecimal("59.99"));
-        updateDTO.setMaxTickets(600);
-        updateDTO.setImageUrl("https://example.com/updated.jpg");
-        updateDTO.setOrganizerId(1L);
+        EventRequest updateRequest = new EventRequest(
+            "Updated Concert",
+            "Updated description",
+            LocalDateTime.of(2025, 7, 20, 20, 0),
+            Genre.Jazz,
+            new BigDecimal("59.99"),
+            600,
+            "https://example.com/updated.jpg",
+            1L
+        );
 
         EventEntity existingEvent = buildEventEntity();
         LocalDateTime originalCreatedAt = existingEvent.getCreatedAt();
@@ -172,17 +169,17 @@ class EventServiceTest {
         when(eventRepository.save(any(EventEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        Event result = eventService.updateEvent(eventId, updateDTO);
+        Event result = eventService.updateEvent(eventId, updateRequest);
 
         // Assert
         assertNotNull(result);
-        assertEquals(updateDTO.getName(), result.getName());
-        assertEquals(updateDTO.getDescription(), result.getDescription());
-        assertEquals(updateDTO.getEventDate(), result.getEventDate());
-        assertEquals(updateDTO.getGenre(), result.getGenre());
-        assertEquals(updateDTO.getTicketPrice(), result.getTicketPrice());
-        assertEquals(updateDTO.getMaxTickets(), result.getMaxTickets());
-        assertEquals(updateDTO.getImageUrl(), result.getImageUrl());
+        assertEquals(updateRequest.name(), result.getName());
+        assertEquals(updateRequest.description(), result.getDescription());
+        assertEquals(updateRequest.eventDate(), result.getEventDate());
+        assertEquals(updateRequest.genre(), result.getGenre());
+        assertEquals(updateRequest.ticketPrice(), result.getTicketPrice());
+        assertEquals(updateRequest.maxTickets(), result.getMaxTickets());
+        assertEquals(updateRequest.imageUrl(), result.getImageUrl());
         assertEquals(originalCreatedAt, result.getCreatedAt()); // createdAt should not change
 
         verify(eventRepository, times(1)).findById(eventId);
@@ -199,7 +196,7 @@ class EventServiceTest {
 
         // Act & Assert
         assertThrows(EventNotFound.class, () -> {
-            eventService.updateEvent(invalidId, validEventRequestDTO);
+            eventService.updateEvent(invalidId, validEventRequest);
         });
 
         verify(eventRepository, times(1)).findById(invalidId);
@@ -213,7 +210,7 @@ class EventServiceTest {
         
         // Act & Assert
         assertThrows(EventNotFound.class, () -> {
-            eventService.updateEvent(null, validEventRequestDTO);
+            eventService.updateEvent(null, validEventRequest);
         });
 
         verify(eventRepository, never()).findById(anyLong());
@@ -489,5 +486,18 @@ class EventServiceTest {
         event.setIsActive(true);
         event.setOrganizerId(1L);
         return event;
+    }
+
+    private EventRequest buildEventRequest() {
+        return new EventRequest(
+                "Spring Concert",
+                "An amazing spring concert featuring local artists",
+                LocalDateTime.of(2025, 6, 15, 19, 0),
+                Genre.Rock,
+                new BigDecimal("49.99"),
+                500,
+                "https://example.com/concert.jpg",
+                1L
+        );
     }
 }

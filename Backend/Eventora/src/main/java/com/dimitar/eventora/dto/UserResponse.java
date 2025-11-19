@@ -2,7 +2,7 @@ package com.dimitar.eventora.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record UserDTO(
+public record UserResponse(
         String id,
         String username,
         String email,

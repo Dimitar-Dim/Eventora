@@ -4,7 +4,7 @@ import com.dimitar.eventora.dto.LoginRequest;
 import com.dimitar.eventora.dto.LoginResponse;
 import com.dimitar.eventora.dto.RegisterRequest;
 import com.dimitar.eventora.dto.RegisterResponse;
-import com.dimitar.***REMOVED***DTO;
+import com.dimitar.***REMOVED***Response;
 import com.dimitar.***REMOVED***vice.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +37,8 @@ public class AuthController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<UserDTO> getProfile(Authentication authentication) {
-        UserDTO userDTO = authService.getProfile(authentication.getName());
-        return ResponseEntity.ok(userDTO);
+    public ResponseEntity<UserResponse> getProfile(Authentication authentication) {
+        UserResponse userResponse = authService.getProfile(authentication.getName());
+        return ResponseEntity.ok(userResponse);
     }
 }
