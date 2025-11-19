@@ -4,10 +4,11 @@ import com.dimitar.eventora.dto.LoginRequest;
 import com.dimitar.eventora.dto.LoginResponse;
 import com.dimitar.eventora.dto.RegisterRequest;
 import com.dimitar.eventora.dto.RegisterResponse;
-import com.dimitar.***REMOVED***DTO;
+import com.dimitar.***REMOVED***Response;
 import com.dimitar.***REMOVED***Entity;
 import com.dimitar.eventora.exception.UnauthorizedException;
 import com.dimitar.***REMOVED***AlreadyExistsException;
+import com.dimitar.***REMOVED***DtoMapper;
 import com.dimitar.***REMOVED***Mapper;
 import com.dimitar.***REMOVED***;
 import com.dimitar.***REMOVED***Role;
@@ -25,6 +26,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserMapper userMapper;
+    private final UserDtoMapper userDtoMapper;
 
     @Override
     @Transactional
@@ -48,6 +50,7 @@ public class AuthServiceImpl implements AuthService {
                 .role(UserRole.USER)
                 .build();
 
+        @SuppressWarnings("null")
         UserEntity savedUser = userRepository.save(user);
 
         return new RegisterResponse(
@@ -73,33 +76,18 @@ public class AuthServiceImpl implements AuthService {
         String jwt = jwtService.createJwt(user.getId(), user.getRole().name());
         long expiresIn = jwtService.getTtlSeconds();
 
-        UserDTO userDTO = new UserDTO(
-                user.getId().toString(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole().name().toLowerCase(),
-                user.getCreatedAt().toString(),
-                user.getUpdatedAt().toString()
-        );
+        UserResponse userResponse = userDtoMapper.toResponse(user);
 
-        return new LoginResponse(jwt, expiresIn, "Bearer", userDTO);
+        return new LoginResponse(jwt, expiresIn, "Bearer", userResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public UserDTO getProfile(String userId) {
+        public UserResponse getProfile(String userId) {
         UserEntity userEntity = userRepository.findById(Long.parseLong(userId))
                 .orElseThrow(UnauthorizedException::new);
 
         User user = userMapper.toModel(userEntity);
-
-        return new UserDTO(
-                user.getId().toString(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole().name().toLowerCase(),
-                user.getCreatedAt().toString(),
-                user.getUpdatedAt().toString()
-        );
+        return userDtoMapper.toResponse(user);
     }
 }

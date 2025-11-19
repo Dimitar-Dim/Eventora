@@ -4,9 +4,11 @@ import com.dimitar.eventora.dto.LoginRequest;
 import com.dimitar.eventora.dto.LoginResponse;
 import com.dimitar.eventora.dto.RegisterRequest;
 import com.dimitar.eventora.dto.RegisterResponse;
+import com.dimitar.***REMOVED***Response;
 import com.dimitar.***REMOVED***Entity;
 import com.dimitar.eventora.exception.UnauthorizedException;
 import com.dimitar.***REMOVED***AlreadyExistsException;
+import com.dimitar.***REMOVED***DtoMapper;
 import com.dimitar.***REMOVED***Mapper;
 import com.dimitar.***REMOVED***;
 import com.dimitar.***REMOVED***Role;
@@ -30,6 +32,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService Tests")
+@SuppressWarnings({"null", "NullAway"})
 class AuthServiceTest {
 
     @Mock
@@ -44,6 +47,9 @@ class AuthServiceTest {
     @Mock
     private UserMapper userMapper;
 
+        @Mock
+        private UserDtoMapper userDtoMapper;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -51,6 +57,7 @@ class AuthServiceTest {
     private LoginRequest validLoginRequest;
     private UserEntity testUser;
     private User testUserModel;
+        private UserResponse testUserResponse;
 
     @BeforeEach
     void setUp() {
@@ -82,6 +89,16 @@ class AuthServiceTest {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
+
+        testUserResponse = new UserResponse(
+                testUserModel.getId().toString(),
+                testUserModel.getUsername(),
+                testUserModel.getEmail(),
+                testUserModel.getRole().name().toLowerCase(),
+                testUserModel.getCreatedAt().toString(),
+                testUserModel.getUpdatedAt().toString()
+        );
+
     }
 
     @Test
@@ -90,7 +107,7 @@ class AuthServiceTest {
         when(userRepository.existsByUsername(validRegisterRequest.username())).thenReturn(false);
         when(userRepository.existsByEmail(validRegisterRequest.email())).thenReturn(false);
         when(passwordEncoder.encode(validRegisterRequest.password())).thenReturn("$2b$12$hashedpassword");
-        when(userRepository.save(any())).thenReturn(testUser);
+        when(userRepository.save(any(UserEntity.class))).thenReturn(testUser);
 
         RegisterResponse response = authService.register(validRegisterRequest);
 
@@ -103,7 +120,7 @@ class AuthServiceTest {
         verify(userRepository, times(1)).existsByUsername(validRegisterRequest.username());
         verify(userRepository, times(1)).existsByEmail(validRegisterRequest.email());
         verify(passwordEncoder, times(1)).encode(validRegisterRequest.password());
-        verify(userRepository, times(1)).save(any());
+        verify(userRepository, times(1)).save(any(UserEntity.class));
     }
 
     @Test
@@ -121,7 +138,7 @@ class AuthServiceTest {
                 () -> authService.register(mismatchRequest)
         );
         assertEquals("Passwords do not match", exception.getMessage());
-        verify(userRepository, never()).save(any());
+        verify(userRepository, n***REMOVED***Entity.class));
     }
 
     @Test
@@ -134,7 +151,7 @@ class AuthServiceTest {
                 () -> authService.register(validRegisterRequest)
         );
         assertEquals("Username already exists", exception.getMessage());
-        verify(userRepository, never()).save(any());
+        verify(userRepository, n***REMOVED***Entity.class));
     }
 
     @Test
@@ -148,7 +165,7 @@ class AuthServiceTest {
                 () -> authService.register(validRegisterRequest)
         );
         assertEquals("Email already exists", exception.getMessage());
-        verify(userRepository, never()).save(any());
+        verify(userRepository, n***REMOVED***Entity.class));
     }
 
     @Test
@@ -158,7 +175,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(validRegisterRequest.email())).thenReturn(false);
         String encodedPassword = "$2b$12$encoded_hash";
         when(passwordEncoder.encode(validRegisterRequest.password())).thenReturn(encodedPassword);
-        when(userRepository.save(any())).thenReturn(testUser);
+        when(userRepository.save(any(UserEntity.class))).thenReturn(testUser);
 
         authService.register(validRegisterRequest);
 
@@ -175,6 +192,7 @@ class AuthServiceTest {
         when(passwordEncoder.matches(validLoginRequest.password(), testUser.getPasswordHash()))
                 .thenReturn(true);
         when(userMapper.toModel(testUser)).thenReturn(testUserModel);
+        when(userDtoMapper.toResponse(testUserModel)).thenReturn(testUserResponse);
         when(jwtService.createJwt(testUserModel.getId(), testUserModel.getRole().name()))
                 .thenReturn(jwtToken);
         when(jwtService.getTtlSeconds()).thenReturn(900L);
@@ -228,6 +246,7 @@ class AuthServiceTest {
         when(passwordEncoder.matches(mixedCaseRequest.password(), testUser.getPasswordHash()))
                 .thenReturn(true);
         when(userMapper.toModel(testUser)).thenReturn(testUserModel);
+        when(userDtoMapper.toResponse(testUserModel)).thenReturn(testUserResponse);
         when(jwtService.createJwt(testUserModel.getId(), testUserModel.getRole().name()))
                 .thenReturn(jwtToken);
         when(jwtService.getTtlSeconds()).thenReturn(900L);
@@ -249,6 +268,7 @@ class AuthServiceTest {
         when(passwordEncoder.matches(validLoginRequest.password(), testUser.getPasswordHash()))
                 .thenReturn(true);
         when(userMapper.toModel(testUser)).thenReturn(testUserModel);
+        when(userDtoMapper.toResponse(testUserModel)).thenReturn(testUserResponse);
         when(jwtService.createJwt(1L, "USER")).thenReturn(jwtToken);
         when(jwtService.getTtlSeconds()).thenReturn(900L);
 

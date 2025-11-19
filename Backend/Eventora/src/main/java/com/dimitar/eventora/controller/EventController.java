@@ -1,11 +1,13 @@
 package com.dimitar.eventora.controller;
 
-import com.dimitar.eventora.dto.EventDTO;
+import com.dimitar.eventora.dto.EventRequest;
+import com.dimitar.eventora.dto.EventResponse;
 import com.dimitar.eventora.dto.TicketPurchaseRequest;
 import com.dimitar.eventora.dto.TicketPurchaseResponse;
 import com.dimitar.eventora.exception.UnauthorizedException;
 import com.dimitar.eventora.model.Event;
 import com.dimitar.eventora.model.TicketPurchaseSummary;
+import com.dimitar.eventora.mapper.EventDtoMapper;
 import com.dimitar.***REMOVED***vice.EventService;
 import com.dimitar.***REMOVED***vice.TicketService;
 import jakarta.validation.Valid;
@@ -25,30 +27,33 @@ public class EventController {
 
     private final EventService eventService;
     private final TicketService ticketService;
+    private final EventDtoMapper eventDtoMapper;
 
     @PostMapping
-    public ResponseEntity<Event> createEvent(@Valid @RequestBody EventDTO dto) {
-        Event event = eventService.createEvent(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(event);
+    public ResponseEntity<EventResponse> createEvent(@Valid @RequestBody EventRequest request) {
+        Event event = eventService.createEvent(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(eventDtoMapper.toResponse(event));
     }
 
     @GetMapping
-    public ResponseEntity<List<Event>> getAllEvents() {
-        List<Event> events = eventService.getAllEvents();
+    public ResponseEntity<List<EventResponse>> getAllEvents() {
+        List<EventResponse> events = eventService.getAllEvents().stream()
+                .map(eventDtoMapper::toResponse)
+                .toList();
         return ResponseEntity.ok(events);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Event> getEventById(@PathVariable @Positive(message = "Event ID must be positive") Long id) {
+    public ResponseEntity<EventResponse> getEventById(@PathVariable @Positive(message = "Event ID must be positive") Long id) {
         Event event = eventService.getEventById(id);
-        return ResponseEntity.ok(event);
+        return ResponseEntity.ok(eventDtoMapper.toResponse(event));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Event> updateEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id, 
-                                             @Valid @RequestBody EventDTO dto) {
-        Event event = eventService.updateEvent(id, dto);
-        return ResponseEntity.ok(event);
+    public ResponseEntity<EventResponse> updateEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id,
+                                                     @Valid @RequestBody EventRequest request) {
+        Event event = eventService.updateEvent(id, request);
+        return ResponseEntity.ok(eventDtoMapper.toResponse(event));
     }
 
     @DeleteMapping("/{id}")
@@ -58,9 +63,9 @@ public class EventController {
     }
 
     @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<Event> deactivateEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id) {
+    public ResponseEntity<EventResponse> deactivateEvent(@PathVariable @Positive(message = "Event ID must be positive") Long id) {
         Event event = eventService.deactivateEvent(id);
-        return ResponseEntity.ok(event);
+        return ResponseEntity.ok(eventDtoMapper.toResponse(event));
     }
 
     @PostMapping("/{id}/tickets")

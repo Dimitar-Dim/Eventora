@@ -1,8 +1,9 @@
 package com.dimitar.***REMOVED***vice;
 
-import com.dimitar.eventora.dto.EventDTO;
+import com.dimitar.eventora.dto.EventRequest;
 import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.eventora.exception.EventNotFound;
+import com.dimitar.eventora.mapper.EventDtoMapper;
 import com.dimitar.eventora.mapper.EventMapper;
 import com.dimitar.eventora.model.Event;
 import com.dimitar.eventora.repository.EventRepository;
@@ -19,22 +20,13 @@ public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
+    private final EventDtoMapper eventDtoMapper;
 
     @Override
     @Transactional
-    public Event createEvent(EventDTO dto) {
-        EventEntity entity = new EventEntity();
-        entity.setName(dto.getName());
-        entity.setDescription(dto.getDescription());
-        entity.setEventDate(dto.getEventDate());
-        entity.setGenre(dto.getGenre());
-        entity.setTicketPrice(dto.getTicketPrice());
-        entity.setMaxTickets(dto.getMaxTickets());
-        entity.setAvailableTickets(dto.getMaxTickets());
-        entity.setImageUrl(dto.getImageUrl());
-        entity.setOrganizerId(dto.getOrganizerId());
-        entity.setIsActive(true);
-
+    public Event createEvent(EventRequest request) {
+        EventEntity entity = eventDtoMapper.toEntity(request);
+        @SuppressWarnings("null")
         EventEntity savedEntity = eventRepository.save(entity);
         return eventMapper.toModel(savedEntity);
     }
@@ -50,19 +42,14 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public Event updateEvent(Long id, EventDTO dto) {
+    public Event updateEvent(Long id, EventRequest request) {
         Long eventId = requireEventId(id);
         EventEntity entity = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFound(id));
 
-        entity.setName(dto.getName());
-        entity.setDescription(dto.getDescription());
-        entity.setEventDate(dto.getEventDate());
-        entity.setGenre(dto.getGenre());
-        entity.setTicketPrice(dto.getTicketPrice());
-        entity.setMaxTickets(dto.getMaxTickets());
-        entity.setImageUrl(dto.getImageUrl());
+        eventDtoMapper.updateEntity(request, entity);
 
+        @SuppressWarnings("null")
         EventEntity updatedEntity = eventRepository.save(entity);
         return eventMapper.toModel(updatedEntity);
     }
@@ -105,6 +92,7 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toModel(updatedEntity);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public List<Event> getEventsByOrganizer(Long organizerId) {
         return eventRepository.findByOrganizerId(organizerId).stream()
