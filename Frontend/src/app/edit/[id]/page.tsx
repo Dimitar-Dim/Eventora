@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAuth } from "@/context/AuthContext"
 
 export default function EditEventPage() {
   const router = useRouter()
@@ -19,10 +20,14 @@ export default function EditEventPage() {
   const searchParams = useSearchParams()
   const eventId = params.id as string
   const isNewEvent = searchParams.get("created") === "true"
+  const { user, isLoading: authLoading } = useAuth()
+  const isAdmin = user?.role === "admin"
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [accessError, setAccessError] = useState<string | null>(null)
+  const [ownerId, setOwnerId] = useState<number | null>(null)
 
   const [formData, setFormData] = useState<IEventFormData>({
     name: "",
@@ -54,6 +59,7 @@ export default function EditEventPage() {
           maxTickets: data.maxTickets,
           imageUrl: data.imageUrl || ""
         })
+        setOwnerId(data.organizerId)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load event")
       } finally {
@@ -65,6 +71,26 @@ export default function EditEventPage() {
       fetchEvent()
     }
   }, [eventId])
+
+  useEffect(() => {
+    if (authLoading || ownerId === null) {
+      return
+    }
+
+    if (!user) {
+      setAccessError("You must be logged in to edit events.")
+      return
+    }
+
+    const matchesOwner = Number(user.id) === ownerId
+    setAccessError(matchesOwner || isAdmin ? null : "You can only edit events you created.")
+  }, [authLoading, ownerId, user, isAdmin])
+
+  useEffect(() => {
+    if (accessError) {
+      showError(accessError)
+    }
+  }, [accessError])
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -82,6 +108,12 @@ export default function EditEventPage() {
     setIsSubmitting(true)
 
     try {
+      if (accessError) {
+        throw new Error(accessError)
+      }
+      if (!user) {
+        throw new Error("You must be logged in to edit events.")
+      }
       if (!formData.name.trim()) throw new Error("Event name is required")
       if (!formData.description.trim()) throw new Error("Description is required")
       if (!formData.eventDate) throw new Error("Event date and time are required")
@@ -101,7 +133,7 @@ export default function EditEventPage() {
         ticketPrice: parseFloat(formData.ticketPrice.toString()),
         maxTickets: parseInt(formData.maxTickets.toString()),
         imageUrl: formData.imageUrl.trim() || null,
-        organizerId: 1
+        organizerId: ownerId ?? Number(user.id)
       }
 
       await eventService.update(parseInt(eventId), requestBody)
@@ -121,10 +153,28 @@ export default function EditEventPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center" data-cy="edit-loading">
         <div className="text-center">
           <p className="text-foreground text-lg">Loading event...</p>
         </div>
+      </div>
+    )
+  }
+
+  if (!authLoading && accessError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center" data-cy="edit-access-denied">
+        <Card className="max-w-md mx-auto border-destructive/40">
+          <CardHeader>
+            <CardTitle className="text-destructive">Access Denied</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-foreground">
+            <p>{accessError}</p>
+            <Button onClick={() => router.push("/events")} variant="outline">
+              Back to events
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -134,7 +184,7 @@ export default function EditEventPage() {
       <section className="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/10" />
         <div className="relative max-w-2xl mx-auto z-10">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-3 text-foreground">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-3 text-foreground" data-cy="edit-title">
             <span className="gradient-text">Edit Event</span>
           </h1>
           <p className="text-muted-foreground text-lg">
@@ -146,7 +196,7 @@ export default function EditEventPage() {
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           {error && (
-            <div className="mb-6 p-4 bg-destructive/20 border border-destructive/50 rounded-lg backdrop-blur-sm">
+            <div className="mb-6 p-4 bg-destructive/20 border border-destructive/50 rounded-lg backdrop-blur-sm" data-cy="edit-error-banner">
               <p className="text-destructive font-medium">✕ {error}</p>
             </div>
           )}
@@ -156,12 +206,12 @@ export default function EditEventPage() {
               <CardTitle className="text-2xl text-foreground">Event Information</CardTitle>
             </CardHeader>
             <CardContent className="pt-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6" data-cy="edit-event-form">
                 <div>
                   <Label htmlFor="name" className="text-sm font-semibold text-foreground">
                     Event Name <span className="text-destructive">*</span>
                   </Label>
-                  <Input
+                    <Input
                     id="name"
                     name="name"
                     type="text"
@@ -169,7 +219,8 @@ export default function EditEventPage() {
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="e.g., Summer Music Festival"
-                    className="mt-2"
+                      className="mt-2"
+                      data-cy="edit-name-input"
                   />
                 </div>
 
@@ -186,6 +237,7 @@ export default function EditEventPage() {
                     placeholder="Tell people about your event..."
                     rows={4}
                     className="mt-2"
+                    data-cy="edit-description-input"
                   />
                 </div>
 
@@ -202,6 +254,7 @@ export default function EditEventPage() {
                       value={formData.eventDate}
                       onChange={handleInputChange}
                       className="mt-2"
+                      data-cy="edit-date-input"
                     />
                   </div>
                   <div>
@@ -209,7 +262,7 @@ export default function EditEventPage() {
                       Genre <span className="text-destructive">*</span>
                     </Label>
                     <Select value={formData.genre} onValueChange={(value) => setFormData(prev => ({ ...prev, genre: value }))}>
-                      <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30">
+                      <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30" data-cy="edit-genre-select">
                         <SelectValue placeholder="Select a genre" />
                       </SelectTrigger>
                       <SelectContent>
@@ -239,6 +292,7 @@ export default function EditEventPage() {
                       onChange={handleInputChange}
                       placeholder="0.00"
                       className="mt-2"
+                      data-cy="edit-price-input"
                     />
                   </div>
                   <div>
@@ -255,6 +309,7 @@ export default function EditEventPage() {
                       onChange={handleInputChange}
                       placeholder="e.g., 500"
                       className="mt-2"
+                      data-cy="edit-max-tickets-input"
                     />
                   </div>
                 </div>
@@ -271,6 +326,7 @@ export default function EditEventPage() {
                     onChange={handleInputChange}
                     placeholder="https://example.com/image.jpg"
                     className="mt-2"
+                    data-cy="edit-image-input"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Optional: Provide a URL to an image for your event
@@ -283,6 +339,7 @@ export default function EditEventPage() {
                     disabled={isSubmitting}
                     size="lg"
                     className="flex-1 glow-effect"
+                    data-cy="edit-submit"
                   >
                     {isSubmitting ? "Updating..." : "Save Changes"}
                   </Button>
@@ -293,6 +350,7 @@ export default function EditEventPage() {
                     onClick={() => router.back()}
                     className="flex-1"
                     disabled={isSubmitting}
+                    data-cy="edit-cancel"
                   >
                     Cancel
                   </Button>

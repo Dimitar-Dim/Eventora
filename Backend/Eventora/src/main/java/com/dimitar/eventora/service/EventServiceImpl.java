@@ -3,6 +3,8 @@ package com.dimitar.***REMOVED***vice;
 import com.dimitar.eventora.dto.EventRequest;
 import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.eventora.exception.EventNotFound;
+import com.dimitar.eventora.exception.ForbiddenOperationException;
+import com.dimitar.eventora.exception.UnauthorizedException;
 import com.dimitar.eventora.mapper.EventDtoMapper;
 import com.dimitar.eventora.mapper.EventMapper;
 import com.dimitar.eventora.model.Event;
@@ -42,10 +44,13 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public Event updateEvent(Long id, EventRequest request) {
+    public Event updateEvent(Long id, EventRequest request, Long requesterId, boolean canManageAll) {
         Long eventId = requireEventId(id);
+        Long userId = requireUserId(requesterId);
         EventEntity entity = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFound(id));
+
+        ensureOwnership(entity, userId, canManageAll);
 
         eventDtoMapper.updateEntity(request, entity);
 
@@ -56,10 +61,12 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public void deleteEvent(Long id) {
+    public void deleteEvent(Long id, Long requesterId, boolean canManageAll) {
         Long eventId = requireEventId(id);
+        Long userId = requireUserId(requesterId);
         EventEntity entity = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFound(id));
+        ensureOwnership(entity, userId, canManageAll);
         entity.setIsActive(false);
         eventRepository.save(entity);
     }
@@ -83,10 +90,12 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public Event deactivateEvent(Long id) {
+    public Event deactivateEvent(Long id, Long requesterId, boolean canManageAll) {
         Long eventId = requireEventId(id);
+        Long userId = requireUserId(requesterId);
         EventEntity entity = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFound(id));
+        ensureOwnership(entity, userId, canManageAll);
         entity.setIsActive(false);
         EventEntity updatedEntity = eventRepository.save(entity);
         return eventMapper.toModel(updatedEntity);
@@ -105,5 +114,23 @@ public class EventServiceImpl implements EventService {
             throw new EventNotFound("Event id must not be null");
         }
         return id;
+    }
+
+    private @NonNull Long requireUserId(Long requesterId) {
+        if (requesterId == null) {
+            throw new UnauthorizedException("User must be authenticated to perform this action");
+        }
+        return requesterId;
+    }
+
+    private void ensureOwnership(EventEntity entity, Long requesterId, boolean canManageAll) {
+        if (canManageAll) {
+            return;
+        }
+
+        Long ownerId = entity.getOrganizerId();
+        if (ownerId == null || !ownerId.equals(requesterId)) {
+            throw new ForbiddenOperationException("You are not allowed to modify this event");
+        }
     }
 }

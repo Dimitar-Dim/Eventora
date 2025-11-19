@@ -1,11 +1,22 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Calendar, CheckCircle2, Clock, Loader2, MapPin, Music, Ticket, Users, AlertTriangle } from "lucide-react"
@@ -21,13 +32,21 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, onViewDetails }: EventCardProps) {
+  const router = useRouter()
   const [showDetails, setShowDetails] = useState(false)
   const [eventDetails, setEventDetails] = useState(event)
   const [issuedTo, setIssuedTo] = useState("")
   const [isBuying, setIsBuying] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [purchaseError, setPurchaseError] = useState<string | null>(null)
   const [purchaseReceipt, setPurchaseReceipt] = useState<IPurchaseTicketResponse | null>(null)
   const { isAuthenticated, user } = useAuth()
+  const ownerId = user ? Number(user.id) : null
+  const isAdmin = user?.role === "admin"
+  const isOwner = ownerId !== null && ownerId === eventDetails.organizerId
+  const canEdit = isOwner || isAdmin
+  const canDelete = canEdit
 
   useEffect(() => {
     setEventDetails(event)
@@ -72,6 +91,27 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       showError(message)
     } finally {
       setIsBuying(false)
+    }
+  }
+
+  const handleEditEvent = () => {
+    setShowDetails(false)
+    router.push(`/edit/${eventDetails.id}`)
+  }
+
+  const handleDeleteEvent = async () => {
+    setIsDeleting(true)
+    try {
+      await eventService.delete(eventDetails.id)
+      showSuccess("Event deleted successfully")
+      setConfirmDeleteOpen(false)
+      setShowDetails(false)
+      router.refresh()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to delete event"
+      showError(message)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -314,7 +354,30 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
               </CardContent>
             </Card>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
+              {canEdit && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="px-4"
+                  onClick={handleEditEvent}
+                  data-cy="event-edit-button"
+                >
+                  Edit Event
+                </Button>
+              )}
+              {canDelete && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="px-4"
+                  onClick={() => setConfirmDeleteOpen(true)}
+                  data-cy="event-delete-button"
+                  disabled={isDeleting}
+                >
+                  Delete
+                </Button>
+              )}
               <Button variant="outline" size="lg" className="flex-1">
                 Share Event
               </Button>
@@ -322,6 +385,28 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the event from listings for everyone. You can’t undo this action.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteEvent}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+              data-cy="confirm-delete-event"
+            >
+              {isDeleting ? "Deleting..." : "Yes, delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

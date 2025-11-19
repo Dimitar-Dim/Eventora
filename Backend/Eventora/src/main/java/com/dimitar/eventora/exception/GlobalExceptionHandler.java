@@ -52,6 +52,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    @ExceptionHandler(ForbiddenOperationException.class)
+    public ResponseEntity<Map<String, Object>> handleForbiddenOperation(ForbiddenOperationException ex, WebRequest request) {
+        Map<String, Object> error = buildErrorBody(HttpStatus.FORBIDDEN, "Forbidden", ex.getMessage(), request);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
     @ExceptionHandler(TicketPurchaseException.class)
     public ResponseEntity<Map<String, Object>> handleTicketPurchaseException(TicketPurchaseException ex, WebRequest request) {
         Map<String, Object> error = buildErrorBody(HttpStatus.CONFLICT, "Ticket Purchase Failed", ex.getMessage(), request);
