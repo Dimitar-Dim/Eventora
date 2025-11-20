@@ -1,12 +1,39 @@
+const AUTH_TOKEN_KEY = 'accessToken';
+const AUTH_TOKEN_TYPE_KEY = 'tokenType';
+const AUTH_TOKEN_EXPIRATION_KEY = 'tokenExpiration';
+
+const mockUser = {
+  id: '1',
+  username: 'Organizer One',
+  email: 'organizer@example.com',
+  role: 'organizer',
+  createdAt: '2025-01-01T00:00:00.000Z',
+  updatedAt: '2025-01-02T00:00:00.000Z'
+};
+
+const setAuthStorage = (win: Window) => {
+  win.localStorage.setItem(AUTH_TOKEN_KEY, 'fake.jwt.token');
+  win.localStorage.setItem(AUTH_TOKEN_TYPE_KEY, 'Bearer');
+  win.localStorage.setItem(AUTH_TOKEN_EXPIRATION_KEY, `${Date.now() + 60 * 60 * 1000}`);
+};
+
 describe('Edit Event Page', () => {
   const eventId = 123;
 
+  const visitEditPage = () => {
+    cy.visit(`/edit/${eventId}`, {
+      onBeforeLoad: setAuthStorage
+    });
+  };
+
   beforeEach(() => {
+    cy.intercept('GET', `**/api/auth/profile`, { body: mockUser }).as('getProfile');
     cy.intercept('GET', `**/api/events/${eventId}`, { fixture: 'event-detail.json' }).as('getEvent');
   });
 
   it('loads existing event details into the form', () => {
-    cy.visit(`/edit/${eventId}`);
+    visitEditPage();
+    cy.wait('@getProfile');
     cy.wait('@getEvent');
 
     cy.get('[data-cy="edit-title"]').should('contain.text', 'Edit Event');
@@ -34,7 +61,8 @@ describe('Edit Event Page', () => {
       });
     }).as('updateEvent');
 
-    cy.visit(`/edit/${eventId}`);
+    visitEditPage();
+    cy.wait('@getProfile');
     cy.wait('@getEvent');
 
     cy.get('[data-cy="edit-name-input"]').clear().type('Updated City Lights');
@@ -45,6 +73,6 @@ describe('Edit Event Page', () => {
     cy.get('[data-cy="edit-submit"]').click();
 
     cy.wait('@updateEvent');
-    cy.contains('Event updated successfully', { timeout: 5000 }).should('be.visible');
+    cy.contains(/Event updated successfully/i, { timeout: 5000 }).should('be.visible');
   });
 });
