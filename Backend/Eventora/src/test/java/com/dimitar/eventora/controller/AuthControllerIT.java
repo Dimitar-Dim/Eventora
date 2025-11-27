@@ -56,22 +56,22 @@ class AuthControllerIT extends PostgresIntegrationTest {
     @Test
     void register_shouldPersistUserAndReturnCreatedResponse() throws Exception {
         RegisterRequest request = new RegisterRequest(
-                "jane",
-                "jane@example.com",
-                "***REMOVED***",
-                "***REMOVED***"
+            "jane",
+            "548399@student.fontys.nl",
+            "***REMOVED***",
+            "***REMOVED***"
         );
 
         mockMvc.perform(post("/api/auth/register")
-                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
-                .content(Objects.requireNonNull(objectMapper.writeValueAsBytes(request))))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber())
-                .andExpect(jsonPath("$.username").value("jane"))
-                .andExpect(jsonPath("$.email").value("jane@example.com"))
-                .andExpect(jsonPath("$.role").value("USER"));
+            .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+            .content(Objects.requireNonNull(objectMapper.writeValueAsBytes(request))))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").isNumber())
+            .andExpect(jsonPath("$.username").value("jane"))
+            .andExpect(jsonPath("$.email").value("548399@student.fontys.nl"))
+            .andExpect(jsonPath("$.role").value("USER"));
 
-        assertThat(userRepository.findByEmailIgnoreCase("jane@example.com")).isPresent();
+        assertThat(userRepository.findByEmailIgnoreCase("548399@student.fontys.nl")).isPresent();
     }
 
     @Test
