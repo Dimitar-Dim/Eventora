@@ -20,6 +20,8 @@ public class UserMapper {
                 .role(entity.getRole())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .verified(entity.isVerified())
+                .verifiedAt(entity.getVerifiedAt())
                 .build();
     }
 }

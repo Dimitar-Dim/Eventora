@@ -7,9 +7,12 @@ public record UserResponse(
         String username,
         String email,
         String role,
+        boolean verified,
         @JsonProperty("createdAt")
         String createdAt,
         @JsonProperty("updatedAt")
-        String updatedAt
+        String updatedAt,
+        @JsonProperty("verifiedAt")
+        String verifiedAt
 ) {
 }

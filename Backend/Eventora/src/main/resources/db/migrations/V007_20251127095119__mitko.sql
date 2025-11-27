@@ -1,0 +1,7 @@
+ALTER TABLE "User"
+    ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP;
+
+UPDATE "User"
+SET is_verified = TRUE
+WHERE is_verified = FALSE;

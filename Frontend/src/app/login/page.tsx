@@ -7,10 +7,12 @@ import { showSuccess, showError } from "@/utils/toast"
 import { redirectAfterLogin } from "@/utils/auth"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import { ErrorAlert } from "@/components/form/ErrorAlert"
 import { LoadingButton } from "@/components/form/LoadingButton"
 import { FormCard } from "@/components/form/FormCard"
 import { PageHeader, TermsFooter } from "@/components/layout/PageHeader"
+import { userService } from "@/api/service/userService"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -20,10 +22,15 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null)
+  const [isResending, setIsResending] = useState(false)
+  const [resendMessage, setResendMessage] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setPendingVerificationEmail(null)
+    setResendMessage(null)
     setIsLoading(true)
 
     try {
@@ -34,8 +41,28 @@ export default function LoginPage() {
       const message = err instanceof Error ? err.message : "Login failed"
       showError(message)
       setError(message)
+      if (message.toLowerCase().includes("verif")) {
+        setPendingVerificationEmail(email)
+      }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleResendVerification = async () => {
+    if (!pendingVerificationEmail) return
+    setIsResending(true)
+    setResendMessage(null)
+    try {
+      const response = await userService.resendVerification(pendingVerificationEmail)
+      setResendMessage(response.message)
+      showSuccess(response.message)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to resend verification email"
+      setResendMessage(message)
+      showError(message)
+    } finally {
+      setIsResending(false)
     }
   }
 
@@ -50,6 +77,26 @@ export default function LoginPage() {
         >
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && <ErrorAlert message={error} />}
+
+            {pendingVerificationEmail && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-left space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">Verify your email to continue</p>
+                  <p className="text-xs text-amber-900/80 dark:text-amber-200/80">
+                    We&apos;ve sent a link to {pendingVerificationEmail}. Click it to activate your account or resend the email below.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={isResending}
+                  className="w-full"
+                >
+                  {isResending ? "Sending..." : "Resend verification email"}
+                </Button>
+                {resendMessage && <p className="text-xs text-muted-foreground">{resendMessage}</p>}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground">

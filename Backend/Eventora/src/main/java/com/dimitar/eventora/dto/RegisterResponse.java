@@ -4,6 +4,7 @@ public record RegisterResponse(
         Long id,
         String username,
         String email,
-        String role
+        String role,
+        boolean verificationEmailSent
 ) {
 }

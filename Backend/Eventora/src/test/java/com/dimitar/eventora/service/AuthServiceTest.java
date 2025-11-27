@@ -1,17 +1,25 @@
 package com.dimitar.***REMOVED***vice;
 
+import com.dimitar.eventora.config.MailProperties;
 import com.dimitar.eventora.dto.LoginRequest;
 import com.dimitar.eventora.dto.LoginResponse;
 import com.dimitar.eventora.dto.RegisterRequest;
 import com.dimitar.eventora.dto.RegisterResponse;
+import com.dimitar.eventora.dto.ResendVerificationRequest;
 import com.dimitar.***REMOVED***Response;
+import com.dimitar.eventora.dto.VerificationResponse;
+import com.dimitar.eventora.dto.VerifyAccountRequest;
+import com.dimitar.eventora.email.EmailService;
 import com.dimitar.***REMOVED***Entity;
+import com.dimitar.eventora.entity.VerificationTokenEntity;
+import com.dimitar.eventora.exception.AccountNotVerifiedException;
 import com.dimitar.eventora.exception.UnauthorizedException;
 import com.dimitar.***REMOVED***AlreadyExistsException;
 import com.dimitar.***REMOVED***DtoMapper;
 import com.dimitar.***REMOVED***Mapper;
 import com.dimitar.***REMOVED***;
 import com.dimitar.***REMOVED***Role;
+import com.dimitar.eventora.model.VerificationTokenType;
 import com.dimitar.***REMOVED***Repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +36,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,8 +50,8 @@ class AuthServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private JwtService jwtService;
+        @Mock
+        private JwtService jwtService;
 
     @Mock
     private UserMapper userMapper;
@@ -50,14 +59,24 @@ class AuthServiceTest {
         @Mock
         private UserDtoMapper userDtoMapper;
 
+        @Mock
+        private VerificationService verificationService;
+
+        @Mock
+        private EmailService emailService;
+
+        @Mock
+        private MailProperties mailProperties;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
     private RegisterRequest validRegisterRequest;
     private LoginRequest validLoginRequest;
-    private UserEntity testUser;
-    private User testUserModel;
+        private UserEntity testUser;
+        private User testUserModel;
         private UserResponse testUserResponse;
+        private VerificationTokenEntity verificationToken;
 
     @BeforeEach
     void setUp() {
@@ -79,6 +98,8 @@ class AuthServiceTest {
                 .email("test@example.com")
                 .passwordHash("$2b$12$hashedpassword")
                 .role(UserRole.USER)
+                .verified(true)
+                .verifiedAt(LocalDateTime.now())
                 .build();
 
         testUserModel = User.builder()
@@ -88,6 +109,8 @@ class AuthServiceTest {
                 .role(UserRole.USER)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
+                .verified(true)
+                .verifiedAt(LocalDateTime.now())
                 .build();
 
         testUserResponse = new UserResponse(
@@ -95,9 +118,21 @@ class AuthServiceTest {
                 testUserModel.getUsername(),
                 testUserModel.getEmail(),
                 testUserModel.getRole().name().toLowerCase(),
+                testUserModel.isVerified(),
                 testUserModel.getCreatedAt().toString(),
-                testUserModel.getUpdatedAt().toString()
+                testUserModel.getUpdatedAt().toString(),
+                testUserModel.getVerifiedAt().toString()
         );
+
+        verificationToken = VerificationTokenEntity.builder()
+                .token("verification-token")
+                .user(testUser)
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .build();
+
+        lenient().when(mailProperties.getVerificationBaseUrl()).thenReturn("http://localhost:3000/verify");
+        lenient().when(verificationService.createToken(anyLong(), any(), any())).thenReturn(verificationToken);
+        lenient().doNothing().when(emailService).send(any());
 
     }
 
@@ -116,6 +151,7 @@ class AuthServiceTest {
         assertEquals("testuser", response.username());
         assertEquals("test@example.com", response.email());
         assertEquals("USER", response.role());
+        assertTrue(response.verificationEmailSent());
 
         verify(userRepository, times(1)).existsByUsername(validRegisterRequest.username());
         verify(userRepository, times(1)).existsByEmail(validRegisterRequest.email());
@@ -211,6 +247,18 @@ class AuthServiceTest {
         verify(jwtService, times(1)).createJwt(testUserModel.getId(), testUserModel.getRole().name());
     }
 
+        @Test
+        @DisplayName("Should fail login when account unverified")
+        void testLoginFailsForUnverifiedAccount() {
+                testUser.setVerified(false);
+                when(userRepository.findByEmailIgnoreCase(validLoginRequest.email()))
+                                .thenReturn(Optional.of(testUser));
+                when(passwordEncoder.matches(validLoginRequest.password(), testUser.getPasswordHash()))
+                                .thenReturn(true);
+
+                assertThrows(AccountNotVerifiedException.class, () -> authService.login(validLoginRequest));
+        }
+
     @Test
     @DisplayName("Should fail login when user not found")
     void testLoginUserNotFound() {
@@ -277,5 +325,75 @@ class AuthServiceTest {
         assertNotNull(response);
         assertEquals(jwtToken, response.accessToken());
         verify(jwtService, times(1)).createJwt(1L, "USER");
+    }
+
+    @Test
+    @DisplayName("Should verify account with valid token")
+    void testVerifyAccountSuccess() {
+        UserEntity unverified = UserEntity.builder()
+                .id(2L)
+                .username("newUser")
+                .email("new@example.com")
+                .passwordHash("hash")
+                .role(UserRole.USER)
+                .verified(false)
+                .build();
+
+        VerificationTokenEntity token = VerificationTokenEntity.builder()
+                .token("token-value")
+                .user(unverified)
+                .expiresAt(LocalDateTime.now().plusHours(1))
+                .build();
+
+        when(verificationService.consumeToken("token-value", VerificationTokenType.ACCOUNT_VERIFICATION))
+                .thenReturn(Optional.of(token));
+        when(userRepository.save(unverified)).thenReturn(unverified);
+
+        VerificationResponse response = authService.verifyAccount(new VerifyAccountRequest("token-value"));
+
+        assertTrue(response.success());
+        assertEquals("Account verified successfully", response.message());
+        assertTrue(unverified.isVerified());
+        verify(userRepository).save(unverified);
+    }
+
+    @Test
+    @DisplayName("Should resend verification email for pending account")
+    void testResendVerificationEmail() {
+        UserEntity pending = UserEntity.builder()
+                .id(3L)
+                .username("pending")
+                .email("pending@example.com")
+                .passwordHash("hash")
+                .role(UserRole.USER)
+                .verified(false)
+                .build();
+
+        VerificationTokenEntity pendingToken = VerificationTokenEntity.builder()
+                .token("pending-token")
+                .user(pending)
+                .expiresAt(LocalDateTime.now().plusHours(2))
+                .build();
+
+        when(userRepository.findByEmailIgnoreCase(pending.getEmail())).thenReturn(Optional.of(pending));
+        when(verificationService.createToken(eq(pending.getId()), eq(VerificationTokenType.ACCOUNT_VERIFICATION), any()))
+                .thenReturn(pendingToken);
+
+        VerificationResponse response = authService.resendVerificationEmail(new ResendVerificationRequest(pending.getEmail()));
+
+        assertTrue(response.success());
+        verify(emailService).send(any());
+    }
+
+    @Test
+    @DisplayName("Should not resend verification email for verified account")
+    void testResendSkippedForVerifiedAccount() {
+        when(userRepository.findByEmailIgnoreCase(testUser.getEmail())).thenReturn(Optional.of(testUser));
+
+        VerificationResponse response = authService.resendVerificationEmail(new ResendVerificationRequest(testUser.getEmail()));
+
+        assertFalse(response.success());
+        assertEquals("Account already verified", response.message());
+        verify(emailService, never()).send(any());
     }
 }

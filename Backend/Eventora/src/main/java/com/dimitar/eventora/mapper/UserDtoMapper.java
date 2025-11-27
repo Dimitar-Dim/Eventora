@@ -17,8 +17,10 @@ public class UserDtoMapper {
                 user.getUsername(),
                 user.getEmail(),
                 user.getRole() != null ? user.getRole().name().toLowerCase() : null,
+            user.isVerified(),
                 user.getCreatedAt() != null ? user.getCreatedAt().toString() : null,
-                user.getUpdatedAt() != null ? user.getUpdatedAt().toString() : null
+            user.getUpdatedAt() != null ? user.getUpdatedAt().toString() : null,
+            user.getVerifiedAt() != null ? user.getVerifiedAt().toString() : null
         );
     }
 }
