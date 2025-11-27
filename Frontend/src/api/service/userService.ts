@@ -1,5 +1,5 @@
 import { ApiService } from "../apiService";
-import { IUser, ILoginResponse, IRegisterPayload } from "@/types/auth";
+import { ILoginResponse, IRegisterPayload, IRegisterResponse, IVerificationResponse, IUser } from "@/types/auth";
 
 const apiService = new ApiService();
 
@@ -16,7 +16,7 @@ export const userService = {
 
   /** Register new user */
   register: async (payload: IRegisterPayload) => {
-    return await apiService.post<ILoginResponse>({
+    return await apiService.post<IRegisterResponse>({
       endpoint: "/api/auth/register",
       config: {
         body: payload,
@@ -30,6 +30,26 @@ export const userService = {
       endpoint: "/api/auth/profile",
       config: {
         requiresAuth: true,
+      },
+    });
+  },
+
+  /** Verify account via token */
+  verifyAccount: async (token: string) => {
+    return await apiService.post<IVerificationResponse>({
+      endpoint: "/api/auth/verify",
+      config: {
+        body: { token },
+      },
+    });
+  },
+
+  /** Resend verification email */
+  resendVerification: async (email: string) => {
+    return await apiService.post<IVerificationResponse>({
+      endpoint: "/api/auth/verify/resend",
+      config: {
+        body: { email },
       },
     });
   },

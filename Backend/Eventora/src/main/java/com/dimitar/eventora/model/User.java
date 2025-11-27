@@ -21,6 +21,8 @@ public class User {
     private UserRole role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private boolean verified;
+    private LocalDateTime verifiedAt;
 
     public boolean isAdmin() {
         return role == UserRole.ADMIN;

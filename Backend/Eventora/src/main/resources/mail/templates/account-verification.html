@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Verify your account</title>
+</head>
+<body>
+<p th:text="${'Hello ' + username + ','}">Hello User,</p>
+<p>
+    Please verify your Eventora account by clicking the button below. This link will expire soon for security
+    reasons.
+</p>
+<p>
+    <a th:href="${verificationUrl}" href="#">Verify account</a>
+</p>
+<p>If you did not create an account, you can safely ignore this email.</p>
+</body>
+</html>

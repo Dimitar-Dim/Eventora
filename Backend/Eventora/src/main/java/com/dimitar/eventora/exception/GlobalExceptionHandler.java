@@ -52,6 +52,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    @ExceptionHandler(AccountNotVerifiedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccountNotVerified(AccountNotVerifiedException ex, WebRequest request) {
+        Map<String, Object> error = buildErrorBody(HttpStatus.FORBIDDEN, "Account Not Verified", ex.getMessage(), request);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    @ExceptionHandler(VerificationTokenException.class)
+    public ResponseEntity<Map<String, Object>> handleVerificationToken(VerificationTokenException ex, WebRequest request) {
+        Map<String, Object> error = buildErrorBody(HttpStatus.BAD_REQUEST, "Verification Error", ex.getMessage(), request);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     @ExceptionHandler(ForbiddenOperationException.class)
     public ResponseEntity<Map<String, Object>> handleForbiddenOperation(ForbiddenOperationException ex, WebRequest request) {
         Map<String, Object> error = buildErrorBody(HttpStatus.FORBIDDEN, "Forbidden", ex.getMessage(), request);

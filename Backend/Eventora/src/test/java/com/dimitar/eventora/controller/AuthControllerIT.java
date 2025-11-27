@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -107,12 +108,15 @@ class AuthControllerIT extends PostgresIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @SuppressWarnings({"ConstantConditions", "null"})
     private UserEntity persistUser(String username, String email, String rawPassword, UserRole role) {
         UserEntity entity = UserEntity.builder()
                 .username(username)
                 .email(email)
                 .passwordHash(passwordEncoder.encode(rawPassword))
                 .role(role)
+            .verified(true)
+            .verifiedAt(LocalDateTime.now())
                 .build();
         return Objects.requireNonNull(userRepository.save(entity));
     }

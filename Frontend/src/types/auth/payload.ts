@@ -13,3 +13,16 @@ export interface IRegisterPayload {
   password: string
   passwordConfirm: string
 }
+
+export interface IRegisterResponse {
+  id: string
+  username: string
+  email: string
+  role: string
+  verificationEmailSent: boolean
+}
+
+export interface IVerificationResponse {
+  success: boolean
+  message: string
+}

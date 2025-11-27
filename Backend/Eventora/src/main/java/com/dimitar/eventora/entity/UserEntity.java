@@ -36,6 +36,12 @@ public class UserEntity {
     @Column(nullable = false, length = 50)
     private UserRole role;
 
+    @Column(name = "is_verified", nullable = false)
+    private boolean verified;
+
+    @Column(name = "verified_at")
+    private LocalDateTime verifiedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
