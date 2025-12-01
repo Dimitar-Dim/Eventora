@@ -1,7 +1,9 @@
 package com.dimitar.***REMOVED***vice;
 
+import com.dimitar.eventora.email.EmailService;
 import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.eventora.entity.TicketEntity;
+import com.dimitar.***REMOVED***Entity;
 import com.dimitar.eventora.exception.TicketPurchaseException;
 import com.dimitar.eventora.mapper.EventMapper;
 import com.dimitar.eventora.mapper.TicketMapper;
@@ -11,6 +13,7 @@ import com.dimitar.eventora.model.TicketPurchaseSummary;
 import com.dimitar.eventora.model.TicketStatus;
 import com.dimitar.eventora.repository.EventRepository;
 import com.dimitar.eventora.repository.TicketRepository;
+import com.dimitar.***REMOVED***Repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +32,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyIterable;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,6 +46,15 @@ class TicketServiceTest {
     @Mock
     private TicketRepository ticketRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PDFTicketService pdfTicketService;
+
+    @Mock
+    private EmailService emailService;
+
     @Spy
     private EventMapper eventMapper = new EventMapper();
 
@@ -52,6 +65,7 @@ class TicketServiceTest {
     private TicketServiceImpl ticketService;
 
     private EventEntity activeEvent;
+    private UserEntity ticketOwner;
 
     @BeforeEach
     void setUp() {
@@ -70,6 +84,16 @@ class TicketServiceTest {
                 .createdAt(LocalDateTime.now().minusDays(10))
                 .updatedAt(LocalDateTime.now().minusDays(5))
                 .build();
+
+            ticketOwner = UserEntity.builder()
+                .id(7L)
+                .username("alice")
+                .email("alice@example.com")
+                .build();
+
+            lenient().when(userRepository.findById(anyLong())).thenReturn(Optional.of(ticketOwner));
+            lenient().when(pdfTicketService.generateTicketPdf(anyString(), anyString(), anyString())).thenReturn(new byte[]{1});
+            lenient().doNothing().when(emailService).send(any());
     }
 
     @Test
@@ -93,6 +117,7 @@ class TicketServiceTest {
 
         verify(ticketRepository, times(1)).save(any(TicketEntity.class));
         verify(eventRepository, times(1)).save(any(EventEntity.class));
+        verify(emailService, times(1)).send(any());
     }
 
     @Test

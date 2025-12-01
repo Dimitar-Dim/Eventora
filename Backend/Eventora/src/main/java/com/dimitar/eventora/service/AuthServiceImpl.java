@@ -35,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -169,7 +170,7 @@ public class AuthServiceImpl implements AuthService {
             variables.put("username", savedUser.getUsername());
             variables.put("verificationUrl", buildVerificationUrl(token.getToken()));
 
-            emailService.send(new EmailRequest(savedUser.getEmail(), EmailTemplate.ACCOUNT_VERIFICATION, variables));
+            emailService.send(new EmailRequest(savedUser.getEmail(), EmailTemplate.ACCOUNT_VERIFICATION, variables, List.of()));
             return true;
         } catch (Exception ex) {
             log.error("Failed to send verification email to {}", savedUser.getEmail(), ex);

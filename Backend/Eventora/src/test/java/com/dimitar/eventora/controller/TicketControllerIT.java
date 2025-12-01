@@ -14,15 +14,20 @@ import com.dimitar.eventora.support.PostgresIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.dimitar.eventora.email.EmailService;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Objects;
+import org.mockito.Mockito;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -32,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(TicketControllerIT.TestEmailConfig.class)
 class TicketControllerIT extends PostgresIntegrationTest {
 
     @Autowired
@@ -89,6 +95,7 @@ class TicketControllerIT extends PostgresIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @SuppressWarnings("null")
     private UserEntity persistUser(String username, String email, UserRole role) {
         UserEntity entity = UserEntity.builder()
                 .username(username)
@@ -96,9 +103,10 @@ class TicketControllerIT extends PostgresIntegrationTest {
                 .passwordHash(passwordEncoder.encode("***REMOVED***"))
                 .role(role)
                 .build();
-        return userRepository.saveAndFlush(entity);
+        return Objects.requireNonNull(userRepository.saveAndFlush(entity));
     }
 
+    @SuppressWarnings("null")
     private EventEntity persistEvent(String name, Long organizerId) {
         EventEntity entity = EventEntity.builder()
                 .name(name)
@@ -112,10 +120,18 @@ class TicketControllerIT extends PostgresIntegrationTest {
                 .organizerId(organizerId)
                 .isActive(true)
                 .build();
-            return eventRepository.saveAndFlush(entity);
+                return Objects.requireNonNull(eventRepository.saveAndFlush(entity));
     }
 
     private String bearerToken(Long userId, UserRole role) {
         return "Bearer " + jwtService.createJwt(userId, role.name());
+    }
+
+    @TestConfiguration
+    static class TestEmailConfig {
+        @Bean
+        EmailService emailService() {
+            return Mockito.mock(EmailService.class);
+        }
     }
 }

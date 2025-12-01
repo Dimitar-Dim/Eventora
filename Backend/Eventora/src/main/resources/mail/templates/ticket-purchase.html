@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Your Eventora Ticket</title>
+</head>
+<body>
+<p th:text="${'Hi ' + attendee + ','}">Hi Attendee,</p>
+<p>
+    Thank you for your purchase! Your ticket for <strong th:text="${eventName}">Event Name</strong>
+    is confirmed. Present the attached PDF (including the QR code) when you arrive.
+</p>
+<ul>
+    <li><strong>Event:</strong> <span th:text="${eventName}">Event Name</span></li>
+    <li><strong>Date:</strong> <span th:text="${eventDate}">Event Date</span></li>
+    <li><strong>Ticket ID:</strong> <span th:text="${ticketId}">1234</span></li>
+</ul>
+<p>Keep this email handy and reach out to the organizer if you need assistance.</p>
+<p>Enjoy the show!<br/>The Eventora Team</p>
+</body>
+</html>
