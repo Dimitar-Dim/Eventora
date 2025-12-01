@@ -1,0 +1,13 @@
+Hi [[${attendee}]],
+
+Thank you for purchasing a ticket for [[${eventName}]].
+
+Event: [[${eventName}]]
+Date: [[${eventDate}]]
+Ticket ID: [[${ticketId}]]
+
+Your PDF ticket with QR code is attached to this email. Please bring it (printed or on your phone)
+when you arrive at the venue.
+
+Enjoy the event!
+The Eventora Team
