@@ -12,6 +12,7 @@ import com.dimitar.eventora.dto.VerifyAccountRequest;
 import com.dimitar.eventora.email.EmailRequest;
 import com.dimitar.eventora.email.EmailService;
 import com.dimitar.eventora.email.EmailTemplate;
+import com.dimitar.eventora.email.EmailVerifier;
 import com.dimitar.***REMOVED***Entity;
 import com.dimitar.eventora.entity.VerificationTokenEntity;
 import com.dimitar.eventora.exception.AccountNotVerifiedException;
@@ -53,6 +54,7 @@ public class AuthServiceImpl implements AuthService {
     private final VerificationService verificationService;
     private final EmailService emailService;
     private final MailProperties mailProperties;
+    private final EmailVerifier emailVerifier;
 
     @Override
     @Transactional
@@ -68,6 +70,8 @@ public class AuthServiceImpl implements AuthService {
         if (userRepository.existsByEmail(request.email())) {
             throw new UserAlreadyExistsException("Email already exists");
         }
+
+        emailVerifier.verifyDeliverability(request.email());
 
         UserEntity user = UserEntity.builder()
                 .username(request.username())
@@ -146,6 +150,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public VerificationResponse resendVerificationEmail(ResendVerificationRequest request) {
+        emailVerifier.verifyDeliverability(request.email());
+
         UserEntity user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new IllegalArgumentException("No account found for email"));
 

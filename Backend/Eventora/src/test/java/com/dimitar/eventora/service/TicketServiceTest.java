@@ -1,6 +1,7 @@
 package com.dimitar.***REMOVED***vice;
 
 import com.dimitar.eventora.email.EmailService;
+import com.dimitar.eventora.email.EmailVerifier;
 import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.eventora.entity.TicketEntity;
 import com.dimitar.***REMOVED***Entity;
@@ -55,6 +56,9 @@ class TicketServiceTest {
     @Mock
     private EmailService emailService;
 
+    @Mock
+    private EmailVerifier emailVerifier;
+
     @Spy
     private EventMapper eventMapper = new EventMapper();
 
@@ -94,6 +98,7 @@ class TicketServiceTest {
             lenient().when(userRepository.findById(anyLong())).thenReturn(Optional.of(ticketOwner));
             lenient().when(pdfTicketService.generateTicketPdf(anyString(), anyString(), anyString())).thenReturn(new byte[]{1});
             lenient().doNothing().when(emailService).send(any());
+            lenient().doNothing().when(emailVerifier).verifyDeliverability(anyString());
     }
 
     @Test
@@ -108,7 +113,7 @@ class TicketServiceTest {
         });
         when(eventRepository.save(any(EventEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        TicketPurchaseSummary summary = ticketService.purchaseTicket(1L, 7L, "Alice");
+        TicketPurchaseSummary summary = ticketService.purchaseTicket(1L, 7L, "Alice", null);
 
         assertNotNull(summary);
         assertEquals("Alice", summary.ticket().getIssuedTo());
@@ -120,6 +125,23 @@ class TicketServiceTest {
         verify(emailService, times(1)).send(any());
     }
 
+        @Test
+        @DisplayName("purchaseTicket should reject guest purchases with undeliverable email")
+        void purchaseTicket_InvalidGuestEmail_ThrowsException() {
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(activeEvent));
+        doThrow(new IllegalArgumentException("Email domain must accept mail"))
+            .when(emailVerifier).verifyDeliverability("invalid@fake-domain.test");
+
+        TicketPurchaseException exception = assertThrows(
+            TicketPurchaseException.class,
+            () -> ticketService.purchaseTicket(1L, null, "Guest", "invalid@fake-domain.test")
+        );
+
+        assertEquals("Please provide a valid email address so we can deliver the ticket.", exception.getMessage());
+        verify(ticketRepository, never()).save(any());
+        verify(eventRepository, never()).save(any());
+        }
+
     @Test
     @DisplayName("purchaseTicket should fail when event is inactive")
     void purchaseTicket_InactiveEvent_ThrowsException() {
@@ -127,7 +149,7 @@ class TicketServiceTest {
     inactiveEvent.setIsActive(false);
         when(eventRepository.findById(1L)).thenReturn(Optional.of(inactiveEvent));
 
-        assertThrows(TicketPurchaseException.class, () -> ticketService.purchaseTicket(1L, 7L, "Alice"));
+        assertThrows(TicketPurchaseException.class, () -> ticketService.purchaseTicket(1L, 7L, "Alice", null));
 
         verify(ticketRepository, never()).save(any());
         verify(eventRepository, never()).save(any());

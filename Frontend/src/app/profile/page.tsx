@@ -198,6 +198,9 @@ export default function ProfilePage() {
                       <p className="text-muted-foreground text-sm">
                         {formatDate(ticket.eventDate)} • #{ticket.ticketId}
                       </p>
+                      <p className="text-muted-foreground text-xs">
+                        Seat {ticket.seatSection} • {ticket.seatRow} Seat {ticket.seatNumber}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">

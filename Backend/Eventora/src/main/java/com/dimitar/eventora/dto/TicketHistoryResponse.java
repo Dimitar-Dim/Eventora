@@ -15,6 +15,10 @@ public record TicketHistoryResponse(
         TicketStatus status,
         BigDecimal ticketPrice,
         LocalDateTime purchasedAt,
-        String eventImageUrl
+        String eventImageUrl,
+        String seatSection,
+        String seatRow,
+        String seatNumber,
+        String deliveryEmail
 ) {
 }

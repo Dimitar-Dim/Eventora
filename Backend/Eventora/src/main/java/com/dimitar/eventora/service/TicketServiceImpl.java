@@ -4,6 +4,7 @@ import com.dimitar.eventora.email.EmailAttachment;
 import com.dimitar.eventora.email.EmailRequest;
 import com.dimitar.eventora.email.EmailService;
 import com.dimitar.eventora.email.EmailTemplate;
+import com.dimitar.eventora.email.EmailVerifier;
 import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.eventora.entity.TicketEntity;
 import com.dimitar.***REMOVED***Entity;
@@ -44,7 +45,13 @@ public class TicketServiceImpl implements TicketService {
     private static final String DEFAULT_ISSUED_TO = "Ticket Holder";
     private static final String TICKET_ENTITY_NULL_MESSAGE = "Ticket entity must not be null";
     private static final String EVENT_ENTITY_NULL_MESSAGE = "Event entity must not be null";
-    private static final String USER_ID_NULL_MESSAGE = "User id must not be null";
+    private static final String USER_ID_REQUIRED_MESSAGE = "User id must not be null";
+    private static final String USER_NOT_FOUND_MESSAGE = "We couldn't find your account. Please sign in again.";
+    private static final String DELIVERY_EMAIL_REQUIRED_MESSAGE = "Please provide the email address where we should deliver the ticket.";
+    private static final String DELIVERY_EMAIL_INVALID_MESSAGE = "Please provide a valid email address so we can deliver the ticket.";
+    private static final String ACCOUNT_EMAIL_REQUIRED_MESSAGE = "Your account must have an email address before purchasing tickets.";
+    private static final int SEATS_PER_ROW = 20;
+    private static final int FLOOR_SECTION_ROWS = 5;
     private static final DateTimeFormatter EVENT_DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
 
     private final EventRepository eventRepository;
@@ -54,25 +61,39 @@ public class TicketServiceImpl implements TicketService {
     private final TicketMapper ticketMapper;
     private final PDFTicketService pdfTicketService;
     private final EmailService emailService;
+    private final EmailVerifier emailVerifier;
 
     @Override
     @Transactional
-    public TicketPurchaseSummary purchaseTicket(Long ***REMOVED***Id, String issuedTo) {
+    public TicketPurchaseSummary purchaseTicket(Long ***REMOVED***Id, String issuedTo, String deliveryEmail) {
         Long resolvedEventId = Objects.requireNonNull(eventId, "Event id must not be null");
-        Long resolvedUserId = Objects.requireNonNull(userId, USER_ID_NULL_MESSAGE);
 
         EventEntity event = eventRepository.findById(resolvedEventId)
                 .orElseThrow(() -> new EventNotFound(resolvedEventId));
 
+        UserEntity purchasingUser = null;
+        if (userId != null) {
+            Long resolvedUserId = userId;
+            purchasingUser = userRepository.findById(resolvedUserId)
+                    .orElseThrow(() -> new TicketPurchaseException(USER_NOT_FOUND_MESSAGE));
+        }
+
         validateEventState(event);
         decrementAvailability(event);
 
+        SeatMetadata seatMetadata = assignSeatMetadata(event);
+        String resolvedDeliveryEmail = resolveDeliveryEmail(purchasingUser, deliveryEmail);
+
         TicketEntity ticketEntity = TicketEntity.builder()
                 .eventId(resolvedEventId)
-                .userId(resolvedUserId)
+                .userId(purchasingUser != null ? purchasingUser.getId() : null)
+                .deliveryEmail(resolvedDeliveryEmail)
                 .issuedTo(resolveIssuedTo(issuedTo))
                 .qrCode(UUID.randomUUID().toString())
                 .status(TicketStatus.ACTIVE)
+                .seatSection(seatMetadata.section())
+                .seatRow(seatMetadata.row())
+                .seatNumber(seatMetadata.number())
                 .build();
 
         TicketEntity savedTicket = ticketRepository.save(Objects.requireNonNull(ticketEntity, TICKET_ENTITY_NULL_MESSAGE));
@@ -82,14 +103,14 @@ public class TicketServiceImpl implements TicketService {
         Event updatedEventModel = eventMapper.toModel(updatedEvent);
         TicketPurchaseSummary summary = new TicketPurchaseSummary(ticket, updatedEventModel);
 
-        dispatchTicketEmail(resolvedUserId, summary);
+        dispatchTicketEmail(resolvedDeliveryEmail, summary);
         return summary;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<TicketPurchaseSummary> getTicketsForUser(Long userId) {
-        Long resolvedUserId = Objects.requireNonNull(userId, USER_ID_NULL_MESSAGE);
+        Long resolvedUserId = Objects.requireNonNull(userId, USER_ID_REQUIRED_MESSAGE);
 
         List<TicketEntity> ticketEntities = ticketRepository.findAllByUserIdOrderByCreatedAtDesc(resolvedUserId);
         if (ticketEntities.isEmpty()) {
@@ -144,15 +165,25 @@ public class TicketServiceImpl implements TicketService {
         return issuedTo.trim();
     }
 
-    private void dispatchTicketEmail(Long userId, TicketPurchaseSummary summary) {
-        Long resolvedUserId = Objects.requireNonNull(userId, USER_ID_NULL_MESSAGE);
-        userRepository.findById(resolvedUserId).ifPresentOrElse(
-                user -> sendEmailWithAttachment(user, summary),
-            () -> log.warn("Skipping ticket email because user {} was not found", resolvedUserId)
-        );
+    private SeatMetadata assignSeatMetadata(EventEntity event) {
+        Objects.requireNonNull(event, EVENT_ENTITY_NULL_MESSAGE);
+        long seatsAlreadyAssigned = ticketRepository.countByEventId(event.getId());
+        int rowIndex = (int) (seatsAlreadyAssigned / SEATS_PER_ROW);
+        int seatIndexInRow = (int) (seatsAlreadyAssigned % SEATS_PER_ROW) + 1;
+
+        String seatRow = "R" + (rowIndex + 1);
+        String seatNumber = String.format("%02d", seatIndexInRow);
+        String seatSection = rowIndex < FLOOR_SECTION_ROWS ? "Floor" : "Balcony";
+
+        return new SeatMetadata(seatSection, seatRow, seatNumber);
     }
 
-    private void sendEmailWithAttachment(UserEntity user, TicketPurchaseSummary summary) {
+    private void dispatchTicketEmail(String deliveryEmail, TicketPurchaseSummary summary) {
+        String recipientEmail = Objects.requireNonNull(deliveryEmail, DELIVERY_EMAIL_REQUIRED_MESSAGE);
+        sendEmailWithAttachment(recipientEmail, summary);
+    }
+
+    private void sendEmailWithAttachment(String recipientEmail, TicketPurchaseSummary summary) {
         try {
             byte[] pdfBytes = pdfTicketService.generateTicketPdf(
                     summary.event().getName(),
@@ -173,13 +204,13 @@ public class TicketServiceImpl implements TicketService {
             variables.put("eventDate", formatEventDate(summary.event().getEventDate()));
 
             emailService.send(new EmailRequest(
-                    user.getEmail(),
+                    recipientEmail,
                     EmailTemplate.TICKET_PURCHASE,
                     variables,
                     List.of(attachment)
             ));
         } catch (Exception ex) {
-            log.warn("Failed to email ticket {} to {}", summary.ticket().getId(), user.getEmail(), ex);
+            log.warn("Failed to email ticket {} to {}", summary.ticket().getId(), recipientEmail, ex);
         }
     }
 
@@ -189,4 +220,42 @@ public class TicketServiceImpl implements TicketService {
         }
         return eventDate.format(EVENT_DATE_FORMATTER);
     }
+
+    private String resolveDeliveryEmail(UserEntity purchasingUser, String deliveryEmail) {
+        String normalizedEmail = normalizeEmail(deliveryEmail);
+
+        if (normalizedEmail == null) {
+            if (purchasingUser == null) {
+                throw new TicketPurchaseException(DELIVERY_EMAIL_REQUIRED_MESSAGE);
+            }
+
+            String accountEmail = normalizeEmail(purchasingUser.getEmail());
+            if (accountEmail == null) {
+                throw new TicketPurchaseException(ACCOUNT_EMAIL_REQUIRED_MESSAGE);
+            }
+
+            return verifyOrThrow(accountEmail);
+        }
+
+        return verifyOrThrow(normalizedEmail);
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        String trimmed = email.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String verifyOrThrow(String email) {
+        try {
+            emailVerifier.verifyDeliverability(email);
+            return email;
+        } catch (IllegalArgumentException ex) {
+            throw new TicketPurchaseException(DELIVERY_EMAIL_INVALID_MESSAGE);
+        }
+    }
+
+    private record SeatMetadata(String section, String row, String number) {}
 }

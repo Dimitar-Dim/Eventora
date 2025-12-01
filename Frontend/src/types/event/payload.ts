@@ -15,6 +15,7 @@ export interface IUpdateEventPayload extends Partial<ICreateEventPayload> {
 
 export interface IPurchaseTicketPayload {
   issuedTo?: string
+  deliveryEmail?: string
 }
 
 export interface IPurchaseTicketResponse {
@@ -27,4 +28,8 @@ export interface IPurchaseTicketResponse {
   remainingTickets: number
   pricePaid: number
   purchasedAt: string
+  seatSection: string
+  seatRow: string
+  seatNumber: string
+  deliveryEmail?: string | null
 }

@@ -74,7 +74,7 @@ class TicketControllerIT extends PostgresIntegrationTest {
         EventEntity event = persistEvent("Live Show", organizer.getId());
         UserEntity attendee = persistUser("customer", "customer@example.com", UserRole.USER);
 
-        TicketPurchaseSummary summary = ticketService.purchaseTicket(event.getId(), attendee.getId(), "Customer");
+        TicketPurchaseSummary summary = ticketService.purchaseTicket(event.getId(), attendee.getId(), "Customer", null);
 
         String bearer = bearerToken(attendee.getId(), attendee.getRole());
 
