@@ -50,12 +50,16 @@ export const eventService = {
     });
   },
 
-  /** Purchase a single ticket for the given event (requires auth) */
-  purchaseTicket: async (id: number, payload?: IPurchaseTicketPayload) => {
+  /** Purchase a single ticket for the given event */
+  purchaseTicket: async (
+    id: number,
+    payload?: IPurchaseTicketPayload,
+    options?: { requiresAuth?: boolean }
+  ) => {
     return await apiService.post<IPurchaseTicketResponse>({
       endpoint: `/api/events/${id}/tickets`,
       config: {
-        requiresAuth: true,
+        requiresAuth: options?.requiresAuth ?? false,
         body: payload,
       },
     });

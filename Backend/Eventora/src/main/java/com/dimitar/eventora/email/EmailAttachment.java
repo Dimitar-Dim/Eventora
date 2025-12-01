@@ -2,9 +2,7 @@ package com.dimitar.eventora.email;
 
 import java.util.Arrays;
 
-/**
- * Represents a simple email attachment backed by in-memory bytes.
- */
+//Represents a simple email attachment backed by in-memory bytes.
 public record EmailAttachment(String fileName, byte[] content, String contentType) {
     public EmailAttachment {
         if (fileName == null || fileName.isBlank()) {

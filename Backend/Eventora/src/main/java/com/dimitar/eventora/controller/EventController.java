@@ -84,10 +84,11 @@ public class EventController {
             @Valid @RequestBody(required = false) TicketPurchaseRequest request,
             Authentication authentication) {
 
-        Long userId = extractUserId(authentication);
+        Long userId = extractOptionalUserId(authentication);
         String issuedTo = request != null ? request.issuedTo() : null;
+        String deliveryEmail = request != null ? request.deliveryEmail() : null;
 
-        TicketPurchaseSummary purchaseSummary = ticketService.purchaseTicket(id, userId, issuedTo);
+        TicketPurchaseSummary purchaseSummary = ticketService.purchaseTicket(id, userId, issuedTo, deliveryEmail);
 
         TicketPurchaseResponse response = new TicketPurchaseResponse(
                 purchaseSummary.ticket().getId(),
@@ -98,7 +99,11 @@ public class EventController {
                 purchaseSummary.ticket().getStatus(),
                 purchaseSummary.event().getAvailableTickets(),
                 purchaseSummary.event().getTicketPrice(),
-                purchaseSummary.ticket().getCreatedAt()
+                purchaseSummary.ticket().getCreatedAt(),
+                purchaseSummary.ticket().getSeatSection(),
+                purchaseSummary.ticket().getSeatRow(),
+                purchaseSummary.ticket().getSeatNumber(),
+                purchaseSummary.ticket().getDeliveryEmail()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -123,5 +128,17 @@ public class EventController {
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+    }
+
+    private Long extractOptionalUserId(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(authentication.getName());
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 }

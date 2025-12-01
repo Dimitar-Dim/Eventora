@@ -11,4 +11,7 @@ export interface IUserTicket {
   ticketPrice: number
   purchasedAt: string
   eventImageUrl?: string | null
+  seatSection: string
+  seatRow: string
+  seatNumber: string
 }

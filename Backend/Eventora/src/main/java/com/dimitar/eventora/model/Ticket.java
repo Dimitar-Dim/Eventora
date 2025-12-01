@@ -20,6 +20,10 @@ public class Ticket {
     private String qrCode;
     private TicketStatus status;
     private String issuedTo;
+    private String deliveryEmail;
+    private String seatSection;
+    private String seatRow;
+    private String seatNumber;
     private LocalDateTime createdAt;
     private LocalDateTime usedAt;
 }

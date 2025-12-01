@@ -14,5 +14,9 @@ public record TicketPurchaseResponse(
         TicketStatus status,
         Integer remainingTickets,
         BigDecimal pricePaid,
-        LocalDateTime purchasedAt
+        LocalDateTime purchasedAt,
+        String seatSection,
+        String seatRow,
+        String seatNumber,
+        String deliveryEmail
 ) {}

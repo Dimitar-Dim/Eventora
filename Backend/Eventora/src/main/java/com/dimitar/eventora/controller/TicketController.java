@@ -42,7 +42,11 @@ public class TicketController {
                 summary.ticket().getStatus(),
                 summary.event().getTicketPrice(),
                 summary.ticket().getCreatedAt(),
-                summary.event().getImageUrl()
+                summary.event().getImageUrl(),
+                summary.ticket().getSeatSection(),
+                summary.ticket().getSeatRow(),
+                summary.ticket().getSeatNumber(),
+                summary.ticket().getDeliveryEmail()
         );
     }
 

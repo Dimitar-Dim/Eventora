@@ -27,7 +27,7 @@ public class TicketEntity {
     @Column(name = "event_id", nullable = false)
     private Long eventId;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id")
     private Long userId;
 
     @Column(name = "qr_code", nullable = false, unique = true, length = 255)
@@ -40,6 +40,18 @@ public class TicketEntity {
 
     @Column(name = "issued_to", nullable = false, length = 255)
     private String issuedTo;
+
+    @Column(name = "delivery_email", nullable = false, length = 320)
+    private String deliveryEmail;
+
+    @Column(name = "seat_section", nullable = false, length = 32)
+    private String seatSection;
+
+    @Column(name = "seat_row", nullable = false, length = 16)
+    private String seatRow;
+
+    @Column(name = "seat_number", nullable = false, length = 16)
+    private String seatNumber;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

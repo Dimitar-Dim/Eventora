@@ -10,6 +10,7 @@ import com.dimitar.***REMOVED***Response;
 import com.dimitar.eventora.dto.VerificationResponse;
 import com.dimitar.eventora.dto.VerifyAccountRequest;
 import com.dimitar.eventora.email.EmailService;
+import com.dimitar.eventora.email.EmailVerifier;
 import com.dimitar.***REMOVED***Entity;
 import com.dimitar.eventora.entity.VerificationTokenEntity;
 import com.dimitar.eventora.exception.AccountNotVerifiedException;
@@ -64,6 +65,9 @@ class AuthServiceTest {
 
         @Mock
         private EmailService emailService;
+
+        @Mock
+        private EmailVerifier emailVerifier;
 
         @Mock
         private MailProperties mailProperties;
@@ -133,6 +137,7 @@ class AuthServiceTest {
         lenient().when(mailProperties.getVerificationBaseUrl()).thenReturn("http://localhost:3000/verify");
         lenient().when(verificationService.createToken(anyLong(), any(), any())).thenReturn(verificationToken);
         lenient().doNothing().when(emailService).send(any());
+                lenient().doNothing().when(emailVerifier).verifyDeliverability(anyString());
 
     }
 
@@ -383,6 +388,7 @@ class AuthServiceTest {
 
         assertTrue(response.success());
         verify(emailService).send(any());
+                verify(emailVerifier).verifyDeliverability(pending.getEmail());
     }
 
     @Test
@@ -396,4 +402,22 @@ class AuthServiceTest {
         assertEquals("Account already verified", response.message());
         verify(emailService, never()).send(any());
     }
+
+        @Test
+        @DisplayName("Should fail resend when email verifier rejects address")
+        void testResendVerificationEmailFailsForInvalidAddress() {
+                String badEmail = "invalid@example.com";
+                doThrow(new IllegalArgumentException("Invalid email address"))
+                                .when(emailVerifier).verifyDeliverability(badEmail);
+                ResendVerificationRequest request = new ResendVerificationRequest(badEmail);
+
+                IllegalArgumentException exception = assertThrows(
+                                IllegalArgumentException.class,
+                        () -> authService.resendVerificationEmail(request)
+                );
+
+                assertEquals("Invalid email address", exception.getMessage());
+                verify(userRepository, never()).findByEmailIgnoreCase(anyString());
+                verify(emailService, never()).send(any());
+        }
 }

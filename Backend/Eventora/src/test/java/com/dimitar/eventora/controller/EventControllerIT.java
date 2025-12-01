@@ -112,41 +112,45 @@ class EventControllerIT extends PostgresIntegrationTest {
     void purchaseTicket_shouldReturnSummaryAndDecreaseAvailability() throws Exception {
         UserEntity organizer = persistUser("***REMOVED***Role.ORGANIZER);
         EventEntity event = persistEvent("Community Day", organizer.getId(), 40);
+        Long eventId = Objects.requireNonNull(event.getId());
         int initialAvailability = Objects.requireNonNull(event.getAvailableTickets());
 
         UserEntity attendee = persistUser("attendee", "attendee@example.com", UserRole.USER);
-        TicketPurchaseRequest request = new TicketPurchaseRequest("Alice");
+        TicketPurchaseRequest request = new TicketPurchaseRequest("Alice", null);
         String bearer = bearerToken(attendee.getId(), attendee.getRole());
 
-        mockMvc.perform(post("/api/events/{id}/tickets", event.getId())
+        mockMvc.perform(post("/api/events/{id}/tickets", eventId)
                         .header(HttpHeaders.AUTHORIZATION, bearer)
                         .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                         .content(Objects.requireNonNull(objectMapper.writeValueAsBytes(request))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.ticketId").isNumber())
-                .andExpect(jsonPath("$.eventId").value(event.getId()))
+                .andExpect(jsonPath("$.eventId").value(eventId))
                 .andExpect(jsonPath("$.issuedTo").value("Alice"))
                 .andExpect(jsonPath("$.remainingTickets").value(initialAvailability - 1));
 
         assertThat(ticketRepository.count()).isEqualTo(1);
-        assertThat(eventRepository.findById(event.getId()))
+        assertThat(eventRepository.findById(eventId))
                 .get()
                 .extracting(EventEntity::getAvailableTickets)
                 .isEqualTo(initialAvailability - 1);
     }
 
     @Test
-    void purchaseTicket_withoutTokenShouldReturnUnauthorized() throws Exception {
+    void purchaseTicket_withoutTokenShouldAllowGuestCheckout() throws Exception {
         UserEntity organizer = persistUser("another", "another@example.com", UserRole.ORGANIZER);
         EventEntity event = persistEvent("Developer Meetup", organizer.getId(), 25);
-        TicketPurchaseRequest request = new TicketPurchaseRequest("Guest");
+        Long eventId = Objects.requireNonNull(event.getId());
+        TicketPurchaseRequest request = new TicketPurchaseRequest("Guest", "guest@example.com");
 
-        mockMvc.perform(post("/api/events/{id}/tickets", event.getId())
+        mockMvc.perform(post("/api/events/{id}/tickets", eventId)
                         .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                         .content(Objects.requireNonNull(objectMapper.writeValueAsBytes(request))))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.deliveryEmail").value("guest@example.com"));
     }
 
+    @SuppressWarnings("null")
     private UserEntity persistUser(String username, String email, UserRole role) {
         UserEntity entity = UserEntity.builder()
                 .username(username)
@@ -157,6 +161,7 @@ class EventControllerIT extends PostgresIntegrationTest {
         return Objects.requireNonNull(userRepository.save(entity));
     }
 
+    @SuppressWarnings("null")
     private EventEntity persistEvent(String name, Long organizerId, int maxTickets) {
         EventEntity entity = EventEntity.builder()
                 .name(name)

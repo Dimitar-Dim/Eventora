@@ -19,6 +19,10 @@ public class TicketMapper {
                 .qrCode(entity.getQrCode())
                 .status(entity.getStatus())
                 .issuedTo(entity.getIssuedTo())
+                .deliveryEmail(entity.getDeliveryEmail())
+                .seatSection(entity.getSeatSection())
+                .seatRow(entity.getSeatRow())
+                .seatNumber(entity.getSeatNumber())
                 .createdAt(entity.getCreatedAt())
                 .usedAt(entity.getUsedAt())
                 .build();
