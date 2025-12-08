@@ -5,6 +5,7 @@ import com.dimitar.eventora.dto.TicketPurchaseRequest;
 import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.***REMOVED***Entity;
 import com.dimitar.eventora.model.Genre;
+import com.dimitar.eventora.model.SeatingLayout;
 import com.dimitar.***REMOVED***Role;
 import com.dimitar.eventora.repository.EventRepository;
 import com.dimitar.eventora.repository.TicketRepository;
@@ -76,9 +77,12 @@ class EventControllerIT extends PostgresIntegrationTest {
                 LocalDateTime.now().plusDays(3),
                 Genre.Rock,
                 new BigDecimal("49.99"),
-                150,
-                "https://example.com/event.jpg",
-                organizer.getId()
+            150,
+            150,
+            SeatingLayout.NONE,
+            false,
+            "https://example.com/event.jpg",
+            organizer.getId()
         );
 
         String bearer = bearerToken(organizer.getId(), organizer.getRole());

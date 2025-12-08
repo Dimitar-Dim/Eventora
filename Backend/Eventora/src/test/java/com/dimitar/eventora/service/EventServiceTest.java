@@ -7,6 +7,7 @@ import com.dimitar.eventora.mapper.EventDtoMapper;
 import com.dimitar.eventora.mapper.EventMapper;
 import com.dimitar.eventora.model.Event;
 import com.dimitar.eventora.model.Genre;
+import com.dimitar.eventora.model.SeatingLayout;
 import com.dimitar.eventora.repository.EventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -160,6 +161,9 @@ class EventServiceTest {
             Genre.Jazz,
             new BigDecimal("59.99"),
             600,
+            600,
+            SeatingLayout.FLOOR,
+            true,
             "https://example.com/updated.jpg",
             1L
         );
@@ -484,6 +488,10 @@ class EventServiceTest {
         event.setTicketPrice(new BigDecimal("49.99"));
         event.setMaxTickets(500);
         event.setAvailableTickets(500);
+        event.setStandingCapacity(500);
+        event.setSeatedCapacity(0);
+        event.setHasSeating(false);
+        event.setSeatingLayout(SeatingLayout.NONE);
         event.setImageUrl("https://example.com/concert.jpg");
         event.setIsActive(true);
         event.setOrganizerId(1L);
@@ -498,8 +506,11 @@ class EventServiceTest {
                 Genre.Rock,
                 new BigDecimal("49.99"),
                 500,
-                "https://example.com/concert.jpg",
-                1L
+            500,
+            SeatingLayout.NONE,
+            false,
+            "https://example.com/concert.jpg",
+            1L
         );
     }
 }

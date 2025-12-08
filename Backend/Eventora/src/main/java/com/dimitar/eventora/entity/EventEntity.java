@@ -1,6 +1,7 @@
 package com.dimitar.eventora.entity;
 
 import com.dimitar.eventora.model.Genre;
+import com.dimitar.eventora.model.SeatingLayout;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,6 +46,23 @@ public class EventEntity {
 
     @Column(name = "available_tickets", nullable = false)
     private Integer availableTickets;
+
+    @Column(name = "has_seating", nullable = false)
+    @Builder.Default
+    private Boolean hasSeating = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "seating_layout", nullable = false, length = 32)
+    @Builder.Default
+    private SeatingLayout seatingLayout = SeatingLayout.NONE;
+
+    @Column(name = "seated_capacity", nullable = false)
+    @Builder.Default
+    private Integer seatedCapacity = 0;
+
+    @Column(name = "standing_capacity", nullable = false)
+    @Builder.Default
+    private Integer standingCapacity = 600;
 
     @Column(name = "image_url")
     private String imageUrl;
