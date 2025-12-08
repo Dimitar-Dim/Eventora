@@ -1,6 +1,7 @@
 package com.dimitar.eventora.dto;
 
 import com.dimitar.eventora.model.Genre;
+import com.dimitar.eventora.model.SeatingLayout;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -38,6 +39,15 @@ public record EventRequest(
         @Min(value = 1, message = "Max tickets must be at least 1")
         @Max(value = 1000000, message = "Max tickets cannot exceed 1000000")
         Integer maxTickets,
+
+        @Min(value = 0, message = "Standing capacity cannot be negative")
+        @Max(value = 600, message = "Standing capacity cannot exceed 600")
+        Integer standingCapacity,
+
+        SeatingLayout seatingLayout,
+
+        @NotNull(message = "Seating toggle must be provided")
+        Boolean hasSeating,
 
         @Size(max = 2048, message = "Image URL cannot exceed 2048 characters")
         String imageUrl,

@@ -4,6 +4,7 @@ import com.dimitar.eventora.dto.EventRequest;
 import com.dimitar.eventora.dto.EventResponse;
 import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.eventora.model.Event;
+import com.dimitar.eventora.model.SeatingLayout;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -41,6 +42,10 @@ public class EventDtoMapper {
                 event.getTicketPrice(),
                 event.getMaxTickets(),
                 event.getAvailableTickets(),
+            event.getStandingCapacity(),
+            event.getSeatedCapacity(),
+            event.getHasSeating(),
+            event.getSeatingLayout(),
                 event.getImageUrl(),
                 event.getIsActive(),
                 event.getOrganizerId(),
@@ -55,7 +60,49 @@ public class EventDtoMapper {
         target.setEventDate(request.eventDate());
         target.setGenre(request.genre());
         target.setTicketPrice(request.ticketPrice());
-        target.setMaxTickets(request.maxTickets());
+        Integer maxTickets = request.maxTickets();
+        boolean hasSeating = Boolean.TRUE.equals(request.hasSeating());
+
+        SeatingLayout layout = normalizeLayout(hasSeating, request.seatingLayout());
+        int seatedCapacity = computeSeatedCapacity(layout);
+        int standingCapacity = normalizeStandingCapacity(request.standingCapacity());
+
+        int totalCapacity = seatedCapacity + standingCapacity;
+        if (maxTickets != null && totalCapacity > 0 && maxTickets > totalCapacity) {
+            throw new IllegalArgumentException("Max tickets cannot exceed combined seating and standing capacity");
+        }
+
+        target.setHasSeating(hasSeating);
+        target.setSeatingLayout(layout);
+        target.setSeatedCapacity(seatedCapacity);
+        target.setStandingCapacity(standingCapacity);
+        target.setMaxTickets(maxTickets);
         target.setImageUrl(request.imageUrl());
+    }
+
+    private SeatingLayout normalizeLayout(boolean hasSeating, SeatingLayout requested) {
+        if (!hasSeating) {
+            return SeatingLayout.NONE;
+        }
+        if (requested == null || requested == SeatingLayout.NONE) {
+            return SeatingLayout.FLOOR; // default to floor seating when seating is enabled
+        }
+        return requested;
+    }
+
+    private int computeSeatedCapacity(SeatingLayout layout) {
+        return switch (layout) {
+            case NONE -> 0;
+            case FLOOR -> 300;
+            case FLOOR_BALCONY -> 600;
+        };
+    }
+
+    private int normalizeStandingCapacity(Integer requested) {
+        int value = requested == null ? 600 : requested;
+        if (value < 0) {
+            return 0;
+        }
+        return Math.min(value, 600);
     }
 }

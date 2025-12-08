@@ -26,6 +26,10 @@ public class EventMapper {
                 .updatedAt(entity.getUpdatedAt())
                 .isActive(entity.getIsActive())
                 .organizerId(entity.getOrganizerId())
+                .hasSeating(entity.getHasSeating())
+                .seatingLayout(entity.getSeatingLayout())
+                .seatedCapacity(entity.getSeatedCapacity())
+                .standingCapacity(entity.getStandingCapacity())
                 .build();
     }
 }

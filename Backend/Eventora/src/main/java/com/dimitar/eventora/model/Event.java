@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import com.dimitar.eventora.model.SeatingLayout;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -28,6 +30,10 @@ public class Event {
     private LocalDateTime updatedAt;
     private Boolean isActive;
     private Long organizerId;
+    private Boolean hasSeating;
+    private SeatingLayout seatingLayout;
+    private Integer seatedCapacity;
+    private Integer standingCapacity;
 
     public boolean canBookTickets(int quantity) {
         return this.isActive && this.availableTickets >= quantity;
