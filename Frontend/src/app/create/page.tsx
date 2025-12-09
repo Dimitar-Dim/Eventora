@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { IEventFormData, GENRES } from "@/types/event"
+import { getAuthToken, getRoleFromToken } from "@/utils/auth"
 import { showSuccess, showError } from "@/utils/toast"
 import { ***REMOVED***vice/eventService"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ export default function CreateEventPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
 
   const [formData, setFormData] = useState<IEventFormData>({
     name: "",
@@ -54,6 +56,17 @@ export default function CreateEventPage() {
     const standingCapacity = Number(formData.standingCapacity || 0)
 
     try {
+      const role = getRoleFromToken()
+      const token = getAuthToken()
+
+      if (!token) {
+        throw new Error("Please log in as an organizer to create events")
+      }
+
+      if (!role || role === "USER") {
+        throw new Error("Only organizers or admins can create events")
+      }
+
       if (!formData.name.trim()) throw new Error("Event name is required")
       if (!formData.description.trim()) throw new Error("Description is required")
       if (!formData.eventDate) throw new Error("Event date and time are required")
@@ -67,6 +80,13 @@ export default function CreateEventPage() {
 
       const eventDateTime = new Date(formData.eventDate).toISOString()
 
+      let imageUrl = formData.imageUrl.trim() || null
+
+      if (!imageUrl && imageFile) {
+        const upload = await eventService.uploadImage(imageFile)
+        imageUrl = upload.url
+      }
+
       const requestBody = {
         name: formData.name.trim(),
         description: formData.description.trim(),
@@ -77,8 +97,7 @@ export default function CreateEventPage() {
         standingCapacity,
         seatingLayout: formData.hasSeating ? formData.seatingLayout : "NONE",
         hasSeating: formData.hasSeating,
-        imageUrl: formData.imageUrl.trim() || null,
-        organizerId: 1
+        imageUrl
       }
 
       const event = await eventService.create(requestBody)
@@ -276,6 +295,23 @@ export default function CreateEventPage() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Optional: Provide a URL to an image for your event
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="imageFile" className="text-sm font-semibold text-foreground">
+                    Upload Image
+                  </Label>
+                  <Input
+                    id="imageFile"
+                    name="imageFile"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    If URL is provided, it will be used; otherwise the uploaded image will be saved on the server.
                   </p>
                 </div>
 

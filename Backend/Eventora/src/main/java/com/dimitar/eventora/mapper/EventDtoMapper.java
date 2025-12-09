@@ -17,7 +17,6 @@ public class EventDtoMapper {
         EventEntity entity = new EventEntity();
         applyMutableFields(entity, safeRequest);
         entity.setAvailableTickets(safeRequest.maxTickets());
-        entity.setOrganizerId(safeRequest.organizerId());
         entity.setIsActive(true);
         return entity;
     }

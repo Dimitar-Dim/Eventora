@@ -87,10 +87,10 @@ export function EventGrid({ events = [] }: { events?: Event[] }) {
 
       {filteredEvents.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr items-stretch">
             {currentEvents.map((event) =>
               event && (
-                <div key={event.id} className="event-card-hover">
+                <div key={event.id} className="event-card-hover h-full">
                   <EventCard event={event} />
                 </div>
               )

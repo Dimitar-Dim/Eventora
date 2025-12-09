@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Calendar, CheckCircle2, Clock, Loader2, MapPin, Music, Ticket, Users, AlertTriangle } from "lucide-react"
+import { env } from "@/config/env"
 import { formatDate, formatTime } from "@/utils/dateUtils"
 import { showError, showSuccess } from "@/utils/toast"
 import { ***REMOVED***vice/eventService"
@@ -90,6 +91,13 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
   const isDeliveryEmailMissing = needsEmail && trimmedDeliveryEmail.length === 0
   const isDeliveryEmailInvalid = trimmedDeliveryEmail.length > 0 && !emailRegex.test(trimmedDeliveryEmail)
   const isPurchaseDisabled = !canPurchase || isBuying || isDeliveryEmailMissing || isDeliveryEmailInvalid
+
+  const resolveImageUrl = (url?: string | null) => {
+    if (!url) return "/placeholder.svg"
+    if (url.startsWith("http")) return url
+    if (url.startsWith("/")) return `${env.API_BASE_URL}${url}`
+    return url
+  }
 
   const getStatusColor = (isActive: boolean) => {
     return isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
@@ -169,13 +177,13 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
   return (
     <>
       <div
-        className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-sm border border-border/30 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/20 event-card-hover"
+        className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-sm border border-border/30 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/20 event-card-hover h-full flex"
         onClick={handleCardClick}
         data-cy="event-card"
       >
         <div className="absolute inset-0">
           <Image
-            src={eventDetails.imageUrl || "/placeholder.svg"}
+            src={resolveImageUrl(eventDetails.imageUrl)}
             alt={eventDetails.name}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -183,7 +191,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         </div>
 
-        <div className="relative z-10 p-8 h-96 flex flex-col justify-between">
+        <div className="relative z-10 p-8 h-full min-h-[360px] flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div className="flex flex-wrap gap-2">
               <Badge className={`${getStatusColor(eventDetails.isActive)} font-medium text-sm`}>
@@ -266,7 +274,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
           <div className="space-y-6">
             {eventDetails.imageUrl && (
               <div className="aspect-video rounded-lg overflow-hidden relative">
-                <Image src={eventDetails.imageUrl || "/placeholder.svg"} alt={eventDetails.name} fill className="object-cover" />
+                <Image src={resolveImageUrl(eventDetails.imageUrl)} alt={eventDetails.name} fill className="object-cover" />
               </div>
             )}
 

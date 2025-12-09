@@ -31,9 +31,10 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
-                    .requestMatchers("/api/auth/verify", "/api/auth/verify/**").permitAll()
+                        .requestMatchers("/api/auth/verify", "/api/auth/verify/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/events/*/tickets").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/events/*/tickets").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
