@@ -19,6 +19,7 @@ import com.dimitar.eventora.model.TicketStatus;
 import com.dimitar.eventora.repository.EventRepository;
 import com.dimitar.eventora.repository.TicketRepository;
 import com.dimitar.***REMOVED***Repository;
+import com.dimitar.***REMOVED***vationService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -62,10 +63,12 @@ public class TicketServiceImpl implements TicketService {
     private final PDFTicketService pdfTicketService;
     private final EmailService emailService;
     private final EmailVerifier emailVerifier;
+    private final SeatReservationService seatReservationService;
 
     @Override
     @Transactional
-    public TicketPurchaseSummary purchaseTicket(Long ***REMOVED***Id, String issuedTo, String deliveryEmail) {
+    public TicketPurchaseSummary purchaseTicket(Long ***REMOVED***Id, String issuedTo, String deliveryEmail,
+                                                 String seatSection, String seatRow, String seatNumber) {
         Long resolvedEventId = Objects.requireNonNull(eventId, "Event id must not be null");
 
         EventEntity event = eventRepository.findById(resolvedEventId)
@@ -81,7 +84,13 @@ public class TicketServiceImpl implements TicketService {
         validateEventState(event);
         decrementAvailability(event);
 
-        SeatMetadata seatMetadata = assignSeatMetadata(event);
+        // Use provided seat info if available, otherwise auto-assign
+        SeatMetadata seatMetadata;
+        if (seatSection != null && seatRow != null && seatNumber != null) {
+            seatMetadata = new SeatMetadata(seatSection, seatRow, seatNumber);
+        } else {
+            seatMetadata = assignSeatMetadata(event);
+        }
         String resolvedDeliveryEmail = resolveDeliveryEmail(purchasingUser, deliveryEmail);
 
         TicketEntity ticketEntity = TicketEntity.builder()
@@ -98,6 +107,16 @@ public class TicketServiceImpl implements TicketService {
 
         TicketEntity savedTicket = ticketRepository.save(Objects.requireNonNull(ticketEntity, TICKET_ENTITY_NULL_MESSAGE));
         EventEntity updatedEvent = eventRepository.save(Objects.requireNonNull(event, EVENT_ENTITY_NULL_MESSAGE));
+
+        // Mark seat as purchased and broadcast to WebSocket clients
+        if (seatMetadata.section() != null && seatMetadata.number() != null) {
+            try {
+                Integer seatNum = Integer.parseInt(seatMetadata.number());
+                seatReservationService.markAsPurchased(resolvedEventId, seatMetadata.section(), seatNum);
+            } catch (NumberFormatException e) {
+                log.warn("Failed to parse seat number for WebSocket broadcast: {}", seatMetadata.number());
+            }
+        }
 
         Ticket ticket = ticketMapper.toModel(savedTicket);
         Event updatedEventModel = eventMapper.toModel(updatedEvent);
@@ -136,6 +155,23 @@ public class TicketServiceImpl implements TicketService {
                     Ticket ticket = ticketMapper.toModel(ticketEntity);
                     Event eventModel = eventMapper.toModel(event);
                     return new TicketPurchaseSummary(ticket, eventModel);
+                })
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getPurchasedSeatsForEvent(Long eventId) {
+        List<TicketEntity> tickets = ticketRepository.findAllByEventId(eventId);
+        
+        return tickets.stream()
+                .filter(ticket -> ticket.getSeatSection() != null && ticket.getSeatNumber() != null)
+                .map(ticket -> {
+                    Map<String, Object> seatInfo = new HashMap<>();
+                    seatInfo.put("seatSection", ticket.getSeatSection());
+                    seatInfo.put("seatRow", ticket.getSeatRow());
+                    seatInfo.put("seatNumber", ticket.getSeatNumber());
+                    return seatInfo;
                 })
                 .toList();
     }

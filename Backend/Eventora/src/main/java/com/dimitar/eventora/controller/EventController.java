@@ -20,6 +20,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/events")
@@ -90,8 +91,12 @@ public class EventController {
         Long userId = extractOptionalUserId(authentication);
         String issuedTo = request != null ? request.issuedTo() : null;
         String deliveryEmail = request != null ? request.deliveryEmail() : null;
+        String seatSection = request != null ? request.seatSection() : null;
+        String seatRow = request != null ? request.seatRow() : null;
+        String seatNumber = request != null ? request.seatNumber() : null;
 
-        TicketPurchaseSummary purchaseSummary = ticketService.purchaseTicket(id, userId, issuedTo, deliveryEmail);
+        TicketPurchaseSummary purchaseSummary = ticketService.purchaseTicket(
+                id, userId, issuedTo, deliveryEmail, seatSection, seatRow, seatNumber);
 
         TicketPurchaseResponse response = new TicketPurchaseResponse(
                 purchaseSummary.ticket().getId(),
@@ -110,6 +115,14 @@ public class EventController {
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/{id}/purchased-seats")
+    public ResponseEntity<List<Map<String, Object>>> getPurchasedSeats(
+            @PathVariable @Positive(message = "Event ID must be positive") Long id) {
+        
+        List<Map<String, Object>> purchasedSeats = ticketService.getPurchasedSeatsForEvent(id);
+        return ResponseEntity.ok(purchasedSeats);
     }
 
     private Long extractUserId(Authentication authentication) {

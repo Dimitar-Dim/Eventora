@@ -8,5 +8,8 @@ public record TicketPurchaseRequest(
         String issuedTo,
         @Email(message = "Please provide a valid email address")
         @Size(max = 320, message = "Email must be at most 320 characters")
-        String deliveryEmail
+        String deliveryEmail,
+        String seatSection,
+        String seatRow,
+        String seatNumber
 ) {}
