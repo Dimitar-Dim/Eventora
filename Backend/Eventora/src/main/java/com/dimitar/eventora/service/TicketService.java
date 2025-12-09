@@ -1,5 +1,6 @@
 package com.dimitar.***REMOVED***vice;
 
+import com.dimitar.eventora.dto.VerifyTicketResponse;
 import com.dimitar.eventora.model.TicketPurchaseSummary;
 
 import java.util.List;
@@ -10,4 +11,5 @@ public interface TicketService {
                                           String seatSection, String seatRow, String seatNumber);
     List<TicketPurchaseSummary> getTicketsForUser(Long userId);
     List<Map<String, Object>> getPurchasedSeatsForEvent(Long eventId);
+    VerifyTicketResponse verifyTicket(String qrCode, Long verifierId);
 }
