@@ -32,7 +32,7 @@ public class UploadController {
 
     @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file,
-                                                          Authentication authentication) throws IOException {
+                            Authentication authentication) throws IOException {
         if (authentication == null || authentication.getName() == null) {
             throw new UnauthorizedException("Authentication required");
         }
