@@ -119,6 +119,10 @@ class TicketControllerIT extends PostgresIntegrationTest {
                 .imageUrl("https://example.com/event.jpg")
                 .organizerId(organizerId)
                 .isActive(true)
+                .hasSeating(false)
+                .seatingLayout(com.dimitar.eventora.model.SeatingLayout.NONE)
+                .seatedCapacity(0)
+                .standingCapacity(50)
                 .build();
                 return Objects.requireNonNull(eventRepository.saveAndFlush(entity));
     }
@@ -132,6 +136,13 @@ class TicketControllerIT extends PostgresIntegrationTest {
         @Bean
         EmailService emailService() {
             return Mockito.mock(EmailService.class);
+        }
+
+        @Bean
+        com.dimitar.eventora.email.EmailVerifier emailVerifier() {
+            com.dimitar.eventora.email.EmailVerifier mock = Mockito.mock(com.dimitar.eventora.email.EmailVerifier.class);
+            Mockito.doNothing().when(mock).verifyDeliverability(Mockito.anyString());
+            return mock;
         }
     }
 }

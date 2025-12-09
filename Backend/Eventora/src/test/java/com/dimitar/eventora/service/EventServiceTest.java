@@ -66,7 +66,7 @@ class EventServiceTest {
         when(eventRepository.save(any(EventEntity.class))).thenReturn(validEventEntity);
 
         // Act
-        Event result = eventService.createEvent(validEventRequest);
+        Event result = eventService.createEvent(validEventRequest, 1L, true);
 
         // Assert
         assertNotNull(result);
@@ -77,7 +77,7 @@ class EventServiceTest {
         assertEquals(validEventRequest.ticketPrice(), result.getTicketPrice());
         assertEquals(validEventRequest.maxTickets(), result.getMaxTickets());
         assertEquals(validEventRequest.imageUrl(), result.getImageUrl());
-        assertEquals(validEventRequest.organizerId(), result.getOrganizerId());
+        assertEquals(1L, result.getOrganizerId());
 
         verify(eventRepository, times(1)).save(any(EventEntity.class));
     }
@@ -89,7 +89,7 @@ class EventServiceTest {
         when(eventRepository.save(any(EventEntity.class))).thenReturn(validEventEntity);
 
         // Act
-        eventService.createEvent(validEventRequest);
+        eventService.createEvent(validEventRequest, 1L, true);
 
         // Assert
         verify(eventRepository).save(eventCaptor.capture());
@@ -105,7 +105,7 @@ class EventServiceTest {
         when(eventRepository.save(any(EventEntity.class))).thenReturn(validEventEntity);
 
         // Act
-        eventService.createEvent(validEventRequest);
+        eventService.createEvent(validEventRequest, 1L, true);
 
         // Assert
         verify(eventRepository).save(eventCaptor.capture());
@@ -164,8 +164,7 @@ class EventServiceTest {
             600,
             SeatingLayout.FLOOR,
             true,
-            "https://example.com/updated.jpg",
-            1L
+            "https://example.com/updated.jpg"
         );
 
         EventEntity existingEvent = buildEventEntity();
@@ -509,8 +508,7 @@ class EventServiceTest {
             500,
             SeatingLayout.NONE,
             false,
-            "https://example.com/concert.jpg",
-            1L
+            "https://example.com/concert.jpg"
         );
     }
 }
