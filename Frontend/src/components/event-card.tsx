@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +26,9 @@ import { formatDate, formatTime } from "@/utils/dateUtils"
 import { showError, showSuccess } from "@/utils/toast"
 import { ***REMOVED***vice/eventService"
 import { useAuth } from "@/context/AuthContext"
+import { seatReservationService } from "@/services/seatReservationService"
 import type { Event, IPurchaseTicketPayload, IPurchaseTicketResponse } from "@/types/event"
+import type { SeatStatus, ISeatState } from "@/types/seat"
 
 interface EventCardProps {
   event: Event
@@ -48,12 +50,61 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
   const [purchaseStep, setPurchaseStep] = useState<"select" | "details">("select")
   const [purchaseEmail, setPurchaseEmail] = useState("")
   const [ticketQuantity, setTicketQuantity] = useState(1)
+  const [seatStates, setSeatStates] = useState<Map<string, SeatStatus>>(new Map())
   const { isAuthenticated, user } = useAuth()
   const ownerId = user ? Number(user.id) : null
   const isAdmin = user?.role === "admin"
   const isOwner = ownerId !== null && ownerId === eventDetails.organizerId
   const canEdit = isOwner || isAdmin
   const canDelete = canEdit
+
+  // WebSocket connection for seat reservations
+  useEffect(() => {
+    if (isPurchaseDialogOpen && eventDetails.hasSeating) {
+      // Fetch purchased seats first
+      const fetchPurchasedSeats = async () => {
+        try {
+          const response = await fetch(`${env.API_BASE_URL}/api/events/${eventDetails.id}/purchased-seats`)
+          if (response.ok) {
+            const purchasedSeats: Array<{ seatSection: string; seatRow: string; seatNumber: string }> = await response.json()
+            
+            const purchasedStates = new Map<string, SeatStatus>()
+            purchasedSeats.forEach(seat => {
+              // Convert seat data to match our format
+              const rowNum = parseInt(seat.seatRow.replace('R', ''))
+              const seatNum = parseInt(seat.seatNumber)
+              const absoluteSeatNum = (rowNum - 1) * 20 + seatNum
+              const key = `${seat.seatSection}-${absoluteSeatNum}`
+              purchasedStates.set(key, "purchased")
+            })
+            
+            setSeatStates(purchasedStates)
+          }
+        } catch (error) {
+          console.error("Failed to fetch purchased seats:", error)
+        }
+      }
+      
+      fetchPurchasedSeats()
+      seatReservationService.connect(eventDetails.id)
+      
+      const unsubscribe = seatReservationService.subscribe((seats: ISeatState[]) => {
+        setSeatStates((prevStates) => {
+          const newSeatStates = new Map(prevStates)
+          seats.forEach(seat => {
+            const key = `${seat.sector}-${seat.seatNumber}`
+            newSeatStates.set(key, seat.status)
+          })
+          return newSeatStates
+        })
+      })
+
+      return () => {
+        unsubscribe()
+        seatReservationService.disconnect()
+      }
+    }
+  }, [isPurchaseDialogOpen, eventDetails.hasSeating, eventDetails.id])
 
   useEffect(() => {
     setEventDetails(event)
@@ -122,22 +173,43 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
     onViewDetails?.(eventDetails)
   }
 
-  const toggleSeatSelection = ({ sector, seatNum }: { sector: string; seatNum: number }) => {
+  const toggleSeatSelection = useCallback(({ sector, seatNum }: { sector: string; seatNum: number }) => {
     const key = `${sector}-${seatNum}`
+    const status = seatStates.get(key)
+    
+    // Pr***REMOVED***ved seats
+    if (status === "purchased" || status === "reserved") {
+      showError(status === "purchased" ? "This seat is already sold" : "This seat is temporarily reserved by another user")
+      return
+    }
+    
     setPurchaseReceipt(null)
     setSelectedSeats((prev) => {
       const exists = prev.some((s) => `${s.sector}-${s.seat}` === key)
       if (exists) {
+        // Release the seat reservation
+        seatReservationService.releaseSeat({
+          eventId: eventDetails.id,
+          sector,
+          seatNumber: seatNum
+        })
         setSeatNames((names) => {
           const next = { ...names }
           delete next[key]
           return next
         })
         return prev.filter((s) => `${s.sector}-${s.seat}` !== key)
+      } else {
+        // Reserve the seat
+        seatReservationService.reserveSeat({
+          eventId: eventDetails.id,
+          sector,
+          seatNumber: seatNum
+        })
+        return [...prev, { sector, seat: seatNum }]
       }
-      return [...prev, { sector, seat: seatNum }]
     })
-  }
+  }, [seatStates, eventDetails.id])
 
   const handleTicketPurchase = async () => {
     // For standing events, check ticket quantity; for seated events, check selected seats
@@ -166,28 +238,43 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
     setPurchaseError(null)
 
     try {
-      // For seated events, use first seat name; for standing, use first ticket name
+      // For seated events, purchase one ticket per seat; for standing, purchase multiple standing tickets
       const ticketsToProcess = eventDetails.hasSeating 
         ? selectedSeats 
         : Array.from({ length: ticketQuantity }, (_, i) => ({ sector: "Standing", seat: i + 1 }))
       
-      const firstTicket = ticketsToProcess[0]
-      const primaryName = firstTicket ? (seatNames[`${firstTicket.sector}-${firstTicket.seat}`] || "").trim() : ""
+      const purchasePromises = ticketsToProcess.map((ticket) => {
+        const seatName = (seatNames[`${ticket.sector}-${ticket.seat}`] || "").trim()
+        const payload: IPurchaseTicketPayload = {
+          ...(seatName ? { issuedTo: seatName } : {}),
+          ...(trimmedPurchaseEmail ? { deliveryEmail: trimmedPurchaseEmail } : {}),
+          ...(eventDetails.hasSeating ? {
+            seatSection: ticket.sector,
+            seatRow: `R${Math.floor((ticket.seat - 1) / 20) + 1}`,
+            seatNumber: String(((ticket.seat - 1) % 20) + 1).padStart(2, '0')
+          } : {})
+        }
 
-      const payload: IPurchaseTicketPayload = {
-        ...(primaryName ? { issuedTo: primaryName } : {}),
-        ...(trimmedPurchaseEmail ? { deliveryEmail: trimmedPurchaseEmail } : {}),
-      }
+        return eventService.purchaseTicket(
+          eventDetails.id,
+          Object.keys(payload).length ? payload : undefined,
+          { requiresAuth: isAuthenticated }
+        )
+      })
 
-      const response = await eventService.purchaseTicket(
-        eventDetails.id,
-        Object.keys(payload).length ? payload : undefined,
-        { requiresAuth: isAuthenticated }
-      )
-      setPurchaseReceipt(response)
-      setEventDetails((prev) => ({ ...prev, availableTickets: response.remainingTickets }))
-      const recipient = response.deliveryEmail ?? (purchaseEmail.trim() || "your inbox")
-      const ticketWord = eventDetails.hasSeating ? "Ticket" : `${ticketQuantity} ticket(s)`
+      const responses = await Promise.all(purchasePromises)
+      const lastResponse = responses[responses.length - 1]
+      
+      setPurchaseReceipt(lastResponse)
+      setEventDetails((prev) => ({ ...prev, availableTickets: lastResponse.remainingTickets }))
+      
+      // Clear selected seats after successful purchase
+      setSelectedSeats([])
+      setSeatNames({})
+      
+      const recipient = lastResponse.deliveryEmail ?? (purchaseEmail.trim() || "your inbox")
+      const ticketCount = ticketsToProcess.length
+      const ticketWord = ticketCount === 1 ? "Ticket" : `${ticketCount} tickets`
       showSuccess(`${ticketWord} confirmed • Delivered to ${recipient}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to complete purchase"
@@ -553,6 +640,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                         standingCapacity={eventDetails.standingCapacity}
                         onToggleSeat={({ sector, seatNum }) => toggleSeatSelection({ sector, seatNum })}
                         selectedSeats={selectedSeats}
+                        seatStates={seatStates}
                       />
                     </div>
                   </>

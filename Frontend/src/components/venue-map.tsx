@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
+import { SeatStatus } from "@/types/seat"
 
 export type SeatingLayoutType = "NONE" | "FLOOR" | "FLOOR_BALCONY"
 
@@ -13,6 +14,9 @@ interface VenueMapProps {
   onSeatSelect?: (info: { sector: string; seat: number } | null) => void
   onToggleSeat?: (seat: Seat) => void
   selectedSeats?: Array<{ sector: string; seat: number }>
+  seatStates?: Map<string, SeatStatus>
+  reservedSeats?: Set<string>
+  purchasedSeats?: Set<string>
 }
 
 type Seat = { sector: string; seatNum: number }
@@ -27,6 +31,7 @@ function SectorGrid({
   tone,
   selectedKeys,
   onSelect,
+  seatStates,
   rows = 5,
   cols = 20,
   className = "",
@@ -36,11 +41,46 @@ function SectorGrid({
   tone: "floor" | "balcony"
   selectedKeys: string[]
   onSelect: (seat: Seat) => void
+  seatStates?: Map<string, SeatStatus>
   rows?: number
   cols?: number
   className?: string
 }) {
   const isFloor = tone === "floor"
+
+  const getSeatClassName = (seat: Seat, selected: boolean): string => {
+    const key = `${seat.sector}-${seat.seatNum}`
+    const status = seatStates?.get(key)
+
+    // Purchased seats - gray and disabled
+    if (status === "purchased") {
+      return "bg-gray-400/40 border border-gray-500/20 cursor-not-allowed opacity-50"
+    }
+
+    // Reserved by others - orange/amber and disabled
+    if (status === "reserved") {
+      return "bg-amber-500/60 border border-amber-400/40 cursor-not-allowed"
+    }
+
+    // Selected by current user
+    if (selected) {
+      const base = isFloor
+        ? "bg-primary/80 border border-primary-foreground/20"
+        : "bg-violet-500/80 border border-violet-200/30"
+      return `${base} ring-2 ring-offset-[1px] ring-offset-background ring-amber-300`
+    }
+
+    // Available seats
+    const base = isFloor
+      ? "bg-primary/80 border border-primary-foreground/20"
+      : "bg-violet-500/80 border border-violet-200/30"
+
+    const hover = isFloor
+      ? "hover:bg-primary hover:shadow-primary/40"
+      : "hover:bg-violet-500 hover:shadow-violet-400/40"
+
+    return `${base} ${hover}`
+  }
 
   return (
     <div
@@ -63,26 +103,17 @@ function SectorGrid({
         {seats.map((seat) => {
           const key = `${seat.sector}-${seat.seatNum}`
           const selected = selectedKeys.includes(key)
-
-          const base = isFloor
-            ? "bg-primary/80 border border-primary-foreground/20"
-            : "bg-violet-500/80 border border-violet-200/30"
-
-          const hover = isFloor
-            ? "hover:bg-primary hover:shadow-primary/40"
-            : "hover:bg-violet-500 hover:shadow-violet-400/40"
+          const status = seatStates?.get(key)
+          const isDisabled = status === "purchased" || status === "reserved"
 
           return (
             <button
               key={key}
               type="button"
               aria-label={`Sector ${seat.sector}, Seat ${seat.seatNum}`}
-              className={`aspect-square w-full rounded-[3px] shadow-sm transition-all duration-150 ${base} ${hover} ${
-                selected
-                  ? "ring-2 ring-offset-[1px] ring-offset-background ring-amber-300"
-                  : ""
-              }`}
-              onClick={() => onSelect(seat)}
+              disabled={isDisabled}
+              className={`aspect-square w-full rounded-[3px] shadow-sm transition-all duration-150 ${getSeatClassName(seat, selected)}`}
+              onClick={() => !isDisabled && onSelect(seat)}
             />
           )
         })}
@@ -99,6 +130,9 @@ export function VenueMap({
   onSeatSelect,
   onToggleSeat,
   selectedSeats,
+  seatStates,
+  reservedSeats,
+  purchasedSeats,
 }: VenueMapProps) {
   const [internalSelected, setInternalSelected] = useState<Seat[]>([])
 
@@ -248,6 +282,7 @@ export function VenueMap({
                     tone="balcony"
                     selectedKeys={effectiveSelected}
                     onSelect={handleSeatSelect}
+                    seatStates={seatStates}
                     rows={20}
                     cols={5}
                     className="w-full max-w-[75px]"
@@ -263,6 +298,7 @@ export function VenueMap({
                   tone="floor"
                   selectedKeys={effectiveSelected}
                   onSelect={handleSeatSelect}
+                  seatStates={seatStates}
                   rows={20}
                   cols={5}
                   className="w-full max-w-[75px]"
@@ -292,6 +328,7 @@ export function VenueMap({
                     tone="floor"
                     selectedKeys={effectiveSelected}
                     onSelect={handleSeatSelect}
+                    seatStates={seatStates}
                     rows={5}
                     cols={20}
                     className="w-full max-w-[550px]"
@@ -305,6 +342,7 @@ export function VenueMap({
                       tone="balcony"
                       selectedKeys={effectiveSelected}
                       onSelect={handleSeatSelect}
+                      seatStates={seatStates}
                       rows={5}
                       cols={20}
                       className="w-full max-w-[550px]"
@@ -321,6 +359,7 @@ export function VenueMap({
                   tone="floor"
                   selectedKeys={effectiveSelected}
                   onSelect={handleSeatSelect}
+                  seatStates={seatStates}
                   rows={20}
                   cols={5}
                   className="w-full max-w-[75px]"
@@ -336,6 +375,7 @@ export function VenueMap({
                     tone="balcony"
                     selectedKeys={effectiveSelected}
                     onSelect={handleSeatSelect}
+                    seatStates={seatStates}
                     rows={20}
                     cols={5}
                     className="w-full max-w-[75px]"
@@ -353,23 +393,29 @@ export function VenueMap({
             <div className="mb-1 flex items-center gap-2">
               <span className="inline-block h-3 w-3 rounded-sm bg-primary/90 border border-primary-foreground/30" />
               <span className="text-[11px] text-muted-foreground">
-                Floor seats (A, B, C)
+                Available
+              </span>
+            </div>
+            <div className="mb-1 flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-sm bg-amber-500/60 border border-amber-400/40" />
+              <span className="text-[11px] text-muted-foreground">
+                Reserved (15min)
+              </span>
+            </div>
+            <div className="mb-1 flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-sm bg-gray-400/40 border border-gray-500/20" />
+              <span className="text-[11px] text-muted-foreground">
+                Sold out
               </span>
             </div>
             {hasBalcony && (
               <div className="mb-1 flex items-center gap-2">
                 <span className="inline-block h-3 w-3 rounded-sm bg-violet-500/80 border border-violet-200/40" />
                 <span className="text-[11px] text-muted-foreground">
-                  Balcony seats (D, E, F)
+                  Balcony seats
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-3 w-3 rounded-sm bg-amber-400/70 border border-amber-300/80" />
-              <span className="text-[11px] text-muted-foreground">
-                Standing zone
-              </span>
-            </div>
           </div>
 
           <div className="rounded-lg border border-border/50 bg-background/80 p-2.5">
