@@ -9,6 +9,10 @@ export interface IEvent {
   ticketPrice: number
   maxTickets: number
   availableTickets: number
+  standingCapacity: number
+  seatedCapacity: number
+  hasSeating: boolean
+  seatingLayout: "NONE" | "FLOOR" | "FLOOR_BALCONY"
   imageUrl?: string
   isActive: boolean
   organizerId: number
@@ -22,7 +26,9 @@ export interface IEventFormData {
   eventDate: string
   genre: string
   ticketPrice: number | string
-  maxTickets: number | string
+  standingCapacity: number | string
+  hasSeating: boolean
+  seatingLayout: "NONE" | "FLOOR" | "FLOOR_BALCONY"
   imageUrl: string
 }
 
