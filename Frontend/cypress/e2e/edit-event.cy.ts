@@ -75,4 +75,35 @@ describe('Edit Event Page', () => {
     cy.wait('@updateEvent');
     cy.contains(/Event updated successfully/i, { timeout: 5000 }).should('be.visible');
   });
+
+  it('allows toggling seating options', () => {
+    visitEditPage();
+    cy.wait('@getProfile');
+    cy.wait('@getEvent');
+
+    // Check if seating toggle exists
+    cy.get('[data-cy="edit-has-seating-toggle"]').should('exist');
+    
+    // Toggle seating on
+    cy.get('[data-cy="edit-has-seating-toggle"]').click();
+    
+    // Should show seating layout options
+    cy.get('[data-cy="edit-seating-layout-select"]').should('be.visible');
+  });
+
+  it('allows selecting different seating layouts', () => {
+    visitEditPage();
+    cy.wait('@getProfile');
+    cy.wait('@getEvent');
+
+    // Enable seating
+    cy.get('[data-cy="edit-has-seating-toggle"]').click();
+    
+    // Select floor layout
+    cy.get('[data-cy="edit-seating-layout-select"]').click();
+    cy.get('[role="option"]').contains(/floor/i).first().click();
+    
+    // Should update capacity fields
+    cy.get('[data-cy="edit-seated-capacity-input"]').should('be.visible');
+  });
 });
