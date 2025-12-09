@@ -47,6 +47,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
   const [seatNames, setSeatNames] = useState<Record<string, string>>({})
   const [purchaseStep, setPurchaseStep] = useState<"select" | "details">("select")
   const [purchaseEmail, setPurchaseEmail] = useState("")
+  const [ticketQuantity, setTicketQuantity] = useState(1)
   const { isAuthenticated, user } = useAuth()
   const ownerId = user ? Number(user.id) : null
   const isAdmin = user?.role === "admin"
@@ -76,7 +77,9 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       setPurchaseReceipt(null)
       setSelectedSeats([])
       setSeatNames({})
-      setPurchaseStep("select")
+      setTicketQuantity(1)
+      // For standing events (NONE seating layout), skip directly to details
+      setPurchaseStep(eventDetails.seatingLayout === "NONE" ? "details" : "select")
       setPurchaseEmail(user?.email ?? "")
     } else {
       setPurchaseError(null)
@@ -96,9 +99,12 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
   const isEmailMissing = trimmedPurchaseEmail.length === 0
   const isEmailInvalid = trimmedPurchaseEmail.length > 0 && !emailRegex.test(trimmedPurchaseEmail)
   const isSelectStep = purchaseStep === "select"
+  
+  const hasTicketsSelected = eventDetails.hasSeating ? selectedSeats.length > 0 : ticketQuantity > 0
+  
   const isPurchaseDisabled = isSelectStep
-    ? !canPurchase || isBuying || selectedSeats.length === 0
-    : !canPurchase || isBuying || isEmailMissing || isEmailInvalid || selectedSeats.length === 0
+    ? !canPurchase || isBuying || !hasTicketsSelected
+    : !canPurchase || isBuying || isEmailMissing || isEmailInvalid || !hasTicketsSelected
 
   const resolveImageUrl = (url?: string | null) => {
     if (!url) return "/placeholder.svg"
@@ -134,8 +140,9 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
   }
 
   const handleTicketPurchase = async () => {
-    if (selectedSeats.length === 0) {
-      const message = "Select at least one seat to continue."
+    // For standing events, check ticket quantity; for seated events, check selected seats
+    if ((eventDetails.hasSeating && selectedSeats.length === 0) || (!eventDetails.hasSeating && ticketQuantity === 0)) {
+      const message = eventDetails.hasSeating ? "Select at least one seat to continue." : "Select at least one ticket to continue."
       setPurchaseError(message)
       showError(message)
       return
@@ -159,8 +166,13 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
     setPurchaseError(null)
 
     try {
-      const firstSeatKey = selectedSeats[0]
-      const primaryName = firstSeatKey ? (seatNames[`${firstSeatKey.sector}-${firstSeatKey.seat}`] || "").trim() : ""
+      // For seated events, use first seat name; for standing, use first ticket name
+      const ticketsToProcess = eventDetails.hasSeating 
+        ? selectedSeats 
+        : Array.from({ length: ticketQuantity }, (_, i) => ({ sector: "Standing", seat: i + 1 }))
+      
+      const firstTicket = ticketsToProcess[0]
+      const primaryName = firstTicket ? (seatNames[`${firstTicket.sector}-${firstTicket.seat}`] || "").trim() : ""
 
       const payload: IPurchaseTicketPayload = {
         ...(primaryName ? { issuedTo: primaryName } : {}),
@@ -175,7 +187,8 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       setPurchaseReceipt(response)
       setEventDetails((prev) => ({ ...prev, availableTickets: response.remainingTickets }))
       const recipient = response.deliveryEmail ?? (purchaseEmail.trim() || "your inbox")
-      showSuccess(`Ticket confirmed • Delivered to ${recipient}`)
+      const ticketWord = eventDetails.hasSeating ? "Ticket" : `${ticketQuantity} ticket(s)`
+      showSuccess(`${ticketWord} confirmed • Delivered to ${recipient}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to complete purchase"
       setPurchaseError(message)
@@ -440,7 +453,9 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                     </span>
                   </Button>
                   <p className="text-xs text-muted-foreground text-center sm:text-right">
-                    Choose seats, then add ticket holder names and a delivery email.
+                    {eventDetails.hasSeating 
+                      ? "Choose seats, then add ticket holder names and a delivery email."
+                      : "Choose how many tickets, add names and your delivery email."}
                   </p>
                 </div>
               </CardContent>
@@ -477,16 +492,17 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
           </div>
         </DialogContent>
       </Dialog>
-
         <Dialog open={isPurchaseDialogOpen} onOpenChange={handlePurchaseDialogChange}>
-          <DialogContent className="max-w-[1100px] max-h-[95vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50">
+          <DialogContent className="max-w-[1000px] max-h-[95vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold flex items-center gap-2">
                 <Ticket className="h-5 w-5 text-primary" />
                 Secure your ticket
               </DialogTitle>
               <DialogDescription>
-                  Select seats, then add ticket holder names and a delivery email.
+                {eventDetails.hasSeating 
+                  ? "Select seats, then add ticket holder names and a delivery email."
+                  : "Choose how many tickets you want, add names and your delivery email."}
               </DialogDescription>
             </DialogHeader>
 
@@ -509,13 +525,20 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">Step {purchaseStep === "select" ? "1" : "2"}</Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {eventDetails.hasSeating ? `Step ${purchaseStep === "select" ? "1" : "2"}` : "Final step"}
+                    </Badge>
                     <span className="text-muted-foreground">
-                      {purchaseStep === "select" ? "Select seats" : "Add ticket details"}
+                      {eventDetails.hasSeating 
+                        ? (purchaseStep === "select" ? "Select seats" : "Add ticket details")
+                        : "Complete your purchase"}
                     </span>
                   </div>
-                  {selectedSeats.length > 0 && (
+                  {eventDetails.hasSeating && selectedSeats.length > 0 && (
                     <span className="text-xs text-muted-foreground">{selectedSeats.length} seat(s) chosen</span>
+                  )}
+                  {!eventDetails.hasSeating && ticketQuantity > 0 && (
+                    <span className="text-xs text-muted-foreground">{ticketQuantity} ticket(s)</span>
                   )}
                 </div>
 
@@ -532,19 +555,54 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                         selectedSeats={selectedSeats}
                       />
                     </div>
-                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      {selectedSeats.length === 0 ? "No seats selected yet" : selectedSeats.map((s) => `${s.sector}-${s.seat}`).join(", ")}
-                    </div>
                   </>
                 ) : (
                   <>
-                    <p className="text-sm text-muted-foreground">Add a name for each seat and confirm the delivery email.</p>
+                    {!eventDetails.hasSeating && (
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium text-foreground">How many tickets?</Label>
+                        <div className="flex items-center gap-3">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setTicketQuantity(Math.max(1, ticketQuantity - 1))}
+                            disabled={ticketQuantity <= 1}
+                          >
+                            -
+                          </Button>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={ticketQuantity}
+                            onChange={(e) => setTicketQuantity(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
+                            className="w-20 text-center"
+                          />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setTicketQuantity(Math.min(10, ticketQuantity + 1))}
+                            disabled={ticketQuantity >= 10}
+                          >
+                            +
+                          </Button>
+                          <span className="text-sm text-muted-foreground">ticket(s)</span>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      {eventDetails.hasSeating 
+                        ? "Add a name for each seat and confirm the delivery email."
+                        : "Add names for each ticket and confirm your delivery email."}
+                    </p>
                     <div className="grid gap-3">
-                      {selectedSeats.map((s) => {
+                      {(eventDetails.hasSeating ? selectedSeats : Array.from({ length: ticketQuantity }, (_, i) => ({ sector: "Standing", seat: i + 1 }))).map((s) => {
                         const key = `${s.sector}-${s.seat}`
                         return (
                           <div key={key} className="flex flex-col gap-1">
-                            <Label className="text-xs font-medium text-foreground">Seat {key}</Label>
+                            <Label className="text-xs font-medium text-foreground">
+                              {eventDetails.hasSeating ? `Seat ${key}` : `Ticket ${s.seat}`}
+                            </Label>
                             <Input
                               placeholder="Ticket holder name"
                               value={seatNames[key] ?? ""}
@@ -627,7 +685,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                     ) : (
                       <span className="flex items-center gap-2">
                         <Ticket className="h-4 w-4" />
-                        {purchaseStep === "select" ? "Select seats" : "Complete purchase"}
+                        {purchaseStep === "select" ? "Continue to details" : "Complete purchase"}
                       </span>
                     )}
                   </Button>

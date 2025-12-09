@@ -151,7 +151,6 @@ export default function CreateEventPage() {
 
                 <div className="space-y-4 pt-4 border-t border-border">
                   <h3 className="text-lg font-semibold text-foreground">Seating & Standing</h3>
-
                   <div className="flex items-center gap-3">
                     <input
                       id="hasSeating"
