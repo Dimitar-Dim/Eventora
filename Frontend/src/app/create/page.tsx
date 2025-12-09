@@ -25,7 +25,9 @@ export default function CreateEventPage() {
     eventDate: "",
     genre: "",
     ticketPrice: "",
-    maxTickets: "",
+    standingCapacity: 600,
+    hasSeating: false,
+    seatingLayout: "NONE",
     imageUrl: ""
   })
 
@@ -35,7 +37,9 @@ export default function CreateEventPage() {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'ticketPrice' || name === 'maxTickets' ? (value === '' ? '' : Number(value)) : value
+      [name]: ['ticketPrice', 'standingCapacity'].includes(name)
+        ? (value === '' ? '' : Number(value))
+        : value
     }))
   }
 
@@ -44,6 +48,11 @@ export default function CreateEventPage() {
     setError(null)
     setIsSubmitting(true)
 
+    const seatedCapacity = formData.hasSeating
+      ? (formData.seatingLayout === "FLOOR_BALCONY" ? 600 : 300)
+      : 0
+    const standingCapacity = Number(formData.standingCapacity || 0)
+
     try {
       if (!formData.name.trim()) throw new Error("Event name is required")
       if (!formData.description.trim()) throw new Error("Description is required")
@@ -51,8 +60,10 @@ export default function CreateEventPage() {
       if (!formData.genre) throw new Error("Genre is required")
       if (formData.ticketPrice === '' || formData.ticketPrice === null) throw new Error("Ticket price is required")
       if (Number(formData.ticketPrice) < 0) throw new Error("Ticket price must be non-negative")
-      if (formData.maxTickets === '' || formData.maxTickets === null) throw new Error("Max tickets is required")
-      if (Number(formData.maxTickets) < 1) throw new Error("Max tickets must be at least 1")
+      if (standingCapacity < 0 || standingCapacity > 600) throw new Error("Standing capacity must be between 0 and 600")
+
+      const totalCapacity = seatedCapacity + standingCapacity
+      if (totalCapacity <= 0) throw new Error("Total capacity must be greater than zero")
 
       const eventDateTime = new Date(formData.eventDate).toISOString()
 
@@ -62,7 +73,10 @@ export default function CreateEventPage() {
         eventDate: eventDateTime,
         genre: formData.genre,
         ticketPrice: parseFloat(formData.ticketPrice.toString()),
-        maxTickets: parseInt(formData.maxTickets.toString()),
+        maxTickets: totalCapacity,
+        standingCapacity,
+        seatingLayout: formData.hasSeating ? formData.seatingLayout : "NONE",
+        hasSeating: formData.hasSeating,
         imageUrl: formData.imageUrl.trim() || null,
         organizerId: 1
       }
@@ -114,6 +128,64 @@ export default function CreateEventPage() {
                     className="mt-2"
                     data-cy="event-name-input"
                   />
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-border">
+                  <h3 className="text-lg font-semibold text-foreground">Seating & Standing</h3>
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="hasSeating"
+                      name="hasSeating"
+                      type="checkbox"
+                      checked={formData.hasSeating}
+                      onChange={(e) => setFormData(prev => ({ ...prev, hasSeating: e.target.checked, seatingLayout: e.target.checked ? "FLOOR" : "NONE" }))}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="hasSeating" className="text-sm font-semibold text-foreground">
+                      Enable seating (otherwise standing only)
+                    </Label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="standingCapacity" className="text-sm font-semibold text-foreground">
+                        Standing Capacity (0-600)
+                      </Label>
+                      <Input
+                        id="standingCapacity"
+                        name="standingCapacity"
+                        type="number"
+                        min="0"
+                        max="600"
+                        value={formData.standingCapacity}
+                        onChange={handleInputChange}
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="seatingLayout" className="text-sm font-semibold text-foreground">
+                        Seating Layout
+                      </Label>
+                      <Select
+                        value={formData.seatingLayout}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, seatingLayout: value as IEventFormData["seatingLayout"] }))}
+                        disabled={!formData.hasSeating}
+                      >
+                        <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30">
+                          <SelectValue placeholder="Choose layout" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="FLOOR">Floor (300 seats)</SelectItem>
+                          <SelectItem value="FLOOR_BALCONY">Floor + Balcony (600 seats)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Seated capacity: {formData.hasSeating ? (formData.seatingLayout === "FLOOR_BALCONY" ? 600 : 300) : 0}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -185,23 +257,6 @@ export default function CreateEventPage() {
                       placeholder="0.00"
                       className="mt-2"
                       data-cy="event-ticket-price-input"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="maxTickets" className="text-sm font-semibold text-foreground">
-                      Max Tickets <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="maxTickets"
-                      name="maxTickets"
-                      type="number"
-                      min="1"
-                      required
-                      value={formData.maxTickets}
-                      onChange={handleInputChange}
-                      placeholder="e.g., 500"
-                      className="mt-2"
-                      data-cy="event-max-tickets-input"
                     />
                   </div>
                 </div>

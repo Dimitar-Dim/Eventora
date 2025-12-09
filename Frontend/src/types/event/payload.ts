@@ -5,6 +5,9 @@ export interface ICreateEventPayload {
   genre: string
   ticketPrice: number
   maxTickets: number
+  standingCapacity?: number
+  seatingLayout?: "NONE" | "FLOOR" | "FLOOR_BALCONY"
+  hasSeating: boolean
   imageUrl?: string | null
   organizerId: number
 }
