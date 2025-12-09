@@ -31,8 +31,11 @@ public class EventController {
     private final EventDtoMapper eventDtoMapper;
 
     @PostMapping
-    public ResponseEntity<EventResponse> createEvent(@Valid @RequestBody EventRequest request) {
-        Event event = eventService.createEvent(request);
+    public ResponseEntity<EventResponse> createEvent(@Valid @RequestBody EventRequest request,
+                                                     Authentication authentication) {
+        Long requesterId = extractUserId(authentication);
+        boolean canOrganize = hasOrganizerPrivileges(authentication);
+        Event event = eventService.createEvent(request, requesterId, canOrganize);
         return ResponseEntity.status(HttpStatus.CREATED).body(eventDtoMapper.toResponse(event));
     }
 
@@ -128,6 +131,15 @@ public class EventController {
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+    }
+
+    private boolean hasOrganizerPrivileges(Authentication authentication) {
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ORGANIZER") || authority.equals("ROLE_ADMIN"));
     }
 
     private Long extractOptionalUserId(Authentication authentication) {

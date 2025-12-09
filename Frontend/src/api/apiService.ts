@@ -1,6 +1,6 @@
 import { env } from "@/config/env";
 import { ApiRequest, ApiRequestParams, RequestConfig, RequestHeaders } from "@/types/IRequestOptions";
-import { getAuthToken } from "@/utils/auth";
+import { getAuthToken, getAuthTokenType } from "@/utils/auth";
 
 export class ApiService {
   private readonly baseUrl: string;
@@ -33,8 +33,13 @@ export class ApiService {
     }
 
     if (config?.requiresAuth) {
-      const token = await getAuthToken();
-      headers.Authorization = `Bearer ${token}`;
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
+      const tokenType = getAuthTokenType() ?? "Bearer";
+      headers.Authorization = `${tokenType} ${token}`;
     }
     return headers;
   }

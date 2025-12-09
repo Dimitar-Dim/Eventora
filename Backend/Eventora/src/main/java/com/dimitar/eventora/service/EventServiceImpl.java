@@ -26,8 +26,13 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public Event createEvent(EventRequest request) {
+    public Event createEvent(EventRequest request, Long requesterId, boolean canOrganizeEvents) {
+        Long userId = requireUserId(requesterId);
+        ensureCanOrganize(canOrganizeEvents);
+
         EventEntity entity = eventDtoMapper.toEntity(request);
+        entity.setOrganizerId(userId);
+
         @SuppressWarnings("null")
         EventEntity savedEntity = eventRepository.save(entity);
         return eventMapper.toModel(savedEntity);
@@ -131,6 +136,12 @@ public class EventServiceImpl implements EventService {
         Long ownerId = entity.getOrganizerId();
         if (ownerId == null || !ownerId.equals(requesterId)) {
             throw new ForbiddenOperationException("You are not allowed to modify this event");
+        }
+    }
+
+    private void ensureCanOrganize(boolean canOrganizeEvents) {
+        if (!canOrganizeEvents) {
+            throw new ForbiddenOperationException("Only organizers or admins can create events");
         }
     }
 }

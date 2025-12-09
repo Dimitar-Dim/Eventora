@@ -1,5 +1,5 @@
 import { ApiService } from "../apiService";
-import { IEvent, ICreateEventPayload, IPurchaseTicketPayload, IPurchaseTicketResponse } from "@/types/event";
+import { IEvent, ICreateEventPayload, IPurchaseTicketPayload, IPurchaseTicketResponse, IImageUploadResponse } from "@/types/event";
 
 const apiService = new ApiService();
 
@@ -61,6 +61,20 @@ export const eventService = {
       config: {
         requiresAuth: options?.requiresAuth ?? false,
         body: payload,
+      },
+    });
+  },
+
+  /** Upload an image file; returns a URL to use as imageUrl */
+  uploadImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return await apiService.post<IImageUploadResponse>({
+      endpoint: "/api/uploads/image",
+      config: {
+        formData,
+        requiresAuth: true,
       },
     });
   },

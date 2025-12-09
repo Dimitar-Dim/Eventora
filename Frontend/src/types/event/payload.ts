@@ -9,7 +9,6 @@ export interface ICreateEventPayload {
   seatingLayout?: "NONE" | "FLOOR" | "FLOOR_BALCONY"
   hasSeating: boolean
   imageUrl?: string | null
-  organizerId: number
 }
 
 export interface IUpdateEventPayload extends Partial<ICreateEventPayload> {
@@ -35,4 +34,8 @@ export interface IPurchaseTicketResponse {
   seatRow: string
   seatNumber: string
   deliveryEmail?: string | null
+}
+
+export interface IImageUploadResponse {
+  url: string
 }

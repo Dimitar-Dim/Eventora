@@ -28,6 +28,7 @@ export default function EditEventPage() {
   const [error, setError] = useState<string | null>(null)
   const [accessError, setAccessError] = useState<string | null>(null)
   const [ownerId, setOwnerId] = useState<number | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
 
   const [formData, setFormData] = useState<IEventFormData>({
     name: "",
@@ -138,6 +139,13 @@ export default function EditEventPage() {
 
       const eventDateTime = new Date(formData.eventDate).toISOString()
 
+      let imageUrl = formData.imageUrl.trim() || null
+
+      if (!imageUrl && imageFile) {
+        const upload = await eventService.uploadImage(imageFile)
+        imageUrl = upload.url
+      }
+
       const requestBody = {
         name: formData.name.trim(),
         description: formData.description.trim(),
@@ -148,7 +156,7 @@ export default function EditEventPage() {
         standingCapacity,
         seatingLayout: formData.hasSeating ? formData.seatingLayout : "NONE",
         hasSeating: formData.hasSeating,
-        imageUrl: formData.imageUrl.trim() || null,
+        imageUrl,
         organizerId: ownerId ?? Number(user.id)
       }
 
@@ -387,6 +395,23 @@ export default function EditEventPage() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Optional: Provide a URL to an image for your event
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="imageFile" className="text-sm font-semibold text-foreground">
+                    Upload Image
+                  </Label>
+                  <Input
+                    id="imageFile"
+                    name="imageFile"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    If URL is provided, it will be used; otherwise the uploaded image will be saved on the server.
                   </p>
                 </div>
 

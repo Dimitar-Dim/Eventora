@@ -9,7 +9,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -50,10 +49,6 @@ public record EventRequest(
         Boolean hasSeating,
 
         @Size(max = 2048, message = "Image URL cannot exceed 2048 characters")
-        String imageUrl,
-
-        @NotNull(message = "Organizer ID cannot be null")
-        @Positive(message = "Organizer ID must be positive")
-        Long organizerId
+        String imageUrl
 ) {
 }
