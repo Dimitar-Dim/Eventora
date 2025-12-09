@@ -1,6 +1,8 @@
 package com.dimitar.eventora.controller;
 
 import com.dimitar.eventora.dto.TicketHistoryResponse;
+import com.dimitar.eventora.dto.VerifyTicketRequest;
+import com.dimitar.eventora.dto.VerifyTicketResponse;
 import com.dimitar.eventora.exception.UnauthorizedException;
 import com.dimitar.eventora.model.TicketPurchaseSummary;
 import com.dimitar.***REMOVED***vice.TicketService;
@@ -8,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,6 +32,17 @@ public class TicketController {
                 .map(this::toResponse)
                 .toList();
 
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<VerifyTicketResponse> verifyTicket(
+            @RequestBody VerifyTicketRequest request,
+            Authentication authentication) {
+        Long userId = extractUserId(authentication);
+        
+        VerifyTicketResponse response = ticketService.verifyTicket(request.getQrCode(), userId);
+        
         return ResponseEntity.ok(response);
     }
 

@@ -1,5 +1,6 @@
 package com.dimitar.***REMOVED***vice;
 
+import com.dimitar.eventora.dto.VerifyTicketResponse;
 import com.dimitar.eventora.email.EmailAttachment;
 import com.dimitar.eventora.email.EmailRequest;
 import com.dimitar.eventora.email.EmailService;
@@ -10,12 +11,14 @@ import com.dimitar.eventora.entity.TicketEntity;
 import com.dimitar.***REMOVED***Entity;
 import com.dimitar.eventora.exception.EventNotFound;
 import com.dimitar.eventora.exception.TicketPurchaseException;
+import com.dimitar.eventora.exception.UnauthorizedException;
 import com.dimitar.eventora.mapper.EventMapper;
 import com.dimitar.eventora.mapper.TicketMapper;
 import com.dimitar.eventora.model.Event;
 import com.dimitar.eventora.model.Ticket;
 import com.dimitar.eventora.model.TicketPurchaseSummary;
 import com.dimitar.eventora.model.TicketStatus;
+import com.dimitar.***REMOVED***Role;
 import com.dimitar.eventora.repository.EventRepository;
 import com.dimitar.eventora.repository.TicketRepository;
 import com.dimitar.***REMOVED***Repository;
@@ -255,6 +258,102 @@ public class TicketServiceImpl implements TicketService {
             return "To be announced";
         }
         return eventDate.format(EVENT_DATE_FORMATTER);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public VerifyTicketResponse verifyTicket(String qrCode, Long verifierId) {
+        // Find the ticket by QR code
+        TicketEntity ticket = ticketRepository.findByQrCode(qrCode)
+                .orElse(null);
+        
+        if (ticket == null) {
+            return VerifyTicketResponse.builder()
+                    .verified(false)
+                    .message("Ticket not found")
+                    .build();
+        }
+
+        // Find the event
+        Long eventId = ticket.getEventId();
+        if (eventId == null) {
+            return VerifyTicketResponse.builder()
+                    .verified(false)
+                    .message("Invalid ticket: no associated event")
+                    .build();
+        }
+
+        EventEntity event = eventRepository.findById(eventId)
+                .orElse(null);
+        
+        if (event == null) {
+            return VerifyTicketResponse.builder()
+                    .verified(false)
+                    .message("Event not found")
+                    .build();
+        }
+
+        // Find the verifier user
+        if (verifierId == null) {
+            throw new UnauthorizedException();
+        }
+        UserEntity verifier = userRepository.findById(verifierId)
+                .orElseThrow(UnauthorizedException::new);
+
+        // Check if verifier is admin or organizer of this event
+        boolean isAdmin = verifier.getRole() == UserRole.ADMIN;
+        boolean isEventOrganizer = Objects.equals(event.getOrganizerId(), verifierId);
+        
+        if (!isAdmin && !isEventOrganizer) {
+            return VerifyTicketResponse.builder()
+                    .verified(false)
+                    .message("You are not authorized to verify tickets for this event")
+                    .build();
+        }
+
+        // Check ticket status
+        if (ticket.getStatus() == TicketStatus.USED) {
+            return VerifyTicketResponse.builder()
+                    .verified(false)
+                    .message("Ticket has already been used")
+                    .ticketId(ticket.getId())
+                    .eventName(event.getName())
+                    .issuedTo(ticket.getIssuedTo())
+                    .seatInfo(buildSeatInfo(ticket))
+                    .build();
+        }
+
+        if (ticket.getStatus() == TicketStatus.EXPIRED) {
+            return VerifyTicketResponse.builder()
+                    .verified(false)
+                    .message("Ticket has expired")
+                    .ticketId(ticket.getId())
+                    .eventName(event.getName())
+                    .issuedTo(ticket.getIssuedTo())
+                    .seatInfo(buildSeatInfo(ticket))
+                    .build();
+        }
+
+        // Mark ticket as used
+        ticket.setStatus(TicketStatus.USED);
+        ticket.setUsedAt(LocalDateTime.now());
+        ticketRepository.save(ticket);
+
+        return VerifyTicketResponse.builder()
+                .verified(true)
+                .message("Ticket verified successfully")
+                .ticketId(ticket.getId())
+                .eventName(event.getName())
+                .issuedTo(ticket.getIssuedTo())
+                .seatInfo(buildSeatInfo(ticket))
+                .build();
+    }
+
+    private String buildSeatInfo(TicketEntity ticket) {
+        if (ticket.getSeatSection() != null && ticket.getSeatRow() != null && ticket.getSeatNumber() != null) {
+            return ticket.getSeatSection() + "-" + ticket.getSeatRow() + "-" + ticket.getSeatNumber();
+        }
+        return "Standing";
     }
 
     private String resolveDeliveryEmail(UserEntity purchasingUser, String deliveryEmail) {
