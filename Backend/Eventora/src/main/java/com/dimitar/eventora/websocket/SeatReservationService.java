@@ -37,22 +37,30 @@ public class SeatReservationService {
         return reservations;
     }
 
-    public void markAsPurchased(Long eventId, String sector, Integer seatNumber) {
-        String key = eventId + "-" + sector + "-" + seatNumber;
-        
-        // Remove any existing reservation for this seat
+    public void markAsPurchased(Long eventId, String sector, Integer seatNumber, String seatRow) {
+        int rowIndex = 0;
+        if (seatRow != null && seatRow.startsWith("R")) {
+            try {
+                rowIndex = Integer.parseInt(seatRow.substring(1)) - 1;
+            } catch (NumberFormatException ignored) {
+                rowIndex = 0;
+            }
+        }
+
+        int absoluteSeatNumber = (rowIndex * 20) + seatNumber;
+        String key = eventId + "-" + sector + "-" + absoluteSeatNumber;
+
         removeReservation(key);
-        
+
         SeatState state = new SeatState();
         state.setEventId(eventId);
         state.setSector(sector);
-        state.setSeatNumber(seatNumber);
+        state.setSeatNumber(absoluteSeatNumber);
         state.setStatus("purchased");
         purchasedSeats.put(key, state);
-        
-        // Publish event to broadcast purchase to all WebSocket clients
+
         eventPublisher.publishEvent(new SeatPurchasedEvent(state));
-        
+
         log.info("Seat marked as purchased: {}", key);
     }
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/context/AuthContext"
 import { showSuccess, showError } from "@/utils/toast"
@@ -149,6 +150,14 @@ export default function LoginPage() {
                     </svg>
                   )}
                 </button>
+              </div>
+              <div className="text-right text-sm">
+                <Link
+                  href="/forgot-password"
+                  className="text-primary hover:text-accent transition-colors"
+                >
+                  Forgot password?
+                </Link>
               </div>
             </div>
 

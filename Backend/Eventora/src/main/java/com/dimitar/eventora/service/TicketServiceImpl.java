@@ -32,6 +32,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -44,16 +48,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class TicketServiceImpl implements TicketService {
 
-    private static final String EVENT_NOT_ACTIVE_MESSAGE = "This event is not accepting ticket purchases right now";
-    private static final String EVENT_SOLD_OUT_MESSAGE = "Sorry, this event is sold out";
-    private static final String DEFAULT_ISSUED_TO = "Ticket Holder";
-    private static final String TICKET_ENTITY_NULL_MESSAGE = "Ticket entity must not be null";
-    private static final String EVENT_ENTITY_NULL_MESSAGE = "Event entity must not be null";
-    private static final String USER_ID_REQUIRED_MESSAGE = "User id must not be null";
-    private static final String USER_NOT_FOUND_MESSAGE = "We couldn't find your account. Please sign in again.";
-    private static final String DELIVERY_EMAIL_REQUIRED_MESSAGE = "Please provide the email address where we should deliver the ticket.";
-    private static final String DELIVERY_EMAIL_INVALID_MESSAGE = "Please provide a valid email address so we can deliver the ticket.";
-    private static final String ACCOUNT_EMAIL_REQUIRED_MESSAGE = "Your account must have an email address before purchasing tickets.";
     private static final int SEATS_PER_ROW = 20;
     private static final int FLOOR_SECTION_ROWS = 5;
     private static final DateTimeFormatter EVENT_DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
@@ -68,6 +62,15 @@ public class TicketServiceImpl implements TicketService {
     private final EmailVerifier emailVerifier;
     private final SeatReservationService seatReservationService;
 
+    private final Map<String, List<TicketPurchaseSummary>> pendingEmailBatches = new ConcurrentHashMap<>();
+    private final Set<String> scheduledEmailFlushes = ConcurrentHashMap.newKeySet();
+    private final ScheduledExecutorService emailBatchScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        t.setName("ticket-email-batcher");
+        return t;
+    });
+
     @Override
     @Transactional
     public TicketPurchaseSummary purchaseTicket(Long ***REMOVED***Id, String issuedTo, String deliveryEmail,
@@ -81,7 +84,7 @@ public class TicketServiceImpl implements TicketService {
         if (userId != null) {
             Long resolvedUserId = userId;
             purchasingUser = userRepository.findById(resolvedUserId)
-                    .orElseThrow(() -> new TicketPurchaseException(USER_NOT_FOUND_MESSAGE));
+                    .orElseThrow(() -> new TicketPurchaseException("We couldn't find your account. Please sign in again."));
         }
 
         validateEventState(event);
@@ -108,14 +111,14 @@ public class TicketServiceImpl implements TicketService {
                 .seatNumber(seatMetadata.number())
                 .build();
 
-        TicketEntity savedTicket = ticketRepository.save(Objects.requireNonNull(ticketEntity, TICKET_ENTITY_NULL_MESSAGE));
-        EventEntity updatedEvent = eventRepository.save(Objects.requireNonNull(event, EVENT_ENTITY_NULL_MESSAGE));
+        TicketEntity savedTicket = ticketRepository.save(Objects.requireNonNull(ticketEntity, "Ticket entity must not be null"));
+        EventEntity updatedEvent = eventRepository.save(Objects.requireNonNull(event, "Event entity must not be null"));
 
         // Mark seat as purchased and broadcast to WebSocket clients
         if (seatMetadata.section() != null && seatMetadata.number() != null) {
             try {
                 Integer seatNum = Integer.parseInt(seatMetadata.number());
-                seatReservationService.markAsPurchased(resolvedEventId, seatMetadata.section(), seatNum);
+                seatReservationService.markAsPurchased(resolvedEventId, seatMetadata.section(), seatNum, seatMetadata.row());
             } catch (NumberFormatException e) {
                 log.warn("Failed to parse seat number for WebSocket broadcast: {}", seatMetadata.number());
             }
@@ -132,7 +135,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional(readOnly = true)
     public List<TicketPurchaseSummary> getTicketsForUser(Long userId) {
-        Long resolvedUserId = Objects.requireNonNull(userId, USER_ID_REQUIRED_MESSAGE);
+        Long resolvedUserId = Objects.requireNonNull(userId, "User id must not be null");
 
         List<TicketEntity> ticketEntities = ticketRepository.findAllByUserIdOrderByCreatedAtDesc(resolvedUserId);
         if (ticketEntities.isEmpty()) {
@@ -181,31 +184,31 @@ public class TicketServiceImpl implements TicketService {
 
     private void validateEventState(EventEntity event) {
         if (!Boolean.TRUE.equals(event.getIsActive())) {
-            throw new TicketPurchaseException(EVENT_NOT_ACTIVE_MESSAGE);
+            throw new TicketPurchaseException("This event is not accepting ticket purchases right now");
         }
 
         if (event.getAvailableTickets() == null || event.getAvailableTickets() <= 0) {
-            throw new TicketPurchaseException(EVENT_SOLD_OUT_MESSAGE);
+            throw new TicketPurchaseException("Sorry, this event is sold out");
         }
     }
 
     private void decrementAvailability(EventEntity event) {
         int remaining = event.getAvailableTickets() - 1;
         if (remaining < 0) {
-            throw new TicketPurchaseException(EVENT_SOLD_OUT_MESSAGE);
+            throw new TicketPurchaseException("Sorry, this event is sold out");
         }
         event.setAvailableTickets(remaining);
     }
 
     private String resolveIssuedTo(String issuedTo) {
         if (issuedTo == null || issuedTo.isBlank()) {
-            return DEFAULT_ISSUED_TO;
+            return "Ticket Holder";
         }
         return issuedTo.trim();
     }
 
     private SeatMetadata assignSeatMetadata(EventEntity event) {
-        Objects.requireNonNull(event, EVENT_ENTITY_NULL_MESSAGE);
+        Objects.requireNonNull(event, "Event entity must not be null");
         long seatsAlreadyAssigned = ticketRepository.countByEventId(event.getId());
         int rowIndex = (int) (seatsAlreadyAssigned / SEATS_PER_ROW);
         int seatIndexInRow = (int) (seatsAlreadyAssigned % SEATS_PER_ROW) + 1;
@@ -218,39 +221,91 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private void dispatchTicketEmail(String deliveryEmail, TicketPurchaseSummary summary) {
-        String recipientEmail = Objects.requireNonNull(deliveryEmail, DELIVERY_EMAIL_REQUIRED_MESSAGE);
-        sendEmailWithAttachment(recipientEmail, summary);
+        String recipientEmail = Objects.requireNonNull(deliveryEmail, "Please provide the email address where we should deliver the ticket.");
+        if (summary == null) {
+            return;
+        }
+
+        pendingEmailBatches.merge(recipientEmail, List.of(summary), (existing, incoming) -> {
+            var merged = new java.util.ArrayList<>(existing);
+            merged.addAll(incoming);
+            return merged;
+        });
+
+        if (scheduledEmailFlushes.add(recipientEmail)) {
+            emailBatchScheduler.schedule(() -> flushEmailBatch(recipientEmail), 500, TimeUnit.MILLISECONDS);
+        }
     }
 
-    private void sendEmailWithAttachment(String recipientEmail, TicketPurchaseSummary summary) {
-        try {
-            byte[] pdfBytes = pdfTicketService.generateTicketPdf(
-                    summary.event().getName(),
-                    summary.ticket().getIssuedTo(),
-                    summary.ticket().getQrCode()
-            );
+    private void flushEmailBatch(String recipientEmail) {
+        List<TicketPurchaseSummary> summaries = pendingEmailBatches.remove(recipientEmail);
+        scheduledEmailFlushes.remove(recipientEmail);
+        if (summaries == null || summaries.isEmpty()) {
+            return;
+        }
+        sendEmailWithAttachments(recipientEmail, summaries);
+    }
 
-            EmailAttachment attachment = new EmailAttachment(
-                    "ticket-" + summary.ticket().getId() + ".pdf",
-                    pdfBytes,
-                    "application/pdf"
-            );
+    private void sendEmailWithAttachments(String recipientEmail, List<TicketPurchaseSummary> summaries) {
+        try {
+            List<EmailAttachment> attachments = summaries.stream()
+                    .map(summary -> new EmailAttachment(
+                            buildAttachmentFileName(summary),
+                            pdfTicketService.generateTicketPdf(
+                                    summary.event().getName(),
+                                    summary.ticket().getIssuedTo(),
+                                    summary.ticket().getQrCode()
+                            ),
+                            "application/pdf"
+                    ))
+                    .toList();
+
+            TicketPurchaseSummary first = summaries.get(0);
 
             Map<String, Object> variables = new HashMap<>();
-            variables.put("eventName", summary.event().getName());
-            variables.put("attendee", summary.ticket().getIssuedTo());
-            variables.put("ticketId", summary.ticket().getId());
-            variables.put("eventDate", formatEventDate(summary.event().getEventDate()));
+            variables.put("eventName", first.event().getName());
+            variables.put("attendee", buildAttendeeLabel(summaries));
+            variables.put("ticketId", summaries.size() == 1 ? first.ticket().getId() : "Multiple tickets");
+            variables.put("eventDate", formatEventDate(first.event().getEventDate()));
 
             emailService.send(new EmailRequest(
                     recipientEmail,
                     EmailTemplate.TICKET_PURCHASE,
                     variables,
-                    List.of(attachment)
+                    attachments
             ));
         } catch (Exception ex) {
-            log.warn("Failed to email ticket {} to {}", summary.ticket().getId(), recipientEmail, ex);
+            log.warn("Failed to email tickets to {}", recipientEmail, ex);
         }
+    }
+
+    private String buildAttachmentFileName(TicketPurchaseSummary summary) {
+        String eventName = sanitizeForFile(summary.event().getName());
+        String holder = sanitizeForFile(summary.ticket().getIssuedTo());
+        String base = (eventName.isBlank() ? "event" : eventName) + " - " + (holder.isBlank() ? "ticket" : holder);
+        return base + ".pdf";
+    }
+
+    private String sanitizeForFile(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+                .replaceAll("[\\\\/:*?\"<>|]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    private String buildAttendeeLabel(List<TicketPurchaseSummary> summaries) {
+        if (summaries.isEmpty()) {
+            return "";
+        }
+        String first = summaries.get(0).ticket().getIssuedTo();
+        int remaining = summaries.size() - 1;
+        if (remaining <= 0) {
+            return first;
+        }
+        return first + " + " + remaining + " more";
     }
 
     private String formatEventDate(LocalDateTime eventDate) {
@@ -361,12 +416,12 @@ public class TicketServiceImpl implements TicketService {
 
         if (normalizedEmail == null) {
             if (purchasingUser == null) {
-                throw new TicketPurchaseException(DELIVERY_EMAIL_REQUIRED_MESSAGE);
+                throw new TicketPurchaseException("Please provide the email address where we should deliver the ticket.");
             }
 
             String accountEmail = normalizeEmail(purchasingUser.getEmail());
             if (accountEmail == null) {
-                throw new TicketPurchaseException(ACCOUNT_EMAIL_REQUIRED_MESSAGE);
+                throw new TicketPurchaseException("Your account must have an email address before purchasing tickets.");
             }
 
             return verifyOrThrow(accountEmail);
@@ -388,7 +443,7 @@ public class TicketServiceImpl implements TicketService {
             emailVerifier.verifyDeliverability(email);
             return email;
         } catch (IllegalArgumentException ex) {
-            throw new TicketPurchaseException(DELIVERY_EMAIL_INVALID_MESSAGE);
+            throw new TicketPurchaseException("Please provide a valid email address so we can deliver the ticket.");
         }
     }
 

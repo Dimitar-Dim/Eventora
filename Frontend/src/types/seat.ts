@@ -24,8 +24,9 @@ export interface ISeatState extends ISeatInfo {
 }
 
 export type SeatReservationMessage = 
-  | { type: "RESERVE"; data: ISeatReservation }
+  | { type: "RESERVE"; data: ISeatState }
   | { type: "RELEASE"; data: ISeatInfo }
   | { type: "PURCHASE"; data: ISeatPurchase }
   | { type: "INITIAL_STATE"; data: ISeatState[] }
+  | { type: "RESERVATION_EXPIRED"; data: ISeatInfo }
   | { type: "RESERVATION_EXPIRED"; data: ISeatInfo }

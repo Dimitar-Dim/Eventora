@@ -6,9 +6,11 @@ import com.dimitar.eventora.dto.LoginResponse;
 import com.dimitar.eventora.dto.RegisterRequest;
 import com.dimitar.eventora.dto.RegisterResponse;
 import com.dimitar.eventora.dto.ResendVerificationRequest;
+import com.dimitar.eventora.dto.ResetPasswordRequest;
 import com.dimitar.***REMOVED***Response;
 import com.dimitar.eventora.dto.VerificationResponse;
 import com.dimitar.eventora.dto.VerifyAccountRequest;
+import com.dimitar.eventora.dto.ForgotPasswordRequest;
 import com.dimitar.eventora.email.EmailRequest;
 import com.dimitar.eventora.email.EmailService;
 import com.dimitar.eventora.email.EmailTemplate;
@@ -45,6 +47,7 @@ import java.util.Map;
 public class AuthServiceImpl implements AuthService {
 
     private static final Duration VERIFICATION_TOKEN_TTL = Duration.ofHours(24);
+    private static final Duration PASSWORD_RESET_TOKEN_TTL = Duration.ofHours(1);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -167,6 +170,42 @@ public class AuthServiceImpl implements AuthService {
         return new VerificationResponse(sent, message);
     }
 
+    @Override
+    @Transactional
+    public VerificationResponse forgotPassword(ForgotPasswordRequest request) {
+        String normalizedEmail = request.email().trim();
+        userRepository.findByEmailIgnoreCase(normalizedEmail).ifPresentOrElse(user -> {
+            try {
+                VerificationTokenEntity token = verificationService.createToken(
+                        user.getId(), VerificationTokenType.PASSWORD_RESET, PASSWORD_RESET_TOKEN_TTL);
+
+                Map<String, Object> variables = new HashMap<>();
+                variables.put("username", user.getUsername());
+                variables.put("resetUrl", buildPasswordResetUrl(token.getToken()));
+
+                emailService.send(new EmailRequest(user.getEmail(), EmailTemplate.PASSWORD_RESET, variables, List.of()));
+            } catch (Exception ex) {
+                log.error("Failed to send password reset email to {}", normalizedEmail, ex);
+            }
+        }, () -> log.info("Password reset requested for non-existent email {}", normalizedEmail));
+
+        return new VerificationResponse(true, "If that email exists in our system, a reset link has been sent.");
+    }
+
+    @Override
+    @Transactional
+    public VerificationResponse resetPassword(ResetPasswordRequest request) {
+        VerificationTokenEntity token = verificationService.consumeToken(
+                        request.token(), VerificationTokenType.PASSWORD_RESET)
+                .orElseThrow(() -> new VerificationTokenException("Invalid or expired password reset token"));
+
+        UserEntity user = token.getUser();
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        return new VerificationResponse(true, "Password has been reset successfully");
+    }
+
     private boolean sendVerificationEmail(UserEntity savedUser) {
         try {
             VerificationTokenEntity token = verificationService.createToken(
@@ -188,6 +227,22 @@ public class AuthServiceImpl implements AuthService {
         String baseUrl = mailProperties.getVerificationBaseUrl();
         if (baseUrl == null || baseUrl.isBlank()) {
             throw new IllegalStateException("Verification base URL is not configured");
+        }
+
+        String separator;
+        if (baseUrl.contains("?")) {
+            separator = (baseUrl.endsWith("?") || baseUrl.endsWith("&")) ? "" : "&";
+        } else {
+            separator = baseUrl.endsWith("?") ? "" : "?";
+        }
+        String encodedToken = URLEncoder.encode(tokenValue, StandardCharsets.UTF_8);
+        return baseUrl + separator + "token=" + encodedToken;
+    }
+
+    private String buildPasswordResetUrl(String tokenValue) {
+        String baseUrl = mailProperties.getPasswordResetBaseUrl();
+        if (baseUrl == null || baseUrl.isBlank()) {
+            throw new IllegalStateException("Password reset base URL is not configured");
         }
 
         String separator;

@@ -53,5 +53,25 @@ export const userService = {
       },
     });
   },
+
+  /** Request password reset link */
+  forgotPassword: async (email: string) => {
+    return await apiService.post<IVerificationResponse>({
+      endpoint: "/api/auth/forgot-password",
+      config: {
+        body: { email },
+      },
+    });
+  },
+
+  /** Submit new password using reset token */
+  resetPassword: async (token: string, newPassword: string) => {
+    return await apiService.post<IVerificationResponse>({
+      endpoint: "/api/auth/reset-password",
+      config: {
+        body: { token, newPassword },
+      },
+    });
+  },
 };
 

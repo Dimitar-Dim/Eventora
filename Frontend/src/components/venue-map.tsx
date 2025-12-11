@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { SeatStatus } from "@/types/seat"
+import { SeatStatus, ISeatState } from "@/types/seat"
 
 export type SeatingLayoutType = "NONE" | "FLOOR" | "FLOOR_BALCONY"
 
@@ -14,7 +14,7 @@ interface VenueMapProps {
   onSeatSelect?: (info: { sector: string; seat: number } | null) => void
   onToggleSeat?: (seat: Seat) => void
   selectedSeats?: Array<{ sector: string; seat: number }>
-  seatStates?: Map<string, SeatStatus>
+  seatStates?: Map<string, ISeatState>
   reservedSeats?: Set<string>
   purchasedSeats?: Set<string>
 }
@@ -41,7 +41,7 @@ function SectorGrid({
   tone: "floor" | "balcony"
   selectedKeys: string[]
   onSelect: (seat: Seat) => void
-  seatStates?: Map<string, SeatStatus>
+  seatStates?: Map<string, ISeatState>
   rows?: number
   cols?: number
   className?: string
@@ -50,15 +50,15 @@ function SectorGrid({
 
   const getSeatClassName = (seat: Seat, selected: boolean): string => {
     const key = `${seat.sector}-${seat.seatNum}`
-    const status = seatStates?.get(key)
+    const seatState = seatStates?.get(key)
 
     // Purchased seats - gray and disabled
-    if (status === "purchased") {
+    if (seatState?.status === "purchased") {
       return "bg-gray-400/40 border border-gray-500/20 cursor-not-allowed opacity-50"
     }
 
     // Reserved by others - orange/amber and disabled
-    if (status === "reserved") {
+    if (seatState?.status === "reserved") {
       return "bg-amber-500/60 border border-amber-400/40 cursor-not-allowed"
     }
 
@@ -103,8 +103,8 @@ function SectorGrid({
         {seats.map((seat) => {
           const key = `${seat.sector}-${seat.seatNum}`
           const selected = selectedKeys.includes(key)
-          const status = seatStates?.get(key)
-          const isDisabled = status === "purchased" || status === "reserved"
+          const seatState = seatStates?.get(key)
+          const isDisabled = seatState?.status === "purchased" || seatState?.status === "reserved"
 
           return (
             <button

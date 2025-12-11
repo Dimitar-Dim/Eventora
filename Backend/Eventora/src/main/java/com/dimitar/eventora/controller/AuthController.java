@@ -5,9 +5,11 @@ import com.dimitar.eventora.dto.LoginResponse;
 import com.dimitar.eventora.dto.RegisterRequest;
 import com.dimitar.eventora.dto.RegisterResponse;
 import com.dimitar.eventora.dto.ResendVerificationRequest;
+import com.dimitar.eventora.dto.ResetPasswordRequest;
 import com.dimitar.***REMOVED***Response;
 import com.dimitar.eventora.dto.VerificationResponse;
 import com.dimitar.eventora.dto.VerifyAccountRequest;
+import com.dimitar.eventora.dto.ForgotPasswordRequest;
 import com.dimitar.***REMOVED***vice.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +56,18 @@ public class AuthController {
     @PostMapping("/verify/resend")
     public ResponseEntity<VerificationResponse> resendVerification(@RequestBody @Valid ResendVerificationRequest request) {
         VerificationResponse response = authService.resendVerificationEmail(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<VerificationResponse> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+        VerificationResponse response = authService.forgotPassword(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<VerificationResponse> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        VerificationResponse response = authService.resetPassword(request);
         return ResponseEntity.ok(response);
     }
 }
