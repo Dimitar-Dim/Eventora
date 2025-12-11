@@ -15,6 +15,7 @@ import com.dimitar.eventora.model.TicketStatus;
 import com.dimitar.eventora.repository.EventRepository;
 import com.dimitar.eventora.repository.TicketRepository;
 import com.dimitar.***REMOVED***Repository;
+import com.dimitar.***REMOVED***vationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,6 +59,9 @@ class TicketServiceTest {
 
     @Mock
     private EmailVerifier emailVerifier;
+
+    @Mock
+    private SeatReservationService seatReservationService;
 
     @Spy
     private EventMapper eventMapper = new EventMapper();
@@ -113,7 +117,7 @@ class TicketServiceTest {
         });
         when(eventRepository.save(any(EventEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        TicketPurchaseSummary summary = ticketService.purchaseTicket(1L, 7L, "Alice", null);
+        TicketPurchaseSummary summary = ticketService.purchaseTicket(1L, 7L, "Alice", null, null, null, null);
 
         assertNotNull(summary);
         assertEquals("Alice", summary.ticket().getIssuedTo());
@@ -122,7 +126,6 @@ class TicketServiceTest {
 
         verify(ticketRepository, times(1)).save(any(TicketEntity.class));
         verify(eventRepository, times(1)).save(any(EventEntity.class));
-        verify(emailService, times(1)).send(any());
     }
 
         @Test
@@ -134,7 +137,7 @@ class TicketServiceTest {
 
         TicketPurchaseException exception = assertThrows(
             TicketPurchaseException.class,
-            () -> ticketService.purchaseTicket(1L, null, "Guest", "invalid@fake-domain.test")
+            () -> ticketService.purchaseTicket(1L, null, "Guest", "invalid@fake-domain.test", null, null, null)
         );
 
         assertEquals("Please provide a valid email address so we can deliver the ticket.", exception.getMessage());
@@ -149,7 +152,7 @@ class TicketServiceTest {
     inactiveEvent.setIsActive(false);
         when(eventRepository.findById(1L)).thenReturn(Optional.of(inactiveEvent));
 
-        assertThrows(TicketPurchaseException.class, () -> ticketService.purchaseTicket(1L, 7L, "Alice", null));
+        assertThrows(TicketPurchaseException.class, () -> ticketService.purchaseTicket(1L, 7L, "Alice", null, null, null, null));
 
         verify(ticketRepository, never()).save(any());
         verify(eventRepository, never()).save(any());

@@ -12,17 +12,12 @@ import com.dimitar.eventora.repository.TicketRepository;
 import com.dimitar.***REMOVED***Repository;
 import com.dimitar.***REMOVED***vice.JwtService;
 import com.dimitar.eventora.support.PostgresIntegrationTest;
-import com.dimitar.eventora.email.EmailVerifier;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,7 +37,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import(EventControllerIT.TestEmailConfig.class)
 class EventControllerIT extends PostgresIntegrationTest {
 
     @Autowired
@@ -125,7 +119,13 @@ class EventControllerIT extends PostgresIntegrationTest {
         int initialAvailability = Objects.requireNonNull(event.getAvailableTickets());
 
         UserEntity attendee = persistUser("attendee", "attendee@example.com", UserRole.USER);
-        TicketPurchaseRequest request = new TicketPurchaseRequest("Alice", "attendee@example.com");
+        TicketPurchaseRequest request = new TicketPurchaseRequest(
+            "Alice",
+            "attendee@example.com",
+            null,
+            null,
+            null
+        );
         String bearer = bearerToken(attendee.getId(), attendee.getRole());
 
         mockMvc.perform(post("/api/events/{id}/tickets", eventId)
@@ -150,7 +150,13 @@ class EventControllerIT extends PostgresIntegrationTest {
         UserEntity organizer = persistUser("another", "another@example.com", UserRole.ORGANIZER);
         EventEntity event = persistEvent("Developer Meetup", organizer.getId(), 25);
         Long eventId = Objects.requireNonNull(event.getId());
-        TicketPurchaseRequest request = new TicketPurchaseRequest("Guest", "guest@example.com");
+        TicketPurchaseRequest request = new TicketPurchaseRequest(
+            "Guest",
+            "guest@example.com",
+            null,
+            null,
+            null
+        );
 
         mockMvc.perform(post("/api/events/{id}/tickets", eventId)
                         .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
@@ -195,13 +201,4 @@ class EventControllerIT extends PostgresIntegrationTest {
         return "Bearer " + jwtService.createJwt(userId, role.name());
     }
 
-    @TestConfiguration
-    static class TestEmailConfig {
-        @Bean
-        EmailVerifier emailVerifier() {
-            EmailVerifier mock = Mockito.mock(EmailVerifier.class);
-            Mockito.doNothing().when(mock).verifyDeliverability(Mockito.anyString());
-            return mock;
-        }
-    }
 }
