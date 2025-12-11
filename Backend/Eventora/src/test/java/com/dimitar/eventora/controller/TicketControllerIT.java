@@ -11,19 +11,14 @@ import com.dimitar.***REMOVED***Repository;
 import com.dimitar.***REMOVED***vice.JwtService;
 import com.dimitar.***REMOVED***vice.TicketService;
 import com.dimitar.eventora.support.PostgresIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import com.dimitar.eventora.email.EmailService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -37,7 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import(TicketControllerIT.TestEmailConfig.class)
 class TicketControllerIT extends PostgresIntegrationTest {
 
     @Autowired
@@ -74,7 +68,15 @@ class TicketControllerIT extends PostgresIntegrationTest {
         EventEntity event = persistEvent("Live Show", organizer.getId());
         UserEntity attendee = persistUser("customer", "customer@example.com", UserRole.USER);
 
-        TicketPurchaseSummary summary = ticketService.purchaseTicket(event.getId(), attendee.getId(), "Customer", null);
+        TicketPurchaseSummary summary = ticketService.purchaseTicket(
+            event.getId(),
+            attendee.getId(),
+            "Customer",
+            null,
+            null,
+            null,
+            null
+        );
 
         String bearer = bearerToken(attendee.getId(), attendee.getRole());
 
@@ -131,18 +133,4 @@ class TicketControllerIT extends PostgresIntegrationTest {
         return "Bearer " + jwtService.createJwt(userId, role.name());
     }
 
-    @TestConfiguration
-    static class TestEmailConfig {
-        @Bean
-        EmailService emailService() {
-            return Mockito.mock(EmailService.class);
-        }
-
-        @Bean
-        com.dimitar.eventora.email.EmailVerifier emailVerifier() {
-            com.dimitar.eventora.email.EmailVerifier mock = Mockito.mock(com.dimitar.eventora.email.EmailVerifier.class);
-            Mockito.doNothing().when(mock).verifyDeliverability(Mockito.anyString());
-            return mock;
-        }
-    }
 }

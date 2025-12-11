@@ -6,3 +6,10 @@ cypress/downloads/
 cypress/reports/
 cypress/.cache/
 cypress/screenshots/
+.screenshots
+.videos/
+screenshots/
+videos/
+downloads/
+reports/
+.cache/
