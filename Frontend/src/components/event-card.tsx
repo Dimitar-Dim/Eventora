@@ -594,7 +594,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
         </DialogContent>
       </Dialog>
         <Dialog open={isPurchaseDialogOpen} onOpenChange={handlePurchaseDialogChange}>
-          <DialogContent className="max-w-[1200px] max-h-[95vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50">
+          <DialogContent className="w-[98vw] max-w-[1400px] sm:w-[min(1250px,98vw)] min-h-[75vh] max-h-[96vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold flex items-center gap-2">
                 <Ticket className="h-5 w-5 text-primary" />
