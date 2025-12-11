@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { SeatStatus, ISeatState } from "@/types/seat"
+import { ISeatState } from "@/types/seat"
 
 export type SeatingLayoutType = "NONE" | "FLOOR" | "FLOOR_BALCONY"
 
@@ -15,8 +15,6 @@ interface VenueMapProps {
   onToggleSeat?: (seat: Seat) => void
   selectedSeats?: Array<{ sector: string; seat: number }>
   seatStates?: Map<string, ISeatState>
-  reservedSeats?: Set<string>
-  purchasedSeats?: Set<string>
 }
 
 type Seat = { sector: string; seatNum: number }
@@ -131,8 +129,6 @@ export function VenueMap({
   onToggleSeat,
   selectedSeats,
   seatStates,
-  reservedSeats,
-  purchasedSeats,
 }: VenueMapProps) {
   const [internalSelected, setInternalSelected] = useState<Seat[]>([])
 

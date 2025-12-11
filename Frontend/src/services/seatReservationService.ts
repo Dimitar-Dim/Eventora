@@ -58,19 +58,19 @@ class SeatReservationService {
         try {
           const message: SeatReservationMessage = JSON.parse(event.data)
           this.handleMessage(message)
-        } catch (error) {
+        } catch {
           // Ignore malformed messages to keep the connection alive
         }
       }
 
-      this.ws.onerror = (error) => {
+      this.ws.onerror = () => {
         this.ws?.close()
       }
 
-      this.ws.onclose = (event) => {
+      this.ws.onclose = () => {
         this.attemptReconnect()
       }
-    } catch (error) {
+    } catch {
     }
   }
 
