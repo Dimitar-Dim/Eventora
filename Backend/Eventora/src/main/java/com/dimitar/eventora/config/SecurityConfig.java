@@ -32,6 +32,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
                         .requestMatchers("/api/auth/verify", "/api/auth/verify/**").permitAll()
+                        .requestMatchers("/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
+                    .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/events/*/tickets").permitAll()

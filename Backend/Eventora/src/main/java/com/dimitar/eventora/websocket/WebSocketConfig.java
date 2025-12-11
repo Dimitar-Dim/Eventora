@@ -15,8 +15,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(seatReservationHandler, "/ws/seats/{eventId}")
-                .setAllowedOrigins("http://localhost:3000")
-                .withSockJS();
+        registry.addHandler(seatReservationHandler, "/ws/seats")
+                .setAllowedOrigins("*");
     }
 }

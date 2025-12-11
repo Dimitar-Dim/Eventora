@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SeatReservationHandler extends TextWebSocketHandler {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final Map<String, Set<WebSocketSession>> eventSessions = new ConcurrentHashMap<>();
+    private final Map<Long, Set<WebSocketSession>> eventSessions = new ConcurrentHashMap<>();
     private final SeatReservationService reservationService;
 
     public SeatReservationHandler(SeatReservationService reservationService) {
@@ -28,180 +28,170 @@ public class SeatReservationHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        Long eventId = extractEventId(session);
-        if (eventId != null) {
-            eventSessions.computeIfAbsent(eventId.toString(), k -> ConcurrentHashMap.newKeySet()).add(session);
-            log.info("WebSocket connection established for event {}", eventId);
-            
-            // Send initial state
-            sendInitialState(session, eventId);
-        }
-    }
-
-    @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        Long eventId = extractEventId(session);
+    public void afterConnectionEstablished(WebSocketSession session) {
+        Long eventId = getEventId(session);
         if (eventId == null) return;
 
-        Map<String, Object> payload = objectMapper.readValue(message.getPayload(), Map.class);
-        String type = (String) payload.get("type");
-        Map<String, Object> data = (Map<String, Object>) payload.get("data");
+        eventSessions.computeIfAbsent(eventId, k -> ConcurrentHashMap.newKeySet()).add(session);
+        
+        sendInitialState(session, eventId);
+    }
 
-        switch (type) {
-            case "RESERVE":
-                handleReserve(eventId, data, session);
-                break;
-            case "RELEASE":
-                handleRelease(eventId, data, session);
-                break;
-            default:
-                log.warn("Unknown message type: {}", type);
+    @Override
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) {
+        try {
+            Long eventId = getEventId(session);
+            if (eventId == null) return;
+
+            Map<String, Object> msg = objectMapper.readValue(message.getPayload(), Map.class);
+            String type = (String) msg.get("type");
+            Map<String, Object> data = (Map<String, Object>) msg.get("data");
+
+            if ("RESERVE".equals(type)) {
+                handleReserve(eventId, data);
+            } else if ("RELEASE".equals(type)) {
+                handleRelease(eventId, data);
+            }
+        } catch (Exception e) {
+            log.error("Error handling message", e);
         }
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        Long eventId = extractEventId(session);
-        if (eventId != null) {
-            Set<WebSocketSession> sessions = eventSessions.get(eventId.toString());
-            if (sessions != null) {
-                sessions.remove(session);
-                if (sessions.isEmpty()) {
-                    eventSessions.remove(eventId.toString());
-                }
-            }
-            log.info("WebSocket connection closed for event {}", eventId);
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        Long eventId = getEventId(session);
+        if (eventId == null) return;
+
+        Set<WebSocketSession> sessions = eventSessions.get(eventId);
+        if (sessions != null) {
+            sessions.remove(session);
         }
     }
 
-    private void handleReserve(Long eventId, Map<String, Object> data, WebSocketSession session) throws IOException {
+    private void handleReserve(Long eventId, Map<String, Object> data) {
         String sector = (String) data.get("sector");
         Integer seatNumber = (Integer) data.get("seatNumber");
         String userId = (String) data.get("userId");
 
         String key = eventId + "-" + sector + "-" + seatNumber;
-        
-        // Check if already reserved or purchased
         if (reservationService.isPurchased(eventId, sector, seatNumber)) {
-            sendError(session, "Seat is already purchased");
             return;
         }
-        
+
         SeatReservation existing = reservationService.getReservation(key);
         if (existing != null && !existing.getReservedBy().equals(userId)) {
-            sendError(session, "Seat is already reserved");
             return;
         }
 
-        // Create or update reservation
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiresAt = now.plusMinutes(15);
-        SeatReservation reservation = new SeatReservation(***REMOVED***Id, now, expiresAt);
+        LocalDateTime expires = now.plusMinutes(15);
+        SeatReservation reservation = new SeatReservation(***REMOVED***Id, now, expires);
         reservationService.addReservation(key, reservation);
 
-        // Broadcast to all clients
-        SeatReservationMessage msg = new SeatReservationMessage("RESERVE", reservation);
-        broadcastToEvent(eventId, msg);
+        SeatState state = new SeatState();
+        state.setEventId(eventId);
+        state.setSector(sector);
+        state.setSeatNumber(seatNumber);
+        state.setStatus("reserved");
+        state.setReservedBy(userId);
+        state.setExpiresAt(expires.format(DateTimeFormatter.ISO_DATE_TIME));
+
+        broadcast(eventId, "RESERVE", state);
     }
 
-    private void handleRelease(Long eventId, Map<String, Object> data, WebSocketSession session) throws IOException {
+    private void handleRelease(Long eventId, Map<String, Object> data) {
         String sector = (String) data.get("sector");
         Integer seatNumber = (Integer) data.get("seatNumber");
         String userId = (String) data.get("userId");
 
         String key = eventId + "-" + sector + "-" + seatNumber;
         SeatReservation existing = reservationService.getReservation(key);
-        
         if (existing != null && existing.getReservedBy().equals(userId)) {
             reservationService.removeReservation(key);
-            
-            SeatInfo seatInfo = new SeatInfo(eventId, sector, seatNumber);
-            SeatReservationMessage msg = new SeatReservationMessage("RELEASE", seatInfo);
-            broadcastToEvent(eventId, msg);
+
+            SeatInfo info = new SeatInfo(eventId, sector, seatNumber);
+            broadcast(eventId, "RELEASE", info);
         }
     }
 
-    private void sendInitialState(WebSocketSession session, Long eventId) throws IOException {
-        List<SeatState> states = new ArrayList<>();
-        
-        // Add all current reservations
-        reservationService.getReservations().values().stream()
-                .filter(r -> r.getEventId().equals(eventId))
-                .filter(r -> r.getExpiresAt().isAfter(LocalDateTime.now()))
-                .forEach(r -> {
-                    SeatState state = new SeatState();
-                    state.setEventId(r.getEventId());
-                    state.setSector(r.getSector());
-                    state.setSeatNumber(r.getSeatNumber());
-                    state.setStatus("reserved");
-                    state.setReservedBy(r.getReservedBy());
-                    state.setExpiresAt(r.getExpiresAt().format(DateTimeFormatter.ISO_DATE_TIME));
-                    states.add(state);
-                });
-        
-        // Add purchased seats
-        states.addAll(reservationService.getPurchasedSeats(eventId));
-        
-        SeatReservationMessage msg = new SeatReservationMessage("INITIAL_STATE", states);
-        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(msg)));
+    private void sendInitialState(WebSocketSession session, Long eventId) {
+        try {
+            List<SeatState> states = new ArrayList<>();
+
+            reservationService.getReservations().values().stream()
+                    .filter(r -> r.getEventId().equals(eventId))
+                    .filter(r -> r.getExpiresAt().isAfter(LocalDateTime.now()))
+                    .forEach(r -> {
+                        SeatState state = new SeatState();
+                        state.setEventId(r.getEventId());
+                        state.setSector(r.getSector());
+                        state.setSeatNumber(r.getSeatNumber());
+                        state.setStatus("reserved");
+                        state.setReservedBy(r.getReservedBy());
+                        state.setExpiresAt(r.getExpiresAt().format(DateTimeFormatter.ISO_DATE_TIME));
+                        states.add(state);
+                    });
+
+            states.addAll(reservationService.getPurchasedSeats(eventId));
+
+            SeatReservationMessage msg = new SeatReservationMessage("INITIAL_STATE", states);
+            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(msg)));
+        } catch (Exception e) {
+            log.error("Error sending initial state", e);
+        }
     }
 
-    private void broadcastToEvent(Long ***REMOVED***vationMessage message) {
-        Set<WebSocketSession> sessions = eventSessions.get(eventId.toString());
-        if (sessions != null) {
-            String payload;
-            try {
-                payload = objectMapper.writeValueAsString(message);
-            } catch (Exception e) {
-                log.error("Failed to serialize message", e);
-                return;
-            }
-            
+    private void broadcast(Long eventId, String type, Object data) {
+        Set<WebSocketSession> sessions = eventSessions.get(eventId);
+        if (sessions == null || sessions.isEmpty()) {
+            return;
+        }
+
+        try {
+            SeatReservationMessage msg = new SeatReservationMessage(type, data);
+            String json = objectMapper.writeValueAsString(msg);
+
             sessions.forEach(session -> {
                 try {
                     if (session.isOpen()) {
-                        session.sendMessage(new TextMessage(payload));
+                        session.sendMessage(new TextMessage(json));
                     }
                 } catch (IOException e) {
-                    log.error("Failed to send message to session", e);
+                    log.error("Failed to send", e);
                 }
             });
-        }
-    }
-
-    private void sendError(WebSocketSession session, String error) throws IOException {
-        Map<String, String> errorMsg = Map.of("type", "ERROR", "message", error);
-        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(errorMsg)));
-    }
-
-    private Long extractEventId(WebSocketSession session) {
-        String path = session.getUri().getPath();
-        String[] parts = path.split("/");
-        try {
-            return Long.parseLong(parts[parts.length - 1]);
         } catch (Exception e) {
-            log.error("Failed to extract eventId from path: {}", path);
-            return null;
+            log.error("Failed to broadcast", e);
         }
     }
 
     @EventListener
     public void handleReservationExpired(SeatReservationExpiredEvent event) {
-        SeatReservation reservation = ***REMOVED***vation();
-        SeatInfo seatInfo = new SeatInfo(reservation.getEventId(), reservation.getSector(), reservation.getSeatNumber());
-        SeatReservationMessage msg = new SeatReservationMessage("RESERVATION_EXPIRED", seatInfo);
-        broadcastToEvent(reservation.getEventId(), msg);
-        log.info("Broadcasted expiry for reservation: {}-{}-{}", 
-                reservation.getEventId(), reservation.getSector(), reservation.getSeatNumber());
+        SeatReservation r = ***REMOVED***vation();
+        SeatInfo info = new SeatInfo(r.getEventId(), r.getSector(), r.getSeatNumber());
+        broadcast(r.getEventId(), "RESERVATION_EXPIRED", info);
     }
 
     @EventListener
     public void handleSeatPurchased(SeatPurchasedEvent event) {
-        SeatState seatState = event.getSeatState();
-        SeatReservationMessage msg = new SeatReservationMessage("PURCHASE", seatState);
-        broadcastToEvent(seatState.getEventId(), msg);
-        log.info("Broadcasted purchase for seat: {}-{}-{}", 
-                seatState.getEventId(), seatState.getSector(), seatState.getSeatNumber());
+        SeatState state = event.getSeatState();
+        broadcast(state.getEventId(), "PURCHASE", state);
+    }
+
+    private Long getEventId(WebSocketSession session) {
+        try {
+            String query = session.getUri().getQuery();
+            if (query != null) {
+                for (String param : query.split("&")) {
+                    String[] kv = param.split("=");
+                    if (kv.length == 2 && "eventId".equals(kv[0])) {
+                        return Long.parseLong(kv[1]);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to get eventId", e);
+        }
+        return null;
     }
 }

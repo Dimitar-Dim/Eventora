@@ -28,7 +28,7 @@ import { ***REMOVED***vice/eventService"
 import { useAuth } from "@/context/AuthContext"
 import { seatReservationService } from "@/services/seatReservationService"
 import type { Event, IPurchaseTicketPayload, IPurchaseTicketResponse } from "@/types/event"
-import type { SeatStatus, ISeatState } from "@/types/seat"
+import type { ISeatState } from "@/types/seat"
 
 interface EventCardProps {
   event: Event
@@ -50,7 +50,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
   const [purchaseStep, setPurchaseStep] = useState<"select" | "details">("select")
   const [purchaseEmail, setPurchaseEmail] = useState("")
   const [ticketQuantity, setTicketQuantity] = useState(1)
-  const [seatStates, setSeatStates] = useState<Map<string, SeatStatus>>(new Map())
+  const [seatStates, setSeatStates] = useState<Map<string, ISeatState>>(new Map())
   const { isAuthenticated, user } = useAuth()
   const ownerId = user ? Number(user.id) : null
   const isAdmin = user?.role === "admin"
@@ -68,14 +68,19 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
           if (response.ok) {
             const purchasedSeats: Array<{ seatSection: string; seatRow: string; seatNumber: string }> = await response.json()
             
-            const purchasedStates = new Map<string, SeatStatus>()
+            const purchasedStates = new Map<string, ISeatState>()
             purchasedSeats.forEach(seat => {
               // Convert seat data to match our format
               const rowNum = parseInt(seat.seatRow.replace('R', ''))
               const seatNum = parseInt(seat.seatNumber)
               const absoluteSeatNum = (rowNum - 1) * 20 + seatNum
               const key = `${seat.seatSection}-${absoluteSeatNum}`
-              purchasedStates.set(key, "purchased")
+              purchasedStates.set(key, {
+                eventId: eventDetails.id,
+                sector: seat.seatSection,
+                seatNumber: absoluteSeatNum,
+                status: "purchased"
+              })
             })
             
             setSeatStates(purchasedStates)
@@ -89,11 +94,13 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       seatReservationService.connect(eventDetails.id)
       
       const unsubscribe = seatReservationService.subscribe((seats: ISeatState[]) => {
+        console.log("Received seat state updates:", seats)
         setSeatStates((prevStates) => {
           const newSeatStates = new Map(prevStates)
           seats.forEach(seat => {
             const key = `${seat.sector}-${seat.seatNumber}`
-            newSeatStates.set(key, seat.status)
+            console.log(`Updating seat ${key}:`, seat)
+            newSeatStates.set(key, seat)
           })
           return newSeatStates
         })
@@ -133,6 +140,16 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       setPurchaseStep(eventDetails.seatingLayout === "NONE" ? "details" : "select")
       setPurchaseEmail(user?.email ?? "")
     } else {
+      // Release all reservations when closing the dialog
+      if (purchaseStep === "details" && selectedSeats.length > 0) {
+        selectedSeats.forEach((seat) => {
+          seatReservationService.releaseSeat({
+            eventId: eventDetails.id,
+            sector: seat.sector,
+            seatNumber: seat.seat
+          })
+        })
+      }
       setPurchaseError(null)
     }
   }
@@ -175,11 +192,18 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
 
   const toggleSeatSelection = useCallback(({ sector, seatNum }: { sector: string; seatNum: number }) => {
     const key = `${sector}-${seatNum}`
-    const status = seatStates.get(key)
+    const seatState = seatStates.get(key)
+    const currentUserId = seatReservationService.getUserId()
     
-    // Pr***REMOVED***ved seats
-    if (status === "purchased" || status === "reserved") {
-      showError(status === "purchased" ? "This seat is already sold" : "This seat is temporarily reserved by another user")
+    // Prevent selection of purchased seats
+    if (seatState?.status === "purchased") {
+      showError("This seat is already sold")
+      return
+    }
+    
+    // Pr***REMOVED***ved by others
+    if (seatState?.status === "reserved" && seatState.reservedBy !== currentUserId) {
+      showError("This seat is temporarily reserved by another user")
       return
     }
     
@@ -187,12 +211,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
     setSelectedSeats((prev) => {
       const exists = prev.some((s) => `${s.sector}-${s.seat}` === key)
       if (exists) {
-        // Release the seat reservation
-        seatReservationService.releaseSeat({
-          eventId: eventDetails.id,
-          sector,
-          seatNumber: seatNum
-        })
+        // Remove from selection
         setSeatNames((names) => {
           const next = { ...names }
           delete next[key]
@@ -200,16 +219,11 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
         })
         return prev.filter((s) => `${s.sector}-${s.seat}` !== key)
       } else {
-        // Reserve the seat
-        seatReservationService.reserveSeat({
-          eventId: eventDetails.id,
-          sector,
-          seatNumber: seatNum
-        })
+        // Add to selection (don't reserve yet)
         return [...prev, { sector, seat: seatNum }]
       }
     })
-  }, [seatStates, eventDetails.id])
+  }, [seatStates])
 
   const handleTicketPurchase = async () => {
     // For standing events, check ticket quantity; for seated events, check selected seats
@@ -580,7 +594,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
         </DialogContent>
       </Dialog>
         <Dialog open={isPurchaseDialogOpen} onOpenChange={handlePurchaseDialogChange}>
-          <DialogContent className="max-w-[1000px] max-h-[95vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50">
+          <DialogContent className="max-w-[1200px] max-h-[95vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold flex items-center gap-2">
                 <Ticket className="h-5 w-5 text-primary" />
@@ -749,7 +763,17 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                     Cancel
                   </Button>
                   {purchaseStep === "details" && (
-                    <Button variant="outline" onClick={() => setPurchaseStep("select")} disabled={isBuying}>
+                    <Button variant="outline" onClick={() => {
+                      // Release all reservations when going back
+                      selectedSeats.forEach((seat) => {
+                        seatReservationService.releaseSeat({
+                          eventId: eventDetails.id,
+                          sector: seat.sector,
+                          seatNumber: seat.seat
+                        })
+                      })
+                      setPurchaseStep("select")
+                    }} disabled={isBuying}>
                       Back to seats
                     </Button>
                   )}
@@ -759,6 +783,14 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                     disabled={isPurchaseDisabled}
                     onClick={() => {
                       if (purchaseStep === "select") {
+                        // Reserve all selected seats when moving to details step
+                        selectedSeats.forEach((seat) => {
+                          seatReservationService.reserveSeat({
+                            eventId: eventDetails.id,
+                            sector: seat.sector,
+                            seatNumber: seat.seat
+                          })
+                        })
                         setPurchaseStep("details")
                         return
                       }
