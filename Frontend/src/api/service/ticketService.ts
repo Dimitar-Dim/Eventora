@@ -13,4 +13,15 @@ export const ticketService = {
       },
     })
   },
+
+  /** Download a PDF for the specified ticket */
+  downloadTicket: async (ticketId: number) => {
+    return await apiService.get<ArrayBuffer>({
+      endpoint: `/api/tickets/${ticketId}/download`,
+      config: {
+        requiresAuth: true,
+        responseType: "arraybuffer",
+      },
+    })
+  },
 }

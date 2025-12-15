@@ -17,6 +17,7 @@ import com.dimitar.eventora.mapper.TicketMapper;
 import com.dimitar.eventora.model.Event;
 import com.dimitar.eventora.model.Ticket;
 import com.dimitar.eventora.model.TicketPurchaseSummary;
+import com.dimitar.eventora.model.TicketPdf;
 import com.dimitar.eventora.model.TicketStatus;
 import com.dimitar.***REMOVED***Role;
 import com.dimitar.eventora.repository.EventRepository;
@@ -445,6 +446,43 @@ public class TicketServiceImpl implements TicketService {
         } catch (IllegalArgumentException ex) {
             throw new TicketPurchaseException("Please provide a valid email address so we can deliver the ticket.");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TicketPdf downloadTicket(Long ticketId, Long userId) {
+        if (userId == null) {
+            throw new UnauthorizedException();
+        }
+
+        TicketEntity ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketPurchaseException("Ticket not found"));
+
+        if (!Objects.equals(ticket.getUserId(), userId)) {
+            throw new UnauthorizedException();
+        }
+
+        EventEntity event = eventRepository.findById(ticket.getEventId())
+                .orElseThrow(() -> new TicketPurchaseException("Event not found for ticket"));
+
+        byte[] pdf = pdfTicketService.generateTicketPdf(
+                event.getName(),
+                ticket.getIssuedTo(),
+                ticket.getQrCode()
+        );
+
+        String filename = buildDownloadFileName(event.getName(), ticket.getIssuedTo(), ticket.getId());
+        return new TicketPdf(filename, pdf);
+    }
+
+    private String buildDownloadFileName(String eventName, String issuedTo, Long ticketId) {
+        String eventPart = sanitizeForFile(eventName);
+        String holderPart = sanitizeForFile(issuedTo);
+        String base = (eventPart.isBlank() ? "event" : eventPart) + "-" + (holderPart.isBlank() ? "ticket" : holderPart);
+        if (ticketId != null) {
+            base = base + "-" + ticketId;
+        }
+        return base + ".pdf";
     }
 
     private record SeatMetadata(String section, String row, String number) {}
