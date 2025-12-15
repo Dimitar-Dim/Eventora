@@ -19,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
@@ -85,15 +86,21 @@ public class EventController {
     @PostMapping("/{id}/tickets")
     public ResponseEntity<TicketPurchaseResponse> purchaseTicket(
             @PathVariable @Positive(message = "Event ID must be positive") Long id,
-            @Valid @RequestBody(required = false) TicketPurchaseRequest request,
-            Authentication authentication) {
+            @Valid @RequestBody(required = false) TicketPurchaseRequest purchaseRequest,
+            Authentication authentication,
+            HttpServletRequest httpRequest) {
+
+        // Stop silent guest purchases when a (possibly expired) token is supplied but not authenticated.
+        if (hasBearerToken(httpRequest) && (authentication == null || !authentication.isAuthenticated())) {
+            throw new UnauthorizedException("Your session expired. Please sign in again.");
+        }
 
         Long userId = extractOptionalUserId(authentication);
-        String issuedTo = request != null ? request.issuedTo() : null;
-        String deliveryEmail = request != null ? request.deliveryEmail() : null;
-        String seatSection = request != null ? request.seatSection() : null;
-        String seatRow = request != null ? request.seatRow() : null;
-        String seatNumber = request != null ? request.seatNumber() : null;
+        String issuedTo = purchaseRequest != null ? purchaseRequest.issuedTo() : null;
+        String deliveryEmail = purchaseRequest != null ? purchaseRequest.deliveryEmail() : null;
+        String seatSection = purchaseRequest != null ? purchaseRequest.seatSection() : null;
+        String seatRow = purchaseRequest != null ? purchaseRequest.seatRow() : null;
+        String seatNumber = purchaseRequest != null ? purchaseRequest.seatNumber() : null;
 
         TicketPurchaseSummary purchaseSummary = ticketService.purchaseTicket(
                 id, userId, issuedTo, deliveryEmail, seatSection, seatRow, seatNumber);
@@ -165,5 +172,13 @@ public class EventController {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private boolean hasBearerToken(HttpServletRequest request) {
+        if (request == null) {
+            return false;
+        }
+        String header = request.getHeader("Authorization");
+        return header != null && header.startsWith("Bearer ") && header.length() > "Bearer ".length();
     }
 }
