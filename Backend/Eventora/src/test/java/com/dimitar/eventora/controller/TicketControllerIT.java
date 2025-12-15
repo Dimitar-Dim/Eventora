@@ -16,16 +16,19 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.hamcrest.Matchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -96,6 +99,56 @@ class TicketControllerIT extends PostgresIntegrationTest {
         mockMvc.perform(get("/api/tickets/me"))
                 .andExpect(status().isUnauthorized());
     }
+
+        @Test
+        void downloadTicket_shouldReturnPdfForOwner() throws Exception {
+        UserEntity organizer = persistUser("org", "org@example.com", UserRole.ORGANIZER);
+        EventEntity event = persistEvent("Downloadable Show", organizer.getId());
+        UserEntity attendee = persistUser("customer", "customer@example.com", UserRole.USER);
+
+        TicketPurchaseSummary summary = ticketService.purchaseTicket(
+            event.getId(),
+            attendee.getId(),
+            "Customer",
+            null,
+            null,
+            null,
+            null
+        );
+
+        String bearer = bearerToken(attendee.getId(), attendee.getRole());
+
+        mockMvc.perform(get("/api/tickets/" + summary.ticket().getId() + "/download")
+                .header(HttpHeaders.AUTHORIZATION, bearer))
+            .andExpect(status().isOk())
+            .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, Matchers.containsString("attachment")))
+            .andExpect(result -> assertThat(result.getResponse().getContentAsByteArray().length).isGreaterThan(0));
+        }
+
+        @Test
+        void downloadTicket_shouldRejectNonOwner() throws Exception {
+        UserEntity organizer = persistUser("org", "org@example.com", UserRole.ORGANIZER);
+        EventEntity event = persistEvent("Download Guard", organizer.getId());
+        UserEntity owner = persistUser("owner", "owner@example.com", UserRole.USER);
+        UserEntity intruder = persistUser("intruder", "intruder@example.com", UserRole.USER);
+
+        TicketPurchaseSummary summary = ticketService.purchaseTicket(
+            event.getId(),
+            owner.getId(),
+            "Owner",
+            null,
+            null,
+            null,
+            null
+        );
+
+        String bearer = bearerToken(intruder.getId(), intruder.getRole());
+
+        mockMvc.perform(get("/api/tickets/" + summary.ticket().getId() + "/download")
+                .header(HttpHeaders.AUTHORIZATION, bearer))
+            .andExpect(status().isUnauthorized());
+        }
 
     @SuppressWarnings("null")
     private UserEntity persistUser(String username, String email, UserRole role) {
