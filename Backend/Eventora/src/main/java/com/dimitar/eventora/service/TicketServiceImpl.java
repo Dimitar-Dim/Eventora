@@ -316,7 +316,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public VerifyTicketResponse verifyTicket(String qrCode, Long verifierId) {
         // Find the ticket by QR code
         TicketEntity ticket = ticketRepository.findByQrCode(qrCode)
