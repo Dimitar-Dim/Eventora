@@ -8,6 +8,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SeatReservationMessage {
-    private String type; // RESERVE, RELEASE, PURCHASE, INITIAL_STATE, RESERVATION_EXPIRED
+    private SeatReservationType type;
     private Object data;
+
+    public enum SeatReservationType {
+        RESERVE,
+        RELEASE,
+        PURCHASE,
+        INITIAL_STATE,
+        RESERVATION_EXPIRED
+    }
 }

@@ -1,6 +1,7 @@
 package com.dimitar.eventora.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.dimitar.***REMOVED***vationType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -44,12 +45,19 @@ public class SeatReservationHandler extends TextWebSocketHandler {
             if (eventId == null) return;
 
             Map<String, Object> msg = objectMapper.readValue(message.getPayload(), Map.class);
-            String type = (String) msg.get("type");
+            String typeValue = (String) msg.get("type");
             Map<String, Object> data = (Map<String, Object>) msg.get("data");
 
-            if ("RESERVE".equals(type)) {
+            SeatReservationType type;
+            try {
+                type = SeatReservationType.valueOf(typeValue);
+            } catch (Exception ignored) {
+                return;
+            }
+
+            if (type == SeatReservationType.RESERVE) {
                 handleReserve(eventId, data);
-            } else if ("RELEASE".equals(type)) {
+            } else if (type == SeatReservationType.RELEASE) {
                 handleRelease(eventId, data);
             }
         } catch (Exception e) {
@@ -96,7 +104,7 @@ public class SeatReservationHandler extends TextWebSocketHandler {
         state.setReservedBy(userId);
         state.setExpiresAt(expires.format(DateTimeFormatter.ISO_DATE_TIME));
 
-        broadcast(eventId, "RESERVE", state);
+        broadcast(***REMOVED***vationType.RESERVE, state);
     }
 
     private void handleRelease(Long eventId, Map<String, Object> data) {
@@ -110,7 +118,7 @@ public class SeatReservationHandler extends TextWebSocketHandler {
             reservationService.removeReservation(key);
 
             SeatInfo info = new SeatInfo(eventId, sector, seatNumber);
-            broadcast(eventId, "RELEASE", info);
+            broadcast(***REMOVED***vationType.RELEASE, info);
         }
     }
 
@@ -134,14 +142,14 @@ public class SeatReservationHandler extends TextWebSocketHandler {
 
             states.addAll(reservationService.getPurchasedSeats(eventId));
 
-            SeatReservationMessage msg = new SeatReservationMessage("INITIAL_STATE", states);
+            SeatReservationMessage msg = new SeatReservationMessage(SeatReservationType.INITIAL_STATE, states);
             session.sendMessage(new TextMessage(objectMapper.writeValueAsString(msg)));
         } catch (Exception e) {
             log.error("Error sending initial state", e);
         }
     }
 
-    private void broadcast(Long eventId, String type, Object data) {
+    private void broadcast(Long ***REMOVED***vationType type, Object data) {
         Set<WebSocketSession> sessions = eventSessions.get(eventId);
         if (sessions == null || sessions.isEmpty()) {
             return;
@@ -169,13 +177,13 @@ public class SeatReservationHandler extends TextWebSocketHandler {
     public void handleReservationExpired(SeatReservationExpiredEvent event) {
         SeatReservation r = ***REMOVED***vation();
         SeatInfo info = new SeatInfo(r.getEventId(), r.getSector(), r.getSeatNumber());
-        broadcast(r.getEventId(), "RESERVATION_EXPIRED", info);
+        broadcast(r.getEventId(), SeatReservationType.RESERVATION_EXPIRED, info);
     }
 
     @EventListener
     public void handleSeatPurchased(SeatPurchasedEvent event) {
         SeatState state = event.getSeatState();
-        broadcast(state.getEventId(), "PURCHASE", state);
+        broadcast(state.getEventId(), SeatReservationType.PURCHASE, state);
     }
 
     private Long getEventId(WebSocketSession session) {
