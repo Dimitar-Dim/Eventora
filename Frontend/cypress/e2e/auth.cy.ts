@@ -27,10 +27,17 @@ describe('Login', () => {
   });
 
   it('shows error on invalid credentials', () => {
+    cy.intercept('POST', '**/api/auth/login', {
+      statusCode: 401,
+      body: { message: 'Invalid credentials' }
+    }).as('login');
+
     cy.get('[data-cy="login-email-input"]').type('invalid@example.com');
     cy.get('[data-cy="login-password-input"]').type('wrong');
     cy.get('[data-cy="login-submit"]').click();
-    cy.contains(/error|invalid|incorrect|failed/i, { timeout: 5000 }).should('be.visible');
+
+    cy.wait('@login').its('response.statusCode').should('eq', 401);
+    cy.contains(/invalid credentials|error|invalid|incorrect|failed/i, { timeout: 5000 }).should('be.visible');
   });
 
   it('navigates to register', () => {

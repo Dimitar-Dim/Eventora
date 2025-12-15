@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { IEventFormData, GENRES } from "@/types/event"
 import { getAuthToken, getRoleFromToken } from "@/utils/auth"
@@ -14,9 +14,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ErrorAlert } from "@/components/form/ErrorAlert"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { useAuth } from "@/context/AuthContext"
 
 export default function CreateEventPage() {
   const router = useRouter()
+  const { isAuthenticated, isLoading } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -37,6 +39,13 @@ export default function CreateEventPage() {
   const seatedCapacityValue = formData.hasSeating
     ? (formData.seatingLayout === "FLOOR_BALCONY" ? 600 : 300)
     : 0
+
+  // Redirect unauthenticated visitors to login before interacting with the form
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace("/login")
+    }
+  }, [isAuthenticated, isLoading, router])
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
