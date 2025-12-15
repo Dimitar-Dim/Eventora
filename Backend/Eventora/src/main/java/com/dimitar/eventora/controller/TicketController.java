@@ -7,10 +7,13 @@ import com.dimitar.eventora.exception.UnauthorizedException;
 import com.dimitar.eventora.model.TicketPurchaseSummary;
 import com.dimitar.***REMOVED***vice.TicketService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,6 +47,18 @@ public class TicketController {
         VerifyTicketResponse response = ticketService.verifyTicket(request.getQrCode(), userId);
         
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{ticketId}/download")
+    public ResponseEntity<byte[]> downloadTicket(@PathVariable Long ticketId, Authentication authentication) {
+        Long userId = extractUserId(authentication);
+
+        var pdf = ticketService.downloadTicket(ticketId, userId);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + pdf.filename() + "\"")
+                .body(pdf.content());
     }
 
     private TicketHistoryResponse toResponse(TicketPurchaseSummary summary) {

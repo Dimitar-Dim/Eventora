@@ -7,6 +7,7 @@ export interface RequestConfig {
   requiresAuth?: boolean
   headers?: RequestHeaders
   formData?: FormData
+  responseType?: "json" | "arraybuffer"
 }
 
 export interface ApiRequestParams {

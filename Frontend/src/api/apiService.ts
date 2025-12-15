@@ -20,7 +20,7 @@ export class ApiService {
 
     const response = await fetch(url, init);
 
-    return this.handleResponse<T>(response);
+    return this.handleResponse<T>(response, config);
   }
 
   private async buildHeaders(config?: RequestConfig) {
@@ -67,11 +67,15 @@ export class ApiService {
   }
 
   /** Convert the raw fetch response into JSON */
-  private async handleResponse<T>(res: Response): Promise<T> {
+  private async handleResponse<T>(res: Response, config?: RequestConfig): Promise<T> {
+    const desiredType = config?.responseType ?? "json";
     const contentType = res.headers.get("content-type") ?? "";
     let payload: unknown = null;
+
     if (res.status !== 204) {
-      if (contentType.includes("application/json")) {
+      if (desiredType === "arraybuffer" && res.ok) {
+        payload = await res.arrayBuffer();
+      } else if (contentType.includes("application/json")) {
         payload = await res.json();
       } else {
         payload = await res.text();
@@ -82,7 +86,9 @@ export class ApiService {
       const errorMessage = 
         typeof payload === "object" && payload !== null && "message" in payload
           ? (payload as Record<string, unknown>).message
-          : `HTTP ${res.status}: ${res.statusText}`;
+          : typeof payload === "string" && payload.length > 0
+            ? payload
+            : `HTTP ${res.status}: ${res.statusText}`;
       throw new Error(String(errorMessage));
     }
 

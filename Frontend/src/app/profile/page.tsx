@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const [tickets, setTickets] = useState<IUserTicket[]>([])
   const [isLoadingTickets, setIsLoadingTickets] = useState(false)
   const [ticketsError, setTicketsError] = useState<string | null>(null)
+  const [downloadingId, setDownloadingId] = useState<number | null>(null)
 
   const handleLogout = () => {
     clearAuthToken()
@@ -95,6 +96,35 @@ export default function ProfilePage() {
     ACTIVE: "bg-emerald-500/15 text-emerald-500",
     USED: "bg-amber-500/15 text-amber-500",
     EXPIRED: "bg-muted text-muted-foreground",
+  }
+
+  const handleDownload = async (ticket: IUserTicket) => {
+    setDownloadingId(ticket.ticketId)
+    setTicketsError(null)
+    try {
+      const pdfBuffer = await ticketService.downloadTicket(ticket.ticketId)
+      const blob = new Blob([pdfBuffer], { type: "application/pdf" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = buildFilename(ticket)
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to download ticket"
+      setTicketsError(message)
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  const buildFilename = (ticket: IUserTicket) => {
+    const sanitize = (value: string | undefined | null) => {
+      if (!value) return "";
+      return value.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase()
+    }
+    const eventSlug = sanitize(ticket.eventName) || "event"
+    return `${eventSlug}-ticket-${ticket.ticketId}.pdf`
   }
 
   return (
@@ -203,9 +233,19 @@ export default function ProfilePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-foreground font-semibold">{formatCurrency(ticket.ticketPrice)}</p>
-                    <p className="text-muted-foreground text-xs mt-1">Purchased {formatDate(ticket.purchasedAt)}</p>
+                  <div className="flex items-end gap-3 text-right">
+                    <div>
+                      <p className="text-foreground font-semibold">{formatCurrency(ticket.ticketPrice)}</p>
+                      <p className="text-muted-foreground text-xs mt-1">Purchased {formatDate(ticket.purchasedAt)}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(ticket)}
+                      disabled={downloadingId === ticket.ticketId}
+                    >
+                      {downloadingId === ticket.ticketId ? "Downloading..." : "Download"}
+                    </Button>
                   </div>
                 </div>
               ))}
