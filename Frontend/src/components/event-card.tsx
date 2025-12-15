@@ -58,7 +58,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
   const canEdit = isOwner || isAdmin
   const canDelete = canEdit
 
-  // WebSocket connection for seat reservations
+  // Socket connection for seat reservations
   useEffect(() => {
     if (isPurchaseDialogOpen && eventDetails.hasSeating) {
       // Fetch purchased seats first
@@ -70,7 +70,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
             
             const purchasedStates = new Map<string, ISeatState>()
             purchasedSeats.forEach(seat => {
-              // Convert seat data to match our format
+              // Convert seat data to match format
               const rowNum = parseInt(seat.seatRow.replace('R', ''))
               const seatNum = parseInt(seat.seatNumber)
               const absoluteSeatNum = (rowNum - 1) * 20 + seatNum
@@ -190,8 +190,8 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
     onViewDetails?.(eventDetails)
   }
 
-  const toggleSeatSelection = useCallback(({ sector, seatNum }: { sector: string; seatNum: number }) => {
-    const key = `${sector}-${seatNum}`
+  const toggleSeatSelection = useCallback(({ sector, seat }: { sector: string; seat: number }) => {
+    const key = `${sector}-${seat}`
     const seatState = seatStates.get(key)
     const currentUserId = seatReservationService.getUserId()
     
@@ -219,8 +219,8 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
         })
         return prev.filter((s) => `${s.sector}-${s.seat}` !== key)
       } else {
-        // Add to selection (don't reserve yet)
-        return [...prev, { sector, seat: seatNum }]
+        // Add to selection
+        return [...prev, { sector, seat }]
       }
     })
   }, [seatStates])
@@ -412,7 +412,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50 z-[60]">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold gradient-text" data-cy="event-details-title">{eventDetails.name}</DialogTitle>
           </DialogHeader>
@@ -569,7 +569,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   size="sm"
                   className="px-4"
                   onClick={handleEditEvent}
-                  data-cy="event-edit-button"
+                  data-cy="edit-event-button"
                 >
                   Edit Event
                 </Button>
@@ -580,7 +580,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                   size="sm"
                   className="px-4"
                   onClick={() => setConfirmDeleteOpen(true)}
-                  data-cy="event-delete-button"
+                  data-cy="delete-event-button"
                   disabled={isDeleting}
                 >
                   Delete
@@ -594,7 +594,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
         </DialogContent>
       </Dialog>
         <Dialog open={isPurchaseDialogOpen} onOpenChange={handlePurchaseDialogChange}>
-          <DialogContent className="w-[98vw] max-w-[1400px] sm:w-[min(1250px,98vw)] min-h-[75vh] max-h-[96vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50">
+          <DialogContent className="w-[98vw] max-w-[1400px] sm:w-[min(1250px,98vw)] min-h-[75vh] max-h-[96vh] overflow-y-auto bg-card/95 backdrop-blur-md border-border/50 z-[60]">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold flex items-center gap-2">
                 <Ticket className="h-5 w-5 text-primary" />
@@ -652,7 +652,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
                         seatingLayout={eventDetails.seatingLayout}
                         seatedCapacity={eventDetails.seatedCapacity}
                         standingCapacity={eventDetails.standingCapacity}
-                        onToggleSeat={({ sector, seatNum }) => toggleSeatSelection({ sector, seatNum })}
+                        onToggleSeat={({ sector, seat }) => toggleSeatSelection({ sector, seat })}
                         selectedSeats={selectedSeats}
                         seatStates={seatStates}
                       />

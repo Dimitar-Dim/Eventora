@@ -20,6 +20,7 @@ export default function CreateEventPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const [maxTickets, setMaxTickets] = useState<number | string>(600)
 
   const [formData, setFormData] = useState<IEventFormData>({
     name: "",
@@ -32,6 +33,10 @@ export default function CreateEventPage() {
     seatingLayout: "NONE",
     imageUrl: ""
   })
+
+  const seatedCapacityValue = formData.hasSeating
+    ? (formData.seatingLayout === "FLOOR_BALCONY" ? 600 : 300)
+    : 0
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -54,6 +59,8 @@ export default function CreateEventPage() {
       ? (formData.seatingLayout === "FLOOR_BALCONY" ? 600 : 300)
       : 0
     const standingCapacity = Number(formData.standingCapacity || 0)
+    const totalCapacityFallback = seatedCapacity + standingCapacity
+    const maxTicketsValue = maxTickets === "" ? totalCapacityFallback : Number(maxTickets)
 
     try {
       const role = getRoleFromToken()
@@ -74,8 +81,9 @@ export default function CreateEventPage() {
       if (formData.ticketPrice === '' || formData.ticketPrice === null) throw new Error("Ticket price is required")
       if (Number(formData.ticketPrice) < 0) throw new Error("Ticket price must be non-negative")
       if (standingCapacity < 0 || standingCapacity > 600) throw new Error("Standing capacity must be between 0 and 600")
+      if (Number.isNaN(maxTicketsValue) || maxTicketsValue <= 0) throw new Error("Total tickets must be greater than zero")
 
-      const totalCapacity = seatedCapacity + standingCapacity
+      const totalCapacity = maxTicketsValue
       if (totalCapacity <= 0) throw new Error("Total capacity must be greater than zero")
 
       const eventDateTime = new Date(formData.eventDate).toISOString()
@@ -159,6 +167,7 @@ export default function CreateEventPage() {
                       checked={formData.hasSeating}
                       onChange={(e) => setFormData(prev => ({ ...prev, hasSeating: e.target.checked, seatingLayout: e.target.checked ? "FLOOR" : "NONE" }))}
                       className="h-4 w-4"
+                      data-cy="event-has-seating-toggle"
                     />
                     <Label htmlFor="hasSeating" className="text-sm font-semibold text-foreground">
                       Enable seating (otherwise standing only)
@@ -179,6 +188,7 @@ export default function CreateEventPage() {
                         value={formData.standingCapacity}
                         onChange={handleInputChange}
                         className="mt-2"
+                        data-cy="event-standing-capacity-input"
                       />
                     </div>
 
@@ -191,7 +201,7 @@ export default function CreateEventPage() {
                         onValueChange={(value) => setFormData(prev => ({ ...prev, seatingLayout: value as IEventFormData["seatingLayout"] }))}
                         disabled={!formData.hasSeating}
                       >
-                        <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30">
+                        <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30" data-cy="event-seating-layout-select">
                           <SelectValue placeholder="Choose layout" />
                         </SelectTrigger>
                         <SelectContent>
@@ -199,9 +209,19 @@ export default function CreateEventPage() {
                           <SelectItem value="FLOOR_BALCONY">Floor + Balcony (600 seats)</SelectItem>
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Seated capacity: {formData.hasSeating ? (formData.seatingLayout === "FLOOR_BALCONY" ? 600 : 300) : 0}
-                      </p>
+                      <div className="mt-2">
+                        <Label htmlFor="seatedCapacity" className="sr-only">Seated capacity</Label>
+                        <Input
+                          id="seatedCapacity"
+                          value={seatedCapacityValue}
+                          readOnly
+                          className="text-sm"
+                          data-cy="event-seated-capacity-input"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Seated capacity: {seatedCapacityValue}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -275,6 +295,22 @@ export default function CreateEventPage() {
                       placeholder="0.00"
                       className="mt-2"
                       data-cy="event-ticket-price-input"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="maxTickets" className="text-sm font-semibold text-foreground">
+                      Total Tickets <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="maxTickets"
+                      name="maxTickets"
+                      type="number"
+                      min="1"
+                      value={maxTickets}
+                      onChange={(e) => setMaxTickets(e.target.value === "" ? "" : Number(e.target.value))}
+                      placeholder="e.g., 100"
+                      className="mt-2"
+                      data-cy="event-max-tickets-input"
                     />
                   </div>
                 </div>

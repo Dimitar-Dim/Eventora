@@ -1,7 +1,3 @@
-export function cn(...inputs: (string | undefined | null | boolean)[]) {
-  return inputs.filter(Boolean).join(' ')
-}
-
 export function formatDate(date: Date | string) {
   const d = new Date(date)
   return d.toLocaleDateString('en-US', {
