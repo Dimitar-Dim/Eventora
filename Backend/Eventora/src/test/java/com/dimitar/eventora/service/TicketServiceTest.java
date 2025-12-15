@@ -6,10 +6,12 @@ import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.eventora.entity.TicketEntity;
 import com.dimitar.***REMOVED***Entity;
 import com.dimitar.eventora.exception.TicketPurchaseException;
+import com.dimitar.eventora.exception.UnauthorizedException;
 import com.dimitar.eventora.mapper.EventMapper;
 import com.dimitar.eventora.mapper.TicketMapper;
 import com.dimitar.eventora.model.Event;
 import com.dimitar.eventora.model.Genre;
+import com.dimitar.eventora.model.TicketPdf;
 import com.dimitar.eventora.model.TicketPurchaseSummary;
 import com.dimitar.eventora.model.TicketStatus;
 import com.dimitar.eventora.repository.EventRepository;
@@ -196,6 +198,47 @@ class TicketServiceTest {
         Event firstEvent = summaries.get(0).event();
         assertEquals("Indie Night", firstEvent.getName());
         assertEquals("Jazz Soiree", summaries.get(1).event().getName());
+    }
+
+    @Test
+    @DisplayName("downloadTicket should regenerate PDF for ticket owner")
+    void downloadTicket_Owner_Succeeds() {
+        TicketEntity ticket = TicketEntity.builder()
+                .id(200L)
+                .eventId(1L)
+                .userId(ticketOwner.getId())
+                .qrCode("QR-200")
+                .issuedTo("Alice")
+                .build();
+
+        when(ticketRepository.findById(200L)).thenReturn(Optional.of(ticket));
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(activeEvent));
+        when(pdfTicketService.generateTicketPdf(anyString(), anyString(), anyString())).thenReturn(new byte[]{1,2,3});
+
+        TicketPdf pdf = ticketService.downloadTicket(200L, ticketOwner.getId());
+
+        assertNotNull(pdf);
+        assertTrue(pdf.filename().endsWith(".pdf"));
+        assertArrayEquals(new byte[]{1,2,3}, pdf.content());
+
+        verify(pdfTicketService).generateTicketPdf(activeEvent.getName(), ticket.getIssuedTo(), ticket.getQrCode());
+    }
+
+    @Test
+    @DisplayName("downloadTicket should reject when caller is not owner")
+    void downloadTicket_NotOwner_Unauthorized() {
+        TicketEntity ticket = TicketEntity.builder()
+                .id(201L)
+                .eventId(1L)
+                .userId(999L)
+                .qrCode("QR-201")
+                .issuedTo("Other")
+                .build();
+
+        when(ticketRepository.findById(201L)).thenReturn(Optional.of(ticket));
+
+        assertThrows(UnauthorizedException.class, () -> ticketService.downloadTicket(201L, ticketOwner.getId()));
+        verify(pdfTicketService, never()).generateTicketPdf(anyString(), anyString(), anyString());
     }
 
         private EventEntity copyOf(EventEntity source) {
