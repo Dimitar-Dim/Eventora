@@ -29,6 +29,7 @@ export default function EditEventPage() {
   const [accessError, setAccessError] = useState<string | null>(null)
   const [ownerId, setOwnerId] = useState<number | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const [maxTickets, setMaxTickets] = useState<number | string>(600)
 
   const [formData, setFormData] = useState<IEventFormData>({
     name: "",
@@ -41,6 +42,9 @@ export default function EditEventPage() {
     seatingLayout: "NONE",
     imageUrl: ""
   })
+  const seatedCapacityValue = formData.hasSeating
+    ? (formData.seatingLayout === "FLOOR_BALCONY" ? 600 : 300)
+    : 0
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -64,6 +68,7 @@ export default function EditEventPage() {
           seatingLayout: data.seatingLayout ?? "NONE",
           imageUrl: data.imageUrl || ""
         })
+        setMaxTickets(data.maxTickets)
         setOwnerId(data.organizerId)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load event")
@@ -118,6 +123,8 @@ export default function EditEventPage() {
       ? (formData.seatingLayout === "FLOOR_BALCONY" ? 600 : 300)
       : 0
     const standingCapacity = Number(formData.standingCapacity || 0)
+    const totalCapacityFallback = seatedCapacity + standingCapacity
+    const maxTicketsValue = maxTickets === "" ? totalCapacityFallback : Number(maxTickets)
 
     try {
       if (accessError) {
@@ -133,8 +140,9 @@ export default function EditEventPage() {
       if (formData.ticketPrice === '' || formData.ticketPrice === null) throw new Error("Ticket price is required")
       if (Number(formData.ticketPrice) < 0) throw new Error("Ticket price must be non-negative")
       if (standingCapacity < 0 || standingCapacity > 600) throw new Error("Standing capacity must be between 0 and 600")
+      if (Number.isNaN(maxTicketsValue) || maxTicketsValue <= 0) throw new Error("Total tickets must be greater than zero")
 
-      const totalCapacity = seatedCapacity + standingCapacity
+      const totalCapacity = maxTicketsValue
       if (totalCapacity <= 0) throw new Error("Total capacity must be greater than zero")
 
       const eventDateTime = new Date(formData.eventDate).toISOString()
@@ -259,6 +267,7 @@ export default function EditEventPage() {
                       checked={formData.hasSeating}
                       onChange={(e) => setFormData(prev => ({ ...prev, hasSeating: e.target.checked, seatingLayout: e.target.checked ? (prev.seatingLayout === "NONE" ? "FLOOR" : prev.seatingLayout) : "NONE" }))}
                       className="h-4 w-4"
+                      data-cy="edit-has-seating-toggle"
                     />
                     <Label htmlFor="hasSeating" className="text-sm font-semibold text-foreground">
                       Enable seating (otherwise standing only)
@@ -279,6 +288,7 @@ export default function EditEventPage() {
                         value={formData.standingCapacity}
                         onChange={handleInputChange}
                         className="mt-2"
+                        data-cy="edit-standing-capacity-input"
                       />
                     </div>
 
@@ -291,7 +301,7 @@ export default function EditEventPage() {
                         onValueChange={(value) => setFormData(prev => ({ ...prev, seatingLayout: value as IEventFormData["seatingLayout"] }))}
                         disabled={!formData.hasSeating}
                       >
-                        <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30">
+                        <SelectTrigger className="mt-2 border-border/30 bg-background/10 focus:bg-background/20 focus:border-primary/30" data-cy="edit-seating-layout-select">
                           <SelectValue placeholder="Choose layout" />
                         </SelectTrigger>
                         <SelectContent>
@@ -299,9 +309,19 @@ export default function EditEventPage() {
                           <SelectItem value="FLOOR_BALCONY">Floor + Balcony (600 seats)</SelectItem>
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Seated capacity: {formData.hasSeating ? (formData.seatingLayout === "FLOOR_BALCONY" ? 600 : 300) : 0}
-                      </p>
+                      <div className="mt-2">
+                        <Label htmlFor="editSeatedCapacity" className="sr-only">Seated capacity</Label>
+                        <Input
+                          id="editSeatedCapacity"
+                          value={seatedCapacityValue}
+                          readOnly
+                          className="text-sm"
+                          data-cy="edit-seated-capacity-input"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Seated capacity: {seatedCapacityValue}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -375,6 +395,22 @@ export default function EditEventPage() {
                       placeholder="0.00"
                       className="mt-2"
                       data-cy="edit-price-input"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editMaxTickets" className="text-sm font-semibold text-foreground">
+                      Total Tickets <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="editMaxTickets"
+                      name="editMaxTickets"
+                      type="number"
+                      min="1"
+                      value={maxTickets}
+                      onChange={(e) => setMaxTickets(e.target.value === "" ? "" : Number(e.target.value))}
+                      placeholder="e.g., 500"
+                      className="mt-2"
+                      data-cy="edit-max-tickets-input"
                     />
                   </div>
                 </div>

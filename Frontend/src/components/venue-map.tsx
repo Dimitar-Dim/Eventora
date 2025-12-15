@@ -17,16 +17,16 @@ interface VenueMapProps {
   seatStates?: Map<string, ISeatState>
 }
 
-type Seat = { sector: string; seatNum: number }
+type Seat = { sector: string; seat: number }
 type SectorSeatMap = Record<string, Seat[]>
 
 const buildSector = (sector: string, count = 100): Seat[] =>
-  Array.from({ length: count }, (_, i) => ({ sector, seatNum: i + 1 }))
+  Array.from({ length: count }, (_, i) => ({ sector, seat: i + 1 }))
 
 function SectorGrid({
-  label,
-  seats,
-  tone,
+  label, //SECTOR LABEL
+  seats, //should come from buildSector
+  tone, //manage colors
   selectedKeys,
   onSelect,
   seatStates,
@@ -47,15 +47,15 @@ function SectorGrid({
   const isFloor = tone === "floor"
 
   const getSeatClassName = (seat: Seat, selected: boolean): string => {
-    const key = `${seat.sector}-${seat.seatNum}`
+    const key = `${seat.sector}-${seat.seat}`
     const seatState = seatStates?.get(key)
 
-    // Purchased seats - gray and disabled
+    // Purchased seats
     if (seatState?.status === "purchased") {
       return "bg-gray-400/40 border border-gray-500/20 cursor-not-allowed opacity-50"
     }
 
-    // Reserved by others - orange/amber and disabled
+    // Reserved seats
     if (seatState?.status === "reserved") {
       return "bg-amber-500/60 border border-amber-400/40 cursor-not-allowed"
     }
@@ -99,7 +99,7 @@ function SectorGrid({
         }}
       >
         {seats.map((seat) => {
-          const key = `${seat.sector}-${seat.seatNum}`
+          const key = `${seat.sector}-${seat.seat}`
           const selected = selectedKeys.includes(key)
           const seatState = seatStates?.get(key)
           const isDisabled = seatState?.status === "purchased" || seatState?.status === "reserved"
@@ -108,7 +108,7 @@ function SectorGrid({
             <button
               key={key}
               type="button"
-              aria-label={`Sector ${seat.sector}, Seat ${seat.seatNum}`}
+              aria-label={`Sector ${seat.sector}, Seat ${seat.seat}`}
               disabled={isDisabled}
               className={`aspect-square w-full rounded-[3px] shadow-sm transition-all duration-150 ${getSeatClassName(seat, selected)}`}
               onClick={() => !isDisabled && onSelect(seat)}
@@ -165,11 +165,11 @@ export function VenueMap({
   }
 
   const effectiveSelectedSeats: Seat[] = selectedSeats
-    ? selectedSeats.map((s) => ({ sector: s.sector, seatNum: s.seat }))
+    ? selectedSeats.map((s) => ({ sector: s.sector, seat: s.seat }))
     : internalSelected
 
   const effectiveSelected = effectiveSelectedSeats.map(
-    (s) => `${s.sector}-${s.seatNum}`,
+    (s) => `${s.sector}-${s.seat}`,
   )
 
   const standingSelections = effectiveSelectedSeats.filter(
@@ -177,30 +177,30 @@ export function VenueMap({
   )
   const standingSelected = standingSelections.length > 0
   const maxStandingSeat = standingSelections.reduce(
-    (max, seat) => Math.max(max, seat.seatNum),
+    (max, seat) => Math.max(max, seat.seat),
     0,
   )
 
   const handleSeatSelect = (seat: Seat) => {
-    const key = `${seat.sector}-${seat.seatNum}`
+    const key = `${seat.sector}-${seat.seat}`
 
     if (onToggleSeat) {
       onToggleSeat(seat)
     } else {
       setInternalSelected((prev) => {
-        const exists = prev.some((s) => `${s.sector}-${s.seatNum}` === key)
-        if (exists) return prev.filter((s) => `${s.sector}-${s.seatNum}` !== key)
+        const exists = prev.some((s) => `${s.sector}-${s.seat}` === key)
+        if (exists) return prev.filter((s) => `${s.sector}-${s.seat}` !== key)
         return [...prev, seat]
       })
     }
 
-    onSeatSelect?.({ sector: seat.sector, seat: seat.seatNum })
+    onSeatSelect?.({ sector: seat.sector, seat: seat.seat })
   }
 
   const handleSelectedClick = (seatKey: string) => {
-    const [sector, seatNumRaw] = seatKey.split("-")
-    const seatNum = Number(seatNumRaw)
-    const seat: Seat = { sector, seatNum }
+    const [sector, seatRaw] = seatKey.split("-")
+    const seatNum = Number(seatRaw)
+    const seat: Seat = { sector, seat: seatNum }
     handleSeatSelect(seat)
   }
 
@@ -212,31 +212,31 @@ export function VenueMap({
         ? maxStandingSeat
         : maxStandingSeat + 1
 
-    const seat: Seat = { sector: "Standing", seatNum: nextSeatNum }
+    const seat: Seat = { sector: "Standing", seat: nextSeatNum }
 
     if (onToggleSeat) {
       onToggleSeat(seat)
     } else {
       setInternalSelected((prev) => {
-        const key = `${seat.sector}-${seat.seatNum}`
-        const exists = prev.some((s) => `${s.sector}-${s.seatNum}` === key)
+        const key = `${seat.sector}-${seat.seat}`
+        const exists = prev.some((s) => `${s.sector}-${s.seat}` === key)
 
         if (
           standingSelections.length >= standingCapacity &&
           standingSelected
         ) {
           return prev.filter(
-            (s) => !(s.sector === "Standing" && s.seatNum === maxStandingSeat),
+            (s) => !(s.sector === "Standing" && s.seat === maxStandingSeat),
           )
         }
 
         if (exists)
-          return prev.filter((s) => `${s.sector}-${s.seatNum}` !== key)
+          return prev.filter((s) => `${s.sector}-${s.seat}` !== key)
         return [...prev, seat]
       })
     }
 
-    onSeatSelect?.({ sector: seat.sector, seat: seat.seatNum })
+    onSeatSelect?.({ sector: seat.sector, seat: seat.seat })
   }
 
   return (
@@ -426,7 +426,7 @@ export function VenueMap({
             {effectiveSelectedSeats.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
                 {effectiveSelectedSeats.map((s) => {
-                  const key = `${s.sector}-${s.seatNum}`
+                  const key = `${s.sector}-${s.seat}`
                   return (
                     <button
                       key={key}
