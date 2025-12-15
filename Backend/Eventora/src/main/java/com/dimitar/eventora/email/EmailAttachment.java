@@ -43,7 +43,7 @@ public record EmailAttachment(String fileName, byte[] content, String contentTyp
         return "EmailAttachment{" +
                 "fileName='" + fileName + '\'' +
                 ", contentType='" + contentType + '\'' +
-                ", contentLength=" + content.length +
+                ", contentLength=" + content.length +   
                 '}';
     }
 }
