@@ -81,10 +81,8 @@ describe('Edit Event Page', () => {
     cy.wait('@getProfile');
     cy.wait('@getEvent');
 
-    // Check if seating toggle exists
     cy.get('[data-cy="edit-has-seating-toggle"]').should('exist');
     
-    // Toggle seating on
     cy.get('[data-cy="edit-has-seating-toggle"]').click();
     
     // Should show seating layout options
@@ -96,10 +94,8 @@ describe('Edit Event Page', () => {
     cy.wait('@getProfile');
     cy.wait('@getEvent');
 
-    // Enable seating
     cy.get('[data-cy="edit-has-seating-toggle"]').click();
     
-    // Select floor layout
     cy.get('[data-cy="edit-seating-layout-select"]').click();
     cy.get('[role="option"]').contains(/floor/i).first().click();
     

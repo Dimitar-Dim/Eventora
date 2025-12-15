@@ -40,8 +40,8 @@ describe('Ticket purchase essentials', () => {
     cy.contains('button', /open ticket window/i).click()
   cy.wait('@getPurchasedSeats')
 
-    // Select first available seat to unlock details step
-    cy.get('button[aria-label^="Sector"]').first().click()
+    // Select first available (non-reserved) seat to unlock details step
+    cy.get('button[aria-label^="Sector"]').not('[disabled]').first().click()
     cy.contains('button', /continue to details/i).click()
 
     // Details step requires email before purchase

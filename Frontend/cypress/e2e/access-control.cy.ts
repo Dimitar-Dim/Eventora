@@ -87,8 +87,9 @@ describe('Organizer Access Control', () => {
       cy.get('[data-cy="event-card"]').first().click()
       
       cy.get('[data-cy="delete-event-button"]').should('exist').click({ force: true })
-      
-      cy.get('[data-cy="confirm-delete"]').click()
+
+      cy.get('[role="alertdialog"], [data-state="open"]').should('exist')
+      cy.get('[data-cy="confirm-delete-event"]').should('exist').click({ force: true })
       cy.wait('@deleteEvent')
       
       cy.contains(/deleted/i).should('be.visible')
@@ -177,19 +178,6 @@ describe('Organizer Access Control', () => {
     it('redirects guest to login when trying to create event', () => {
       cy.visit('/create')
 
-      const tomorrow = new Date()
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      const dateString = tomorrow.toISOString().slice(0, 16)
-
-      cy.get('[data-cy="event-name-input"]').type('Guest Event')
-      cy.get('[data-cy="event-description-input"]').type('Should be unauthorized')
-      cy.get('[data-cy="event-date-input"]').type(dateString)
-      cy.get('[data-cy="event-genre-select"]').click()
-      cy.get('[role="option"]').contains('Rock').click({ force: true })
-      cy.get('[data-cy="event-ticket-price-input"]').type('10')
-      cy.get('[data-cy="event-max-tickets-input"]').type('50')
-
-      cy.get('[data-cy="create-event-submit"]').click()
       cy.location('pathname', { timeout: 20000 }).should('eq', '/login')
     })
 
