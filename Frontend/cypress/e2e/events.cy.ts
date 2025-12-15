@@ -1,6 +1,26 @@
 describe('Events', () => {
   beforeEach(() => {
-    cy.visit('/events');
+    const mockEvent = {
+      id: 1,
+      name: 'Showcase Night',
+      description: 'Event with curated artists',
+      eventDate: '2025-12-20T19:00:00',
+      genre: 'ROCK',
+      ticketPrice: 50.0,
+      maxTickets: 100,
+      availableTickets: 95,
+      hasSeating: true,
+      seatingLayout: 'FLOOR',
+      standingCapacity: 0,
+      seatedCapacity: 100,
+      imageUrl: null,
+      organizerId: 1,
+      isActive: true
+    }
+
+    cy.intercept('GET', '**/api/events', [mockEvent]).as('getEvents')
+    cy.visit('/events')
+    cy.wait('@getEvents')
   });
 
   it('loads events page', () => {
