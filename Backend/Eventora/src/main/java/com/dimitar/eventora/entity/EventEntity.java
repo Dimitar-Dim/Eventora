@@ -1,7 +1,7 @@
 package com.dimitar.eventora.entity;
 
-import com.dimitar.eventora.model.Genre;
-import com.dimitar.eventora.model.SeatingLayout;
+import com.dimitar.eventora.model.Event.Genre;
+import com.dimitar.eventora.model.Event.SeatingLayout;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

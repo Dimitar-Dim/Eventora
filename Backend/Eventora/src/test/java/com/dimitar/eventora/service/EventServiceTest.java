@@ -1,14 +1,15 @@
 package com.dimitar.***REMOVED***vice;
 
-import com.dimitar.eventora.dto.EventRequest;
+import com.dimitar.eventora.dto.Event.EventRequest;
 import com.dimitar.eventora.entity.EventEntity;
-import com.dimitar.eventora.exception.EventNotFound;
+import com.dimitar.eventora.exception.Event.EventNotFound;
 import com.dimitar.eventora.mapper.EventDtoMapper;
 import com.dimitar.eventora.mapper.EventMapper;
-import com.dimitar.eventora.model.Event;
-import com.dimitar.eventora.model.Genre;
-import com.dimitar.eventora.model.SeatingLayout;
+import com.dimitar.eventora.model.Event.Event;
+import com.dimitar.eventora.model.Event.Genre;
+import com.dimitar.eventora.model.Event.SeatingLayout;
 import com.dimitar.eventora.repository.EventRepository;
+import com.dimitar.***REMOVED***vice.Event.EventServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

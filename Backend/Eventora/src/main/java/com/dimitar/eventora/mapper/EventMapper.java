@@ -1,7 +1,7 @@
 package com.dimitar.eventora.mapper;
 
 import com.dimitar.eventora.entity.EventEntity;
-import com.dimitar.eventora.model.Event;
+import com.dimitar.eventora.model.Event.Event;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,6 +1,6 @@
 package com.dimitar.eventora.entity;
 
-import com.dimitar.eventora.model.VerificationTokenType;
+import com.dimitar.eventora.model.Auth.VerificationTokenType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -1,11 +1,11 @@
 package com.dimitar.eventora.controller;
 
-import com.dimitar.eventora.dto.LoginRequest;
-import com.dimitar.eventora.dto.RegisterRequest;
+import com.dimitar.eventora.dto.Auth.LoginRequest;
+import com.dimitar.eventora.dto.Auth.RegisterRequest;
 import com.dimitar.***REMOVED***Entity;
 import com.dimitar.***REMOVED***Role;
 import com.dimitar.***REMOVED***Repository;
-import com.dimitar.***REMOVED***vice.JwtService;
+import com.dimitar.***REMOVED***vice.Auth.JwtService;
 import com.dimitar.eventora.support.PostgresIntegrationTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;

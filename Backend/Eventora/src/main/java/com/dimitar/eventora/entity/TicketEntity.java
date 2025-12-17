@@ -1,6 +1,6 @@
 package com.dimitar.eventora.entity;
 
-import com.dimitar.eventora.model.TicketStatus;
+import com.dimitar.eventora.model.Ticket.TicketStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

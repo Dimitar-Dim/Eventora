@@ -1,0 +1,22 @@
+package com.dimitar.eventora.dto.Ticket;
+
+import com.dimitar.eventora.model.Ticket.TicketStatus;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+public record TicketPurchaseResponse(
+        Long ticketId,
+        Long eventId,
+        String eventName,
+        String issuedTo,
+        String qrCode,
+        TicketStatus status,
+        Integer remainingTickets,
+        BigDecimal pricePaid,
+        LocalDateTime purchasedAt,
+        String seatSection,
+        String seatRow,
+        String seatNumber,
+        String deliveryEmail
+) {}

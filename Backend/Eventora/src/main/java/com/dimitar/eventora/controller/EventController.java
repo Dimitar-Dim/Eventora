@@ -1,15 +1,15 @@
 package com.dimitar.eventora.controller;
 
-import com.dimitar.eventora.dto.EventRequest;
-import com.dimitar.eventora.dto.EventResponse;
-import com.dimitar.eventora.dto.TicketPurchaseRequest;
-import com.dimitar.eventora.dto.TicketPurchaseResponse;
-import com.dimitar.eventora.exception.UnauthorizedException;
-import com.dimitar.eventora.model.Event;
-import com.dimitar.eventora.model.TicketPurchaseSummary;
+import com.dimitar.eventora.dto.Event.EventRequest;
+import com.dimitar.eventora.dto.Event.EventResponse;
+import com.dimitar.eventora.dto.Ticket.TicketPurchaseRequest;
+import com.dimitar.eventora.dto.Ticket.TicketPurchaseResponse;
+import com.dimitar.eventora.exception.Auth.UnauthorizedException;
+import com.dimitar.eventora.model.Event.Event;
+import com.dimitar.eventora.model.Ticket.TicketPurchaseSummary;
 import com.dimitar.eventora.mapper.EventDtoMapper;
-import com.dimitar.***REMOVED***vice.EventService;
-import com.dimitar.***REMOVED***vice.TicketService;
+import com.dimitar.***REMOVED***vice.Event.EventService;
+import com.dimitar.***REMOVED***vice.Ticket.TicketService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;

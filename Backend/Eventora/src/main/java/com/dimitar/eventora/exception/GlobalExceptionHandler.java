@@ -1,5 +1,8 @@
 package com.dimitar.eventora.exception;
 
+import com.dimitar.eventora.exception.Auth.*;
+import com.dimitar.eventora.exception.Event.EventNotFound;
+import com.dimitar.eventora.exception.Ticket.TicketPurchaseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
