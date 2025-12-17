@@ -1,11 +1,11 @@
 package com.dimitar.eventora.controller;
 
-import com.dimitar.eventora.dto.TicketHistoryResponse;
-import com.dimitar.eventora.dto.VerifyTicketRequest;
-import com.dimitar.eventora.dto.VerifyTicketResponse;
-import com.dimitar.eventora.exception.UnauthorizedException;
-import com.dimitar.eventora.model.TicketPurchaseSummary;
-import com.dimitar.***REMOVED***vice.TicketService;
+import com.dimitar.eventora.dto.Ticket.TicketHistoryResponse;
+import com.dimitar.eventora.dto.Ticket.VerifyTicketRequest;
+import com.dimitar.eventora.dto.Ticket.VerifyTicketResponse;
+import com.dimitar.eventora.exception.Auth.UnauthorizedException;
+import com.dimitar.eventora.model.Ticket.TicketPurchaseSummary;
+import com.dimitar.***REMOVED***vice.Ticket.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

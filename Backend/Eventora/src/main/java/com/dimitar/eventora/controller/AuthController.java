@@ -1,16 +1,16 @@
 package com.dimitar.eventora.controller;
 
-import com.dimitar.eventora.dto.LoginRequest;
-import com.dimitar.eventora.dto.LoginResponse;
-import com.dimitar.eventora.dto.RegisterRequest;
-import com.dimitar.eventora.dto.RegisterResponse;
-import com.dimitar.eventora.dto.ResendVerificationRequest;
-import com.dimitar.eventora.dto.ResetPasswordRequest;
+import com.dimitar.eventora.dto.Auth.LoginRequest;
+import com.dimitar.eventora.dto.Auth.LoginResponse;
+import com.dimitar.eventora.dto.Auth.RegisterRequest;
+import com.dimitar.eventora.dto.Auth.RegisterResponse;
+import com.dimitar.eventora.dto.Auth.ResendVerificationRequest;
+import com.dimitar.eventora.dto.Auth.ResetPasswordRequest;
 import com.dimitar.***REMOVED***Response;
-import com.dimitar.eventora.dto.VerificationResponse;
-import com.dimitar.eventora.dto.VerifyAccountRequest;
-import com.dimitar.eventora.dto.ForgotPasswordRequest;
-import com.dimitar.***REMOVED***vice.AuthService;
+import com.dimitar.eventora.dto.Auth.VerificationResponse;
+import com.dimitar.eventora.dto.Auth.VerifyAccountRequest;
+import com.dimitar.eventora.dto.Auth.ForgotPasswordRequest;
+import com.dimitar.***REMOVED***vice.Auth.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

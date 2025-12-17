@@ -1,5 +1,6 @@
 package com.dimitar.***REMOVED***vice;
 
+import com.dimitar.***REMOVED***vice.Auth.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.security.SecurityException;
 import org.junit.jupiter.api.DisplayName;

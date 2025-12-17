@@ -2,14 +2,15 @@ package com.dimitar.eventora.controller;
 
 import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.***REMOVED***Entity;
-import com.dimitar.eventora.model.Genre;
-import com.dimitar.eventora.model.TicketPurchaseSummary;
+import com.dimitar.eventora.model.Event.Genre;
+import com.dimitar.eventora.model.Event.SeatingLayout;
+import com.dimitar.eventora.model.Ticket.TicketPurchaseSummary;
 import com.dimitar.***REMOVED***Role;
 import com.dimitar.eventora.repository.EventRepository;
 import com.dimitar.eventora.repository.TicketRepository;
 import com.dimitar.***REMOVED***Repository;
-import com.dimitar.***REMOVED***vice.JwtService;
-import com.dimitar.***REMOVED***vice.TicketService;
+import com.dimitar.***REMOVED***vice.Auth.JwtService;
+import com.dimitar.***REMOVED***vice.Ticket.TicketService;
 import com.dimitar.eventora.support.PostgresIntegrationTest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -175,7 +176,7 @@ class TicketControllerIT extends PostgresIntegrationTest {
                 .organizerId(organizerId)
                 .isActive(true)
                 .hasSeating(false)
-                .seatingLayout(com.dimitar.eventora.model.SeatingLayout.NONE)
+                .seatingLayout(SeatingLayout.NONE)
                 .seatedCapacity(0)
                 .standingCapacity(50)
                 .build();

@@ -1,7 +1,7 @@
 package com.dimitar.eventora.controller;
 
-import com.dimitar.eventora.exception.ForbiddenOperationException;
-import com.dimitar.eventora.exception.UnauthorizedException;
+import com.dimitar.eventora.exception.Auth.ForbiddenOperationException;
+import com.dimitar.eventora.exception.Auth.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;

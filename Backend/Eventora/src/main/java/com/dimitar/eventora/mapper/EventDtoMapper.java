@@ -1,10 +1,10 @@
 package com.dimitar.eventora.mapper;
 
-import com.dimitar.eventora.dto.EventRequest;
-import com.dimitar.eventora.dto.EventResponse;
+import com.dimitar.eventora.dto.Event.EventRequest;
+import com.dimitar.eventora.dto.Event.EventResponse;
 import com.dimitar.eventora.entity.EventEntity;
-import com.dimitar.eventora.model.Event;
-import com.dimitar.eventora.model.SeatingLayout;
+import com.dimitar.eventora.model.Event.Event;
+import com.dimitar.eventora.model.Event.SeatingLayout;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
