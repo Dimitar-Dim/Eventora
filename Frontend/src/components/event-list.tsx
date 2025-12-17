@@ -142,7 +142,7 @@ export function EventList({ events = [] }: { events?: Event[] }) {
               {filteredEvents.map((event) => event && (
                 <div key={event.id} className="w-full flex-shrink-0 px-2">
                   <div className="event-card-hover">
-                    <EventCard event={event} />
+                    <EventCard event={event} variant="carousel" />
                   </div>
                 </div>
               ))}
