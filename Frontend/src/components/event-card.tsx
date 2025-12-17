@@ -33,9 +33,10 @@ import type { ISeatState } from "@/types/seat"
 interface EventCardProps {
   event: Event
   onViewDetails?: (event: Event) => void
+  variant?: "grid" | "carousel"
 }
 
-export function EventCard({ event, onViewDetails }: EventCardProps) {
+export function EventCard({ event, onViewDetails, variant = "grid" }: EventCardProps) {
   const router = useRouter()
   const [showDetails, setShowDetails] = useState(false)
   const [eventDetails, setEventDetails] = useState(event)
@@ -337,7 +338,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         </div>
 
-        <div className="relative z-10 p-8 h-full min-h-[360px] flex flex-col justify-between">
+        <div className="relative z-10 p-8 h-full w-full min-h-[360px] flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div className="flex flex-wrap gap-2">
               <Badge className={`${getStatusColor(eventDetails.isActive)} font-medium text-sm`}>
@@ -379,11 +380,11 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="text-foreground">
+          <div className={`flex items-center gap-4 ${variant === "carousel" ? "justify-between" : "flex-wrap justify-between"}`}>
+            <div className="text-foreground flex-shrink-0">
               <span className="text-4xl font-bold text-primary" data-cy="event-price">€{eventDetails.ticketPrice}</span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 size="lg"
                 className="bg-muted/30 hover:bg-muted text-foreground font-semibold px-6 py-3"
