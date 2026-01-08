@@ -133,6 +133,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          architecture: 'arm64'
           cache: 'npm'
           cache-dependency-path: Frontend/package-lock.json
 
@@ -212,7 +213,7 @@ jobs:
   summary:
     needs: [test-backend, e2e, build-and-deploy]
     if: always()
-    runs-on: [self-hosted, macOS]
+    runs-on: ubuntu-latest
     steps:
       - name: Summarize timings
         run: |
