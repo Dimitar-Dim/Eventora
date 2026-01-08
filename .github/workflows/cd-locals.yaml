@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   test-backend:
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: [self-hosted, macOS]
     outputs:
       started: ${{ steps.tstart.outputs.ts }}
       finished: ${{ steps.tend.outputs.ts }}
