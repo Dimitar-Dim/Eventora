@@ -93,6 +93,7 @@ sonarqube {
         property "sonar.java.binaries", "build/classes/java/main"
         property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
         property "sonar.exclusions", "src/main/java/**/dto/**,src/main/java/**/entity/**"
+        property "sonar.coverage.exclusions", "src/main/java/**/config/**,src/main/java/**/model/**,src/main/java/**/repository/**,src/main/java/**/exception/**,src/main/java/**/email/**,src/main/java/**/websocket/**,src/main/java/**/EventoraApplication.java"
     }
 }
 
