@@ -498,6 +498,35 @@ class EventServiceTest {
         return event;
     }
 
+    @Test
+    @DisplayName("Should return events for organizer")
+    void getEventsByOrganizer_ReturnsOrganizerEvents() {
+        EventEntity event1 = buildEventEntity();
+        EventEntity event2 = buildEventEntity();
+        event2.setId(2L);
+        event2.setName("Summer Festival");
+
+        when(eventRepository.findByOrganizerId(1L)).thenReturn(Arrays.asList(event1, event2));
+
+        List<Event> result = eventService.getEventsByOrganizer(1L);
+
+        assertEquals(2, result.size());
+        assertEquals("Spring Concert", result.get(0).getName());
+        assertEquals("Summer Festival", result.get(1).getName());
+        verify(eventRepository, times(1)).findByOrganizerId(1L);
+    }
+
+    @Test
+    @DisplayName("Should return empty list when organizer has no events")
+    void getEventsByOrganizer_NoEvents_ReturnsEmptyList() {
+        when(eventRepository.findByOrganizerId(999L)).thenReturn(Collections.emptyList());
+
+        List<Event> result = eventService.getEventsByOrganizer(999L);
+
+        assertTrue(result.isEmpty());
+        verify(eventRepository, times(1)).findByOrganizerId(999L);
+    }
+
     private EventRequest buildEventRequest() {
         return new EventRequest(
                 "Spring Concert",

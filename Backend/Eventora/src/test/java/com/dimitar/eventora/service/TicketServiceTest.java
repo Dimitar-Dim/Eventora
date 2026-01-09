@@ -33,6 +33,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -241,6 +242,80 @@ class TicketServiceTest {
 
         assertThrows(UnauthorizedException.class, () -> ticketService.downloadTicket(201L, ticketOwner.getId()));
         verify(pdfTicketService, never()).generateTicketPdf(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("purchaseTicket should fail when event is sold out")
+    void purchaseTicket_SoldOut_ThrowsException() {
+        EventEntity soldOutEvent = copyOf(activeEvent);
+        soldOutEvent.setAvailableTickets(0);
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(soldOutEvent));
+
+        TicketPurchaseException exception = assertThrows(
+            TicketPurchaseException.class,
+            () -> ticketService.purchaseTicket(1L, 7L, "Alice", null, null, null, null)
+        );
+
+        assertTrue(exception.getMessage().contains("sold out"));
+        verify(ticketRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("purchaseTicket should use provided seat info when available")
+    void purchaseTicket_WithSeatInfo_UseProvidedSeat() {
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(activeEvent));
+        when(ticketRepository.save(any(TicketEntity.class))).thenAnswer(invocation -> {
+            TicketEntity entity = invocation.getArgument(0);
+            entity.setId(99L);
+            entity.setCreatedAt(LocalDateTime.now());
+            return entity;
+        });
+        when(eventRepository.save(any(EventEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TicketPurchaseSummary summary = ticketService.purchaseTicket(1L, 7L, "Alice", null, "VIP", "A", "5");
+
+        assertNotNull(summary);
+        assertEquals("VIP", summary.ticket().getSeatSection());
+        assertEquals("A", summary.ticket().getSeatRow());
+        assertEquals("5", summary.ticket().getSeatNumber());
+    }
+
+    @Test
+    @DisplayName("getTicketsForUser should return empty list when no tickets")
+    void getTicketsForUser_NoTickets_ReturnsEmptyList() {
+        when(ticketRepository.findAllByUserIdOrderByCreatedAtDesc(7L)).thenReturn(List.of());
+
+        List<TicketPurchaseSummary> summaries = ticketService.getTicketsForUser(7L);
+
+        assertTrue(summaries.isEmpty());
+    }
+
+    @Test
+    @DisplayName("downloadTicket should throw when userId is null")
+    void downloadTicket_NullUserId_ThrowsUnauthorized() {
+        assertThrows(UnauthorizedException.class, () -> ticketService.downloadTicket(200L, null));
+        verify(ticketRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("getPurchasedSeatsForEvent should return seat info for purchased tickets")
+    void getPurchasedSeatsForEvent_ReturnsSeatInfo() {
+        TicketEntity ticket = TicketEntity.builder()
+                .id(100L)
+                .eventId(1L)
+                .seatSection("Floor")
+                .seatRow("R1")
+                .seatNumber("05")
+                .build();
+
+        when(ticketRepository.findAllByEventId(1L)).thenReturn(List.of(ticket));
+
+        List<Map<String, Object>> seats = ticketService.getPurchasedSeatsForEvent(1L);
+
+        assertEquals(1, seats.size());
+        assertEquals("Floor", seats.get(0).get("seatSection"));
+        assertEquals("R1", seats.get(0).get("seatRow"));
+        assertEquals("05", seats.get(0).get("seatNumber"));
     }
 
         private EventEntity copyOf(EventEntity source) {
