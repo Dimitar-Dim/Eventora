@@ -14,6 +14,7 @@ import com.dimitar.eventora.model.Event.Genre;
 import com.dimitar.eventora.model.Ticket.TicketPdf;
 import com.dimitar.eventora.model.Ticket.TicketPurchaseSummary;
 import com.dimitar.eventora.model.Ticket.TicketStatus;
+import com.dimitar.***REMOVED***Role;
 import com.dimitar.eventora.repository.EventRepository;
 import com.dimitar.eventora.repository.TicketRepository;
 import com.dimitar.***REMOVED***Repository;
@@ -316,6 +317,100 @@ class TicketServiceTest {
         assertEquals("Floor", seats.get(0).get("seatSection"));
         assertEquals("R1", seats.get(0).get("seatRow"));
         assertEquals("05", seats.get(0).get("seatNumber"));
+    }
+
+    @Test
+    @DisplayName("verifyTicket should return not found for invalid QR code")
+    void verifyTicket_InvalidQR_ReturnsNotFound() {
+        when(ticketRepository.findByQrCode("INVALID-QR")).thenReturn(Optional.empty());
+
+        var response = ticketService.verifyTicket("INVALID-QR", 1L);
+
+        assertFalse(response.isVerified());
+        assertEquals("Ticket not found", response.getMessage());
+    }
+
+    @Test
+    @DisplayName("verifyTicket should reject when verifier is not authorized")
+    void verifyTicket_NotAuthorized_ReturnsUnauthorized() {
+        TicketEntity ticket = TicketEntity.builder()
+                .id(100L)
+                .eventId(1L)
+                .qrCode("VALID-QR")
+                .status(TicketStatus.ACTIVE)
+                .build();
+
+        UserEntity nonOrganizer = UserEntity.builder()
+                .id(99L)
+                .role(UserRole.USER)
+                .build();
+
+        when(ticketRepository.findByQrCode("VALID-QR")).thenReturn(Optional.of(ticket));
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(activeEvent));
+        when(userRepository.findById(99L)).thenReturn(Optional.of(nonOrganizer));
+
+        var response = ticketService.verifyTicket("VALID-QR", 99L);
+
+        assertFalse(response.isVerified());
+        assertTrue(response.getMessage().contains("not authorized"));
+    }
+
+    @Test
+    @DisplayName("verifyTicket should mark ticket as used when valid")
+    void verifyTicket_ValidTicket_MarksAsUsed() {
+        TicketEntity ticket = TicketEntity.builder()
+                .id(100L)
+                .eventId(1L)
+                .qrCode("VALID-QR")
+                .status(TicketStatus.ACTIVE)
+                .issuedTo("Alice")
+                .seatSection("Floor")
+                .seatRow("R1")
+                .seatNumber("05")
+                .build();
+
+        UserEntity organizer = UserEntity.builder()
+                .id(42L)
+                .role(UserRole.ORGANIZER)
+                .build();
+
+        when(ticketRepository.findByQrCode("VALID-QR")).thenReturn(Optional.of(ticket));
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(activeEvent));
+        when(userRepository.findById(42L)).thenReturn(Optional.of(organizer));
+        when(ticketRepository.save(any(TicketEntity.class))).thenReturn(ticket);
+
+        var response = ticketService.verifyTicket("VALID-QR", 42L);
+
+        assertTrue(response.isVerified());
+        assertEquals("Ticket verified successfully", response.getMessage());
+        assertEquals("Alice", response.getIssuedTo());
+        verify(ticketRepository).save(ticket);
+    }
+
+    @Test
+    @DisplayName("verifyTicket should reject already used ticket")
+    void verifyTicket_AlreadyUsed_ReturnsUsed() {
+        TicketEntity usedTicket = TicketEntity.builder()
+                .id(100L)
+                .eventId(1L)
+                .qrCode("USED-QR")
+                .status(TicketStatus.USED)
+                .issuedTo("Alice")
+                .build();
+
+        UserEntity organizer = UserEntity.builder()
+                .id(42L)
+                .role(UserRole.ORGANIZER)
+                .build();
+
+        when(ticketRepository.findByQrCode("USED-QR")).thenReturn(Optional.of(usedTicket));
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(activeEvent));
+        when(userRepository.findById(42L)).thenReturn(Optional.of(organizer));
+
+        var response = ticketService.verifyTicket("USED-QR", 42L);
+
+        assertFalse(response.isVerified());
+        assertEquals("Ticket has already been used", response.getMessage());
     }
 
         private EventEntity copyOf(EventEntity source) {

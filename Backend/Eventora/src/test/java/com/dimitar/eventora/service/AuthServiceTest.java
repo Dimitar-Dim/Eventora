@@ -1,11 +1,13 @@
 package com.dimitar.***REMOVED***vice;
 
 import com.dimitar.eventora.config.MailProperties;
+import com.dimitar.eventora.dto.Auth.ForgotPasswordRequest;
 import com.dimitar.eventora.dto.Auth.LoginRequest;
 import com.dimitar.eventora.dto.Auth.LoginResponse;
 import com.dimitar.eventora.dto.Auth.RegisterRequest;
 import com.dimitar.eventora.dto.Auth.RegisterResponse;
 import com.dimitar.eventora.dto.Auth.ResendVerificationRequest;
+import com.dimitar.eventora.dto.Auth.ResetPasswordRequest;
 import com.dimitar.***REMOVED***Response;
 import com.dimitar.eventora.dto.Auth.VerificationResponse;
 import com.dimitar.eventora.dto.Auth.VerifyAccountRequest;
@@ -423,4 +425,71 @@ class AuthServiceTest {
                 verify(userRepository, never()).findByEmailIgnoreCase(anyString());
                 verify(emailService, never()).send(any());
         }
+
+    @Test
+    @DisplayName("Should return success for forgot password regardless of email existence")
+    void testForgotPasswordAlwaysReturnsSuccess() {
+        when(userRepository.findByEmailIgnoreCase("test@example.com")).thenReturn(Optional.of(testUser));
+        when(mailProperties.getPasswordResetBaseUrl()).thenReturn("http://localhost:3000/reset-password");
+
+        VerificationResponse response = authService.forgotPassword(new ForgotPasswordRequest("test@example.com"));
+
+        assertTrue(response.success());
+        assertTrue(response.message().contains("If that email exists"));
+    }
+
+    @Test
+    @DisplayName("Should return success for forgot password even when email not found")
+    void testForgotPasswordNonExistentEmail() {
+        when(userRepository.findByEmailIgnoreCase("nonexistent@example.com")).thenReturn(Optional.empty());
+
+        VerificationResponse response = authService.forgotPassword(new ForgotPasswordRequest("nonexistent@example.com"));
+
+        assertTrue(response.success());
+        verify(emailService, never()).send(any());
+    }
+
+    @Test
+    @DisplayName("Should reset password with valid token")
+    void testResetPasswordSuccess() {
+        VerificationTokenEntity resetToken = VerificationTokenEntity.builder()
+                .token("reset-token")
+                .user(testUser)
+                .expiresAt(LocalDateTime.now().plusHours(1))
+                .build();
+
+        when(verificationService.consumeToken("reset-token", VerificationTokenType.PASSWORD_RESET))
+                .thenReturn(Optional.of(resetToken));
+        when(passwordEncoder.encode("newPassword123")).thenReturn("$2b$12$newhashedpassword");
+        when(userRepository.save(any(UserEntity.class))).thenReturn(testUser);
+
+        VerificationRespon***REMOVED***"));
+
+        assertTrue(response.success());
+        assertEquals("Password has been reset successfully", response.message());
+        verify(passwordEncoder).encode("newPassword123");
+        verify(userRepository).save(testUser);
+    }
+
+    @Test
+    @DisplayName("Should get user profile successfully")
+    void testGetProfileSuccess() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userMapper.toModel(testUser)).thenReturn(testUserModel);
+        when(userDtoMapper.toResponse(testUserModel)).thenReturn(testUserResponse);
+
+        UserResponse response = authService.getProfile("1");
+
+        assertNotNull(response);
+        assertEquals("testuser", response.username());
+        verify(userRepository).findById(1L);
+    }
+
+    @Test
+    @DisplayName("Should throw UnauthorizedException when profile not found")
+    void testGetProfileNotFound() {
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(UnauthorizedException.class, () -> authService.getProfile("999"));
+    }
 }
