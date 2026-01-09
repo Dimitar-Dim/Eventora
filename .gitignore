@@ -81,6 +81,8 @@ application-dev.properties
 
 # OS generated files
 *.DS_Store
+./.DS_Store
+.DS_Store
 
 HELP.md
 .gradle
