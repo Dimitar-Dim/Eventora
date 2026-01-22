@@ -1,14 +1,14 @@
-#Build Next.js app
+# Build Next.js app
 FROM node:20 AS build
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
 
+# Accept build arg BEFORE the build step
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+COPY package*.json ./
+RUN npm ci
+COPY . .
 RUN npm run build
 
 #Runtime stage
