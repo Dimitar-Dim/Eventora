@@ -25,9 +25,20 @@ dist/
 build/
 .env
 .env.*
+!.env.example
 .env.local
 .env.development.local
 .env.test.local
+
+# Backend configuration with secrets
+Backend/Eventora/src/main/resources/application-local.properties
+Backend/Eventora/src/main/resources/application-local.yml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
 .env.production.local
 coverage/
 *.tgz
