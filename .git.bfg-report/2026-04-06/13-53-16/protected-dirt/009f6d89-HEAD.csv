@@ -1,0 +1,4 @@
+f825f50f718276cc4e9e671c2fa811ace3c9b31a,MODIFY,regular-file,Backend/Eventora/database-compose.yml,532,9
+83866ef53599fcaf30425c502ecef14d2dd1010e,MODIFY,regular-file,Backend/Eventora/src/main/resources/application.properties,1629,5;18;29-30
+94b2e8297331681d22fbbbcb32bf356cd1f99ba1,MODIFY,regular-file,database-container.yml,621,9
+328886d31cf83e88e74679149420cdeea6acf33c,MODIFY,regular-file,docker-compose.yaml,1842,10;36
