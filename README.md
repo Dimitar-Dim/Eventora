@@ -18,6 +18,7 @@ A modern, full-stack ***REMOVED***s to discover events, purchase tickets, manage
 - **Inventory Management** - Track available tickets and standing room capacity
 - **Revenue Analytics** - Dashboard with ticket sales and revenue metrics
 - **Attendee Management** - Access to attendee information and check-in capabilities
+- **Mobile Client** - [EventoraClient](https://github.com/Dimitar-Dim/EventoraClient) - Native mobile app for event organizers
 
 ### Platform Features
 - **JWT Authentication** - Secure token-based authentication
