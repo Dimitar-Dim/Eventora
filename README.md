@@ -118,7 +118,7 @@ npm run dev
 
 The frontend will be available at `http://localhost:3000`
 
-## 🐳 Docker Deployment
+## Docker Deployment
 
 Run the entire stack with Docker Compose:
 
@@ -160,7 +160,7 @@ cd Backend/Eventora
 
 Coverage reports available in `build/reports/jacoco/test/html/index.html`
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Eventora/
@@ -194,15 +194,7 @@ Eventora/
 - Secure password encryption with Spring Security
 - Access token with configurable expiration
 - Refresh token mechanism for extended sessions
-## 🛡️ Security
 
-**Important:** This project handles user data and payment information. Please review [SECURITY.md](SECURITY.md) for:
-- Environment variable configuration
-- Credentials management
-- Secrets rotation procedures
-- Production deployment security guidelines
-
-Do NOT commit secrets to version control. Use `.env` files and environment variables instead.
 ## Database Schema
 
 Key entities:
@@ -234,13 +226,11 @@ Then edit `.env` with your actual values:
 DATABASE_URL=jdbc:postgresql://localhost:5432/eventora
 DATABASE_USERNAME=postgres
 DATABASE_PASSWORD=your_secure_password
-JWT_SECRET=your_secure_jwt_secret_min_32_chars
+JWT_SECRET=your_secure_jwt
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your_app_specific_password
 FRONTEND_URL=http://localhost:3000
 ```
-
-⚠️ **Important:** Never commit `.env` file to version control. See [SECURITY.md](SECURITY.md) for detailed security setup instructions.
 
 ## Styling
 
@@ -248,15 +238,6 @@ The frontend uses:
 - **Tailwind CSS** - Utility-first CSS framework
 - **Radix UI** - Unstyled, accessible component primitives
 - **Custom CSS Modules** - For component-specific styles
-
-## Reporting Issues
-
-Found a bug? Please create an issue with:
-- Clear description of the problem
-- Steps to reproduce
-- Expected vs actual behavior
-- Screenshots/logs if applicable
-- Your environment details
 
 ## License
 
