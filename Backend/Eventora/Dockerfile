@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/home/gradle/.gradle ./gradlew --no-daemon help
 
 COPY src ./src
 
-RUN ./gradlew clean bootJar -x test --no-daemon
+RUN --mount=type=cache,target=/home/gradle/.gradle ./gradlew clean bootJar -x test --no-daemon
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
