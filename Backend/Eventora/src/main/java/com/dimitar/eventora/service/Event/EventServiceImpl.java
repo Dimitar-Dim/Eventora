@@ -1,4 +1,4 @@
-package com.dimitar.***REMOVED***vice.Event;
+package com.dimitar.eventora.service.Event;
 
 import com.dimitar.eventora.dto.Event.EventRequest;
 import com.dimitar.eventora.entity.EventEntity;

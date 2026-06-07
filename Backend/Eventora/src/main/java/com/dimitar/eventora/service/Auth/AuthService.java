@@ -1,4 +1,4 @@
-package com.dimitar.***REMOVED***vice.Auth;
+package com.dimitar.eventora.service.Auth;
 
 import com.dimitar.eventora.dto.Auth.LoginRequest;
 import com.dimitar.eventora.dto.Auth.LoginResponse;
@@ -6,7 +6,7 @@ import com.dimitar.eventora.dto.Auth.RegisterRequest;
 import com.dimitar.eventora.dto.Auth.RegisterResponse;
 import com.dimitar.eventora.dto.Auth.ResendVerificationRequest;
 import com.dimitar.eventora.dto.Auth.ResetPasswordRequest;
-import com.dimitar.***REMOVED***Response;
+import com.dimitar.eventora.dto.Auth.UserResponse;
 import com.dimitar.eventora.dto.Auth.VerificationResponse;
 import com.dimitar.eventora.dto.Auth.VerifyAccountRequest;
 import com.dimitar.eventora.dto.Auth.ForgotPasswordRequest;

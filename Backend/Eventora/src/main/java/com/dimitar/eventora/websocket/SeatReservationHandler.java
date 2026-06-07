@@ -1,7 +1,7 @@
 package com.dimitar.eventora.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.dimitar.***REMOVED***vationType;
+import com.dimitar.eventora.websocket.SeatReservationMessage.SeatReservationType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -93,7 +93,7 @@ public class SeatReservationHandler extends TextWebSocketHandler {
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime expires = now.plusMinutes(15);
-        SeatReservation reservation = new SeatReservation(***REMOVED***Id, now, expires);
+        SeatReservation reservation = new SeatReservation(eventId, sector, seatNumber, userId, now, expires);
         reservationService.addReservation(key, reservation);
 
         SeatState state = new SeatState();
@@ -104,7 +104,7 @@ public class SeatReservationHandler extends TextWebSocketHandler {
         state.setReservedBy(userId);
         state.setExpiresAt(expires.format(DateTimeFormatter.ISO_DATE_TIME));
 
-        broadcast(***REMOVED***vationType.RESERVE, state);
+        broadcast(eventId, SeatReservationType.RESERVE, state);
     }
 
     private void handleRelease(Long eventId, Map<String, Object> data) {
@@ -118,7 +118,7 @@ public class SeatReservationHandler extends TextWebSocketHandler {
             reservationService.removeReservation(key);
 
             SeatInfo info = new SeatInfo(eventId, sector, seatNumber);
-            broadcast(***REMOVED***vationType.RELEASE, info);
+            broadcast(eventId, SeatReservationType.RELEASE, info);
         }
     }
 
@@ -149,7 +149,7 @@ public class SeatReservationHandler extends TextWebSocketHandler {
         }
     }
 
-    private void broadcast(Long ***REMOVED***vationType type, Object data) {
+    private void broadcast(Long eventId, SeatReservationType type, Object data) {
         Set<WebSocketSession> sessions = eventSessions.get(eventId);
         if (sessions == null || sessions.isEmpty()) {
             return;
@@ -175,7 +175,7 @@ public class SeatReservationHandler extends TextWebSocketHandler {
 
     @EventListener
     public void handleReservationExpired(SeatReservationExpiredEvent event) {
-        SeatReservation r = ***REMOVED***vation();
+        SeatReservation r = event.getReservation();
         SeatInfo info = new SeatInfo(r.getEventId(), r.getSector(), r.getSeatNumber());
         broadcast(r.getEventId(), SeatReservationType.RESERVATION_EXPIRED, info);
     }

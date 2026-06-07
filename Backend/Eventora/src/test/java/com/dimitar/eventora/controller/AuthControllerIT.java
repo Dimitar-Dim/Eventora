@@ -2,10 +2,10 @@ package com.dimitar.eventora.controller;
 
 import com.dimitar.eventora.dto.Auth.LoginRequest;
 import com.dimitar.eventora.dto.Auth.RegisterRequest;
-import com.dimitar.***REMOVED***Entity;
-import com.dimitar.***REMOVED***Role;
-import com.dimitar.***REMOVED***Repository;
-import com.dimitar.***REMOVED***vice.Auth.JwtService;
+import com.dimitar.eventora.entity.UserEntity;
+import com.dimitar.eventora.model.Auth.UserRole;
+import com.dimitar.eventora.repository.UserRepository;
+import com.dimitar.eventora.service.Auth.JwtService;
 import com.dimitar.eventora.support.PostgresIntegrationTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,8 +58,8 @@ class AuthControllerIT extends PostgresIntegrationTest {
         RegisterRequest request = new RegisterRequest(
             "jane",
             "548399@student.fontys.nl",
-            "***REMOVED***",
-            "***REMOVED***"
+            "secret123",
+            "secret123"
         );
 
         mockMvc.perform(post("/api/auth/register")
@@ -76,9 +76,9 @@ class AuthControllerIT extends PostgresIntegrationTest {
 
     @Test
     void login_shouldReturnAccessTokenForValidCredentials() throws Exception {
-        UserEntity user = persistUser("alice", "alice@example.com", "***REMOVED***", UserRole.USER);
+        UserEntity user = persistUser("alice", "alice@example.com", "secret123", UserRole.USER);
 
-        LoginRequest request = new LoginRequest(user.getEmail(), "***REMOVED***");
+        LoginRequest request = new LoginRequest(user.getEmail(), "secret123");
 
         mockMvc.perform(post("/api/auth/login")
                 .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
@@ -91,7 +91,7 @@ class AuthControllerIT extends PostgresIntegrationTest {
 
     @Test
     void profile_shouldReturnCurrentUserInfoWhenTokenIsValid() throws Exception {
-        UserEntity user = persistUser("bob", "bob@example.com", "***REMOVED***", UserRole.USER);
+        UserEntity user = persistUser("bob", "bob@example.com", "secret123", UserRole.USER);
         String bearer = bearerToken(user.getId(), user.getRole());
 
         mockMvc.perform(get("/api/auth/profile")

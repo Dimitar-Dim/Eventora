@@ -1,7 +1,7 @@
 package com.dimitar.eventora.mapper;
 
-import com.dimitar.***REMOVED***Response;
-import com.dimitar.***REMOVED***;
+import com.dimitar.eventora.dto.Auth.UserResponse;
+import com.dimitar.eventora.model.Auth.User;
 import org.springframework.stereotype.Component;
 
 @Component

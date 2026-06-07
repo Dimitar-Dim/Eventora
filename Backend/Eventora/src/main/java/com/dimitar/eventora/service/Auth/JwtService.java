@@ -1,4 +1,4 @@
-package com.dimitar.***REMOVED***vice.Auth;
+package com.dimitar.eventora.service.Auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

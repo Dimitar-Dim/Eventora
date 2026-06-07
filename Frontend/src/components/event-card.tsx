@@ -24,7 +24,7 @@ import { VenueMap } from "@/components/venue-map"
 import { env } from "@/config/env"
 import { formatDate, formatTime } from "@/utils/dateUtils"
 import { showError, showSuccess } from "@/utils/toast"
-import { ***REMOVED***vice/eventService"
+import { eventService } from "@/api/service/eventService"
 import { useAuth } from "@/context/AuthContext"
 import { seatReservationService } from "@/services/seatReservationService"
 import type { Event, IPurchaseTicketPayload, IPurchaseTicketResponse } from "@/types/event"
@@ -123,7 +123,7 @@ export function EventCard({ event, onViewDetails, variant = "grid" }: EventCardP
     setPurchaseStep("select")
     setPurchaseEmail(user?.email ?? "")
     setPurchaseDialogOpen(false)
-  }, [***REMOVED***?.email])
+  }, [event, user?.email])
 
   useEffect(() => {
     setPurchaseEmail(user?.email ?? "")
@@ -202,7 +202,7 @@ export function EventCard({ event, onViewDetails, variant = "grid" }: EventCardP
       return
     }
     
-    // Pr***REMOVED***ved by others
+    // Prevent selection of seats reserved by others
     if (seatState?.status === "reserved" && seatState.reservedBy !== currentUserId) {
       showError("This seat is temporarily reserved by another user")
       return

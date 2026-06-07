@@ -1,6 +1,6 @@
-package com.dimitar.***REMOVED***vice;
+package com.dimitar.eventora.service;
 
-import com.dimitar.***REMOVED***vice.Auth.JwtService;
+import com.dimitar.eventora.service.Auth.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.security.SecurityException;
 import org.junit.jupiter.api.DisplayName;

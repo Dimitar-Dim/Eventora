@@ -1,4 +1,4 @@
-package com.dimitar.***REMOVED***vice;
+package com.dimitar.eventora.service;
 
 import com.dimitar.eventora.dto.Event.EventRequest;
 import com.dimitar.eventora.entity.EventEntity;
@@ -9,7 +9,7 @@ import com.dimitar.eventora.model.Event.Event;
 import com.dimitar.eventora.model.Event.Genre;
 import com.dimitar.eventora.model.Event.SeatingLayout;
 import com.dimitar.eventora.repository.EventRepository;
-import com.dimitar.***REMOVED***vice.Event.EventServiceImpl;
+import com.dimitar.eventora.service.Event.EventServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

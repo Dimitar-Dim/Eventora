@@ -5,7 +5,7 @@ import { Event } from "@/types/event"
 import { Button } from "@/components/ui/button"
 import { Plus, Zap } from "lucide-react"
 import { useEffect, useState } from "react"
-import { ***REMOVED***vice/eventService"
+import { eventService } from "@/api/service/eventService"
 import { getRoleFromToken } from "@/utils/auth"
 
 export default function HomePage() {

@@ -3,14 +3,14 @@ package com.dimitar.eventora.controller;
 import com.dimitar.eventora.dto.Event.EventRequest;
 import com.dimitar.eventora.dto.Ticket.TicketPurchaseRequest;
 import com.dimitar.eventora.entity.EventEntity;
-import com.dimitar.***REMOVED***Entity;
+import com.dimitar.eventora.entity.UserEntity;
 import com.dimitar.eventora.model.Event.Genre;
 import com.dimitar.eventora.model.Event.SeatingLayout;
-import com.dimitar.***REMOVED***Role;
+import com.dimitar.eventora.model.Auth.UserRole;
 import com.dimitar.eventora.repository.EventRepository;
 import com.dimitar.eventora.repository.TicketRepository;
-import com.dimitar.***REMOVED***Repository;
-import com.dimitar.***REMOVED***vice.Auth.JwtService;
+import com.dimitar.eventora.repository.UserRepository;
+import com.dimitar.eventora.service.Auth.JwtService;
 import com.dimitar.eventora.support.PostgresIntegrationTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -113,7 +113,7 @@ class EventControllerIT extends PostgresIntegrationTest {
 
     @Test
     void purchaseTicket_shouldReturnSummaryAndDecreaseAvailability() throws Exception {
-        UserEntity organizer = persistUser("***REMOVED***Role.ORGANIZER);
+        UserEntity organizer = persistUser("eventowner", "owner@example.com", UserRole.ORGANIZER);
         EventEntity event = persistEvent("Community Day", organizer.getId(), 40);
         Long eventId = Objects.requireNonNull(event.getId());
         int initialAvailability = Objects.requireNonNull(event.getAvailableTickets());
@@ -170,7 +170,7 @@ class EventControllerIT extends PostgresIntegrationTest {
         UserEntity entity = UserEntity.builder()
                 .username(username)
                 .email(email)
-                .passwordHash(passwordEncoder.encode("***REMOVED***"))
+                .passwordHash(passwordEncoder.encode("secret123"))
                 .role(role)
                 .build();
         return Objects.requireNonNull(userRepository.save(entity));

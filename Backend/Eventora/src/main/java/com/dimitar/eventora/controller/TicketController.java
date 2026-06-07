@@ -5,7 +5,7 @@ import com.dimitar.eventora.dto.Ticket.VerifyTicketRequest;
 import com.dimitar.eventora.dto.Ticket.VerifyTicketResponse;
 import com.dimitar.eventora.exception.Auth.UnauthorizedException;
 import com.dimitar.eventora.model.Ticket.TicketPurchaseSummary;
-import com.dimitar.***REMOVED***vice.Ticket.TicketService;
+import com.dimitar.eventora.service.Ticket.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

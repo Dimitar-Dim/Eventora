@@ -103,7 +103,7 @@ describe('Organizer Access Control', () => {
       cy.intercept('GET', '**/api/events/**', mockEvent).as('getEvent')
     })
 
-    it('pr***REMOVED*** from creating events', () => {
+    it('prevents regular user from creating events', () => {
       cy.visit('/create', {
         onBeforeLoad: setAuthStorage
       })

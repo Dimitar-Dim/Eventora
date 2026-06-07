@@ -1,6 +1,6 @@
 # Eventora
 
-A modern, full-stack ***REMOVED***s to discover events, purchase tickets, manage seating arrangements, and provides organizers with comprehensive event management tools.
+A modern, full-stack event ticketing platform built with Spring Boot and Next.js. Eventora allows users to discover events, purchase tickets, manage seating arrangements, and provides organizers with comprehensive event management tools.
 
 ## Features
 
@@ -113,7 +113,7 @@ cd Frontend
 # Install dependencies
 npm install
 
-# Run d***REMOVED***ver
+# Run development server
 npm run dev
 ```
 

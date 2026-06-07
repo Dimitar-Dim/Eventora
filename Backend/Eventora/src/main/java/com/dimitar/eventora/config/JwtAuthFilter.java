@@ -1,6 +1,6 @@
 package com.dimitar.eventora.config;
 
-import com.dimitar.***REMOVED***vice.Auth.JwtService;
+import com.dimitar.eventora.service.Auth.JwtService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

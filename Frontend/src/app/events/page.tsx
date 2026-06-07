@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { Event } from "@/types/event"
 import { EventGrid } from "@/components/event-grid"
-import { ***REMOVED***vice/eventService"
+import { eventService } from "@/api/service/eventService"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/context/AuthContext"
 

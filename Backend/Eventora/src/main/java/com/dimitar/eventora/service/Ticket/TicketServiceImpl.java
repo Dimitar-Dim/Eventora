@@ -1,4 +1,4 @@
-package com.dimitar.***REMOVED***vice.Ticket;
+package com.dimitar.eventora.service.Ticket;
 
 import com.dimitar.eventora.dto.Ticket.VerifyTicketResponse;
 import com.dimitar.eventora.email.EmailAttachment;
@@ -8,7 +8,7 @@ import com.dimitar.eventora.email.EmailTemplate;
 import com.dimitar.eventora.email.EmailVerifier;
 import com.dimitar.eventora.entity.EventEntity;
 import com.dimitar.eventora.entity.TicketEntity;
-import com.dimitar.***REMOVED***Entity;
+import com.dimitar.eventora.entity.UserEntity;
 import com.dimitar.eventora.exception.Event.EventNotFound;
 import com.dimitar.eventora.exception.Ticket.TicketPurchaseException;
 import com.dimitar.eventora.exception.Auth.UnauthorizedException;
@@ -19,11 +19,11 @@ import com.dimitar.eventora.model.Ticket.Ticket;
 import com.dimitar.eventora.model.Ticket.TicketPurchaseSummary;
 import com.dimitar.eventora.model.Ticket.TicketPdf;
 import com.dimitar.eventora.model.Ticket.TicketStatus;
-import com.dimitar.***REMOVED***Role;
+import com.dimitar.eventora.model.Auth.UserRole;
 import com.dimitar.eventora.repository.EventRepository;
 import com.dimitar.eventora.repository.TicketRepository;
-import com.dimitar.***REMOVED***Repository;
-import com.dimitar.***REMOVED***vationService;
+import com.dimitar.eventora.repository.UserRepository;
+import com.dimitar.eventora.websocket.SeatReservationService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -74,7 +74,7 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional
-    public TicketPurchaseSummary purchaseTicket(Long ***REMOVED***Id, String issuedTo, String deliveryEmail,
+    public TicketPurchaseSummary purchaseTicket(Long eventId, Long userId, String issuedTo, String deliveryEmail,
                                                  String seatSection, String seatRow, String seatNumber) {
         Long resolvedEventId = Objects.requireNonNull(eventId, "Event id must not be null");
 

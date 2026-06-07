@@ -1,4 +1,4 @@
-package com.dimitar.***REMOVED***vice.Ticket;
+package com.dimitar.eventora.service.Ticket;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;

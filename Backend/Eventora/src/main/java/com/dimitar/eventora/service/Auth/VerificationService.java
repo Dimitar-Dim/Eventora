@@ -1,4 +1,4 @@
-package com.dimitar.***REMOVED***vice.Auth;
+package com.dimitar.eventora.service.Auth;
 
 import com.dimitar.eventora.entity.VerificationTokenEntity;
 import com.dimitar.eventora.model.Auth.VerificationTokenType;

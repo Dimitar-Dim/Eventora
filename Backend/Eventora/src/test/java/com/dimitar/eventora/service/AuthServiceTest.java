@@ -1,4 +1,4 @@
-package com.dimitar.***REMOVED***vice;
+package com.dimitar.eventora.service;
 
 import com.dimitar.eventora.config.MailProperties;
 import com.dimitar.eventora.dto.Auth.ForgotPasswordRequest;
@@ -8,25 +8,25 @@ import com.dimitar.eventora.dto.Auth.RegisterRequest;
 import com.dimitar.eventora.dto.Auth.RegisterResponse;
 import com.dimitar.eventora.dto.Auth.ResendVerificationRequest;
 import com.dimitar.eventora.dto.Auth.ResetPasswordRequest;
-import com.dimitar.***REMOVED***Response;
+import com.dimitar.eventora.dto.Auth.UserResponse;
 import com.dimitar.eventora.dto.Auth.VerificationResponse;
 import com.dimitar.eventora.dto.Auth.VerifyAccountRequest;
 import com.dimitar.eventora.email.EmailService;
 import com.dimitar.eventora.email.EmailVerifier;
-import com.dimitar.***REMOVED***Entity;
+import com.dimitar.eventora.entity.UserEntity;
 import com.dimitar.eventora.entity.VerificationTokenEntity;
 import com.dimitar.eventora.exception.Auth.AccountNotVerifiedException;
 import com.dimitar.eventora.exception.Auth.UnauthorizedException;
-import com.dimitar.***REMOVED***AlreadyExistsException;
-import com.dimitar.***REMOVED***DtoMapper;
-import com.dimitar.***REMOVED***Mapper;
-import com.dimitar.***REMOVED***;
-import com.dimitar.***REMOVED***Role;
+import com.dimitar.eventora.exception.Auth.UserAlreadyExistsException;
+import com.dimitar.eventora.mapper.UserDtoMapper;
+import com.dimitar.eventora.mapper.UserMapper;
+import com.dimitar.eventora.model.Auth.User;
+import com.dimitar.eventora.model.Auth.UserRole;
 import com.dimitar.eventora.model.Auth.VerificationTokenType;
-import com.dimitar.***REMOVED***Repository;
-import com.dimitar.***REMOVED***vice.Auth.AuthServiceImpl;
-import com.dimitar.***REMOVED***vice.Auth.JwtService;
-import com.dimitar.***REMOVED***vice.Auth.VerificationService;
+import com.dimitar.eventora.repository.UserRepository;
+import com.dimitar.eventora.service.Auth.AuthServiceImpl;
+import com.dimitar.eventora.service.Auth.JwtService;
+import com.dimitar.eventora.service.Auth.VerificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -184,7 +184,7 @@ class AuthServiceTest {
                 () -> authService.register(mismatchRequest)
         );
         assertEquals("Passwords do not match", exception.getMessage());
-        verify(userRepository, n***REMOVED***Entity.class));
+        verify(userRepository, never()).save(any(UserEntity.class));
     }
 
     @Test
@@ -197,7 +197,7 @@ class AuthServiceTest {
                 () -> authService.register(validRegisterRequest)
         );
         assertEquals("Username already exists", exception.getMessage());
-        verify(userRepository, n***REMOVED***Entity.class));
+        verify(userRepository, never()).save(any(UserEntity.class));
     }
 
     @Test
@@ -211,7 +211,7 @@ class AuthServiceTest {
                 () -> authService.register(validRegisterRequest)
         );
         assertEquals("Email already exists", exception.getMessage());
-        verify(userRepository, n***REMOVED***Entity.class));
+        verify(userRepository, never()).save(any(UserEntity.class));
     }
 
     @Test
@@ -296,7 +296,7 @@ class AuthServiceTest {
     @DisplayName("Should find user case-insensitively by email")
     void testLoginEmailCaseInsensitive() {
         String mixedCaseEmail = "TEST@EXAMPLE.COM";
-        LoginRequest mixedCa***REMOVED***!");
+        LoginRequest mixedCaseRequest = new LoginRequest(mixedCaseEmail, "Password123!");
         String jwtToken = "token";
 
         when(userRepository.findByEmailIgnoreCase(mixedCaseEmail))
@@ -463,7 +463,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode("newPassword123")).thenReturn("$2b$12$newhashedpassword");
         when(userRepository.save(any(UserEntity.class))).thenReturn(testUser);
 
-        VerificationRespon***REMOVED***"));
+        VerificationResponse response = authService.resetPassword(new ResetPasswordRequest("reset-token", "newPassword123"));
 
         assertTrue(response.success());
         assertEquals("Password has been reset successfully", response.message());

@@ -1,4 +1,4 @@
-package com.dimitar.***REMOVED***vice.Ticket;
+package com.dimitar.eventora.service.Ticket;
 
 import com.dimitar.eventora.dto.Ticket.VerifyTicketResponse;
 import com.dimitar.eventora.model.Ticket.TicketPurchaseSummary;
@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface TicketService {
-    TicketPurchaseSummary purchaseTicket(Long ***REMOVED***Id, String issuedTo, String deliveryEmail, 
+    TicketPurchaseSummary purchaseTicket(Long eventId, Long userId, String issuedTo, String deliveryEmail, 
                                           String seatSection, String seatRow, String seatNumber);
     List<TicketPurchaseSummary> getTicketsForUser(Long userId);
     List<Map<String, Object>> getPurchasedSeatsForEvent(Long eventId);

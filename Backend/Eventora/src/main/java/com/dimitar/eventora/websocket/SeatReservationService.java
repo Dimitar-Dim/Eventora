@@ -90,7 +90,7 @@ public class SeatReservationService {
             SeatReservation reservation = reservations.remove(key);
             if (reservation != null) {
                 // Publish event for handler to broadcast
-                ***REMOVED***vation));
+                eventPublisher.publishEvent(new SeatReservationExpiredEvent(reservation));
                 log.info("Expired reservation: {}", key);
             }
         });

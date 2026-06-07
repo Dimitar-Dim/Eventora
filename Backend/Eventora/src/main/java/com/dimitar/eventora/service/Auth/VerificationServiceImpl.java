@@ -1,9 +1,9 @@
-package com.dimitar.***REMOVED***vice.Auth;
+package com.dimitar.eventora.service.Auth;
 
-import com.dimitar.***REMOVED***Entity;
+import com.dimitar.eventora.entity.UserEntity;
 import com.dimitar.eventora.entity.VerificationTokenEntity;
 import com.dimitar.eventora.model.Auth.VerificationTokenType;
-import com.dimitar.***REMOVED***Repository;
+import com.dimitar.eventora.repository.UserRepository;
 import com.dimitar.eventora.repository.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

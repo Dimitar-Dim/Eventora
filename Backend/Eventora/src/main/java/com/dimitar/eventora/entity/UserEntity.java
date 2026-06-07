@@ -1,6 +1,6 @@
 package com.dimitar.eventora.entity;
 
-import com.dimitar.***REMOVED***Role;
+import com.dimitar.eventora.model.Auth.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

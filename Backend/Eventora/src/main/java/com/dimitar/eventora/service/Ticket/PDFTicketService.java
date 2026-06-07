@@ -1,4 +1,4 @@
-package com.dimitar.***REMOVED***vice.Ticket;
+package com.dimitar.eventora.service.Ticket;
 
 import com.lowagie.text.Document;
 import com.lowagie.text.Font;

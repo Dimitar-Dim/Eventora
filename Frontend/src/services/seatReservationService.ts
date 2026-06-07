@@ -45,7 +45,7 @@ class SeatReservationService {
 
     const userId = this.getOrCreateUserId()
     const wsUrl = env.API_BASE_URL.replace(/^http/, "ws")
-    const url = `${wsUrl}/ws/seats?***REMOVED***Id}`
+    const url = `${wsUrl}/ws/seats?eventId=${eventId}&userId=${userId}`
 
     try {
       this.ws = new WebSocket(url)

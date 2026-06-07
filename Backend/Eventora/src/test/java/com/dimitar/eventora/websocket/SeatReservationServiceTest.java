@@ -68,10 +68,10 @@ class SeatReservationServiceTest {
         assertThat(service.getReservation(keyExpired)).isNull();
         assertThat(service.getReservation(keyFuture)).isNotNull();
 
-        ArgumentCaptor<SeatReservationExpiredEvent> ***REMOVED***vationExpiredEvent.class);
+        ArgumentCaptor<SeatReservationExpiredEvent> eventCaptor = ArgumentCaptor.forClass(SeatReservationExpiredEvent.class);
         verify(publisher).publishEvent(eventCaptor.capture());
         SeatReservationExpiredEvent event = eventCaptor.getValue();
-        assertThat(***REMOVED***vation().getSeatNumber()).isEqualTo(10);
-        assertThat(***REMOVED***vation().getEventId()).isEqualTo(2L);
+        assertThat(event.getReservation().getSeatNumber()).isEqualTo(10);
+        assertThat(event.getReservation().getEventId()).isEqualTo(2L);
     }
 }

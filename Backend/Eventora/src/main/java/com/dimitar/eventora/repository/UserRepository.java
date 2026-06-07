@@ -1,6 +1,6 @@
 package com.dimitar.eventora.repository;
 
-import com.dimitar.***REMOVED***Entity;
+import com.dimitar.eventora.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
