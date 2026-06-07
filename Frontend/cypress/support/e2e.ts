@@ -1,5 +1,10 @@
 beforeEach(() => {
-  cy.clearLocalStorage()
+  // Default stub: any spec that doesn't intercept profile gets an immediate 401
+  // so the auth context clears the token and moves on without hanging on the
+  // unreachable Tailscale IP (100.110.129.21:8080).  Specs that need a valid
+  // profile (e.g. profile.cy.ts, access-control.cy.ts) register their own
+  // intercept AFTER this one — Cypress last-registered-wins, so theirs wins.
+  cy.intercept('GET', '**/api/auth/profile', { statusCode: 401 }).as('globalAuthProfile')
 })
 
 const app = window.top as Window | null;
