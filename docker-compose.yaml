@@ -7,7 +7,7 @@ services:
     container_name: eventora-database
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ***REMOVED***
+      POSTGRES_PASSWORD: "***REMOVED***"
       POSTGRES_DB: postgres
       POSTGRES_INITDB_ARGS: "-c password_encryption=scram-sha-256"
     ports:
@@ -33,7 +33,7 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: ***REMOVED***
+      SPRING_DATASOURCE_PASSWORD: "***REMOVED***"
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       JWT_SECRET: ${JWT_SECRET}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
