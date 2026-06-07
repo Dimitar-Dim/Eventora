@@ -18,6 +18,7 @@ describe('Ticket purchase essentials', () => {
   }
 
   beforeEach(() => {
+    cy.intercept('GET', '**/api/auth/profile', { statusCode: 401 }).as('getProfile')
     cy.intercept('GET', '**/api/events', [seatedEvent]).as('getEvents')
     cy.intercept('GET', `**/api/events/${seatedEvent.id}`, seatedEvent).as('getEvent')
     cy.intercept('GET', `**/api/events/${seatedEvent.id}/purchased-seats`, []).as('getPurchasedSeats')

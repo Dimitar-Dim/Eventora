@@ -1,3 +1,7 @@
+beforeEach(() => {
+  cy.clearLocalStorage()
+})
+
 const app = window.top as Window | null;
 
 if (!app || !app.document || !app.document.head) {

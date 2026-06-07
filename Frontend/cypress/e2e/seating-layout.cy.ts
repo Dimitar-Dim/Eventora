@@ -21,6 +21,7 @@ describe('Event details essentials', () => {
 
   describe('active event', () => {
     beforeEach(() => {
+      cy.intercept('GET', '**/api/auth/profile', { statusCode: 401 }).as('getProfile')
       cy.intercept('GET', '**/api/events', [activeEvent]).as('getEvents')
       cy.visit('/events')
       cy.wait('@getEvents')
@@ -36,6 +37,7 @@ describe('Event details essentials', () => {
 
   describe('sold out event', () => {
     beforeEach(() => {
+      cy.intercept('GET', '**/api/auth/profile', { statusCode: 401 }).as('getProfile')
       cy.intercept('GET', '**/api/events', [soldOutEvent]).as('getEvents')
       cy.visit('/events')
       cy.wait('@getEvents')
