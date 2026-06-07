@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   test-backend:
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, Linux, X64]
     outputs:
       started: ${{ steps.tstart.outputs.ts }}
       finished: ${{ steps.tend.outputs.ts }}
@@ -79,7 +79,7 @@ jobs:
   e2e:
     needs: build-and-deploy
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, Linux, X64]
     outputs:
       started: ${{ steps.tstart.outputs.ts }}
       finished: ${{ steps.tend.outputs.ts }}
@@ -133,7 +133,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          architecture: 'arm64'
+          architecture: 'x64'
           cache: 'npm'
           cache-dependency-path: Frontend/package-lock.json
 
@@ -155,7 +155,7 @@ jobs:
   build-and-deploy:
     needs: test-backend
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, Linux, X64]
     outputs:
       started: ${{ steps.tstart.outputs.ts }}
       finished: ${{ steps.tend.outputs.ts }}
