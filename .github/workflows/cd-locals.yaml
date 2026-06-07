@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   test-backend:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     outputs:
       started: ${{ steps.tstart.outputs.ts }}
       finished: ${{ steps.tend.outputs.ts }}
@@ -79,7 +79,7 @@ jobs:
   e2e:
     needs: build-and-deploy
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     outputs:
       started: ${{ steps.tstart.outputs.ts }}
       finished: ${{ steps.tend.outputs.ts }}
@@ -103,6 +103,17 @@ jobs:
           }
           EOF
           echo "DOCKER_CONFIG=$RUNNER_TEMP/docker" >> "$GITHUB_ENV"
+
+      - name: Create environment file for docker-compose
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+        run: |
+          _jwt="${JWT_SECRET:-$(openssl rand -hex 32)}"
+          echo "JWT_SECRET=$_jwt" > .env
+          echo "MAIL_USERNAME=${MAIL_USERNAME}" >> .env
+          echo "MAIL_PASSWORD=${MAIL_PASSWORD}" >> .env
 
       - name: Start stack (e2e, keep DB)
         run: |
@@ -155,7 +166,7 @@ jobs:
   build-and-deploy:
     needs: test-backend
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     outputs:
       started: ${{ steps.tstart.outputs.ts }}
       finished: ${{ steps.tend.outputs.ts }}
@@ -177,6 +188,17 @@ jobs:
           }
           EOF
           echo "DOCKER_CONFIG=$RUNNER_TEMP/docker" >> "$GITHUB_ENV"
+
+      - name: Create environment file for docker-compose
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+        run: |
+          _jwt="${JWT_SECRET:-$(openssl rand -hex 32)}"
+          echo "JWT_SECRET=$_jwt" > .env
+          echo "MAIL_USERNAME=${MAIL_USERNAME}" >> .env
+          echo "MAIL_PASSWORD=${MAIL_PASSWORD}" >> .env
 
       - name: Rebuild & restart stack (keep DB)
         run: |
