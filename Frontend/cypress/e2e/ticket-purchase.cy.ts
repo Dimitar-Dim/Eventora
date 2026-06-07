@@ -21,24 +21,20 @@ describe('Ticket purchase essentials', () => {
     cy.intercept('GET', '**/api/events', [seatedEvent]).as('getEvents')
     cy.intercept('GET', `**/api/events/${seatedEvent.id}`, seatedEvent).as('getEvent')
     cy.intercept('GET', `**/api/events/${seatedEvent.id}/purchased-seats`, []).as('getPurchasedSeats')
+    cy.visit('/events')
+    cy.wait('@getEvents')
   })
 
   it('opens the purchase dialog from event details', () => {
-    cy.visit('/events')
-    cy.wait('@getEvents')
-
     cy.get('[data-cy="event-card"]').first().click()
     cy.contains('button', /open ticket window/i).click()
     cy.contains(/secure your ticket/i).should('be.visible')
   })
 
   it('requires delivery email before completing purchase', () => {
-    cy.visit('/events')
-    cy.wait('@getEvents')
-
     cy.get('[data-cy="event-card"]').first().click()
     cy.contains('button', /open ticket window/i).click()
-  cy.wait('@getPurchasedSeats')
+    cy.wait('@getPurchasedSeats')
 
     // Select first available (non-reserved) seat to unlock details step
     cy.get('button[aria-label^="Sector"]').not('[disabled]').first().click()
